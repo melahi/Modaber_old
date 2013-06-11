@@ -69,7 +69,9 @@ using std::vector;
 
 namespace VAL {
 
-template<class T> bool operator != (T & t1,T & t2) {return ! (t1==t2);};
+
+//@TODO: I've commented the following line because it had a conflict with some CVC4 file; perhaps I should correct this basically
+//template<class T> bool operator != (T & t1,T & t2) {return ! (t1==t2);};
 
 struct Environment : public map<const var_symbol*,const const_symbol*> {
 	static map<Validator*,vector<Environment *> > copies;

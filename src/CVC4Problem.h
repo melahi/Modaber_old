@@ -53,51 +53,64 @@ public:
 		return;
 	}
 
-	CVC4Problem (int nVariables, int nProposition, int nAction, int nSignificantTimePoint): em(), smt(&em), nVariables(nVariables), nProposition(nProposition), nAction(nAction), nSignificantTimePoint(nSignificantTimePoint) {
+
+	void increaseSizeForAnotherStep (bool initialStep = false){
+
+		int size;
+
+		//Creating variable expressions
+		Type real = em.realType();
+		size = variableExpr.size();
+		for (int i = 0; i < nVariables; i++){
+			ostringstream oss;
+			oss << "variable(" << (size + i) % nVariables << "," << (size + i) / nVariables << ")";
+			variableExpr.push_back(em.mkVar(oss.str(),real));
+		}
+
+
+		//Creating boolean expressions
+
+
+		//For proposition
+		Type boolean = em.booleanType();
+		size = propositionExpr.size();
+		for (int i = 0; i < nProposition; i++){
+			ostringstream oss;
+			oss << "proposition(" << (size + i) % nProposition << "," << (size + i) / nProposition << ")";
+			propositionExpr.push_back(em.mkVar(oss.str(), boolean));
+		}
+
+
+		//For action
+
+		if (!initialStep){
+
+			//		@TODO: for now we doesn't target temporal problems, perhaps for future it will be not bad to handle temporal problems!
+			//		size = nSignificantTimePoint * nAction * 3;
+
+			size = actionExpr.size();
+			for (int i = 0; i < nAction; i++){
+				ostringstream oss;
+				oss << "action(" << (size + i) % nAction << "," << (size + i) / nAction << ")";
+				actionExpr.push_back(em.mkVar (oss.str(), boolean));
+			}
+
+		}
+
+	}
+
+	CVC4Problem (int nVariables, int nProposition, int nAction): em(), smt(&em), nVariables(nVariables), nProposition(nProposition), nAction(nAction) {
 
 		CVC4Problem::updateInitialValues();
 
 		smt.setOption("produce-models", SExpr("true"));
-		smt.setOption("check-models", SExpr("true"));
+		smt.setOption("check-models", SExpr("false"));		//In the case of debugging we can turn it to "true"
+		smt.setOption("interactive-mode", SExpr("false"));		//In the case of debugging we can turn it to "true"
 		smt.setOption("produce-assignments", SExpr("true"));
 		smt.setOption("verbosity", SExpr("0"));
+		smt.setOption("incremental", SExpr("true"));
 
-		int size;
-		//Creating variable expressions
-		Type real = em.realType();
-		size = nSignificantTimePoint * nVariables;
-		variableExpr = new Expr [size];
-		for (int i = 0; i < size; i++){
-				ostringstream oss;
-				oss << "variable(" << i % nVariables << "," << i / nVariables << ")";
-				variableExpr[i] = em.mkVar(oss.str(),real);
-
-		}
-
-		//Creating boolean expressions
-		//For proposition
-		Type boolean = em.booleanType();
-		size = nSignificantTimePoint * nProposition;
-		propositionExpr = new Expr [size];
-		for (int i = 0; i < size; i++){
-			ostringstream oss;
-			oss << "proposition(" << i % nProposition << "," << i / nProposition << ")";
-			propositionExpr[i] = em.mkVar(oss.str(), boolean);
-		}
-
-		//For action
-
-//		@TODO: for now we doesn't target temporal problems, perhaps for future it will be not bad to handle temporal problems!
-//		size = nSignificantTimePoint * nAction * 3;
-//		actionExpr = new Expr[size]; // each part of start, overall and end of an action need an expression so for each action we should have 3 expressions
-
-		size = nSignificantTimePoint * nAction;
-		actionExpr = new Expr[size]; // each part of start, overall and end of an action need an expression so for each action we should have 3 expressions
-		for (int i = 0; i < size; i++){
-			ostringstream oss;
-			oss << "action(" << i % nAction << "," << i / nAction << ")";
-			actionExpr[i] = em.mkVar (oss.str(), boolean);
-		}
+		increaseSizeForAnotherStep(true);
 	}
 
 	//Start to build new clause for SMT problem
@@ -236,6 +249,16 @@ public:
 		cout << "Start to try solving the problem" << endl;
 		Result result = smt.checkSat();
 
+
+
+		/*      For debug
+		Statistics myStatistics = smt.getStatistics();
+		cout << "*****************************Start****************************" << endl;
+		myStatistics.flushInformation(cout);
+		cout << "******************************End*****************************" << endl;
+		*/
+
+
 		switch (result.isSat()){
 		case Result::SAT:
 			cout << "OH yeay!, the problem is solved" << endl;
@@ -268,11 +291,15 @@ public:
 		return isUsed;
 	}
 
+	void push(){
+		smt.push();
+	}
+	void pop(){
+		smt.pop();
+	}
+
 
 	virtual ~CVC4Problem(){
-		delete [] variableExpr;
-		delete [] propositionExpr;
-		delete [] actionExpr;
 	}
 
 
@@ -281,14 +308,15 @@ private:
 	ExprManager em;
 	SmtEngine smt;
 
-	Expr *variableExpr;
-	Expr *propositionExpr;
-	Expr *actionExpr;
+	vector <Expr> variableExpr;
+	vector <Expr> propositionExpr;
+	vector <Expr> actionExpr;
+
+
 	vector <Expr> buildingClause;
 	int nVariables;
 	int nProposition;
 	int nAction;
-	int nSignificantTimePoint;
 
 	//find and return the index of corresponding PVariableExpression in the variableExpr array
 	inline int getVariableIndex (int variableStateId, int significantTimePoint){

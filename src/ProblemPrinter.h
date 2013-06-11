@@ -256,7 +256,7 @@ private:
 
 public:
 
-	ProblemPrinter();
+	ProblemPrinter(){}
 
 	void printProblem(){
 		cout << "###########  INITIAL STATE  ####################" << endl;
@@ -267,7 +267,7 @@ public:
 	 	myGoalStatePrint();
 	}
 
-	virtual ~ProblemPrinter();
+	virtual ~ProblemPrinter(){}
 };
 
 #endif /* PROBLEMPRINTER_H_ */

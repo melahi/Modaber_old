@@ -5,14 +5,6 @@
 
 
 
-
-
-
-
-
-
-
-
 int main (int argc, char * argv[]){
 	Modaber modaber (argv[1], argv[2]);
 	return 0;

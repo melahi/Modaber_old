@@ -4,15 +4,12 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/ProblemPrinter.cpp \
 ../src/modaberMain.cpp 
 
 OBJS += \
-./src/ProblemPrinter.o \
 ./src/modaberMain.o 
 
 CPP_DEPS += \
-./src/ProblemPrinter.d \
 ./src/modaberMain.d 
 
 

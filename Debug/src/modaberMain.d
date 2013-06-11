@@ -19,7 +19,10 @@ src/modaberMain.d: ../src/modaberMain.cpp ../src/Modaber.h \
  ../src/ProblemPrinter.h \
  /home/sadra/masterThesis/Modaber/VALfiles/SimpleEval.h \
  /home/sadra/masterThesis/Modaber/VALfiles/instantiation.h \
- /home/sadra/masterThesis/Modaber/VALfiles/SimpleEval.h
+ /home/sadra/masterThesis/Modaber/VALfiles/SimpleEval.h \
+ ../src/Translator.h ../src/CVC4Problem.h \
+ /home/sadra/masterThesis/Modaber/VALfiles/FastEnvironment.h \
+ ../src/MyAnalyzer.h
 
 ../src/Modaber.h:
 
@@ -64,3 +67,11 @@ src/modaberMain.d: ../src/modaberMain.cpp ../src/Modaber.h \
 /home/sadra/masterThesis/Modaber/VALfiles/instantiation.h:
 
 /home/sadra/masterThesis/Modaber/VALfiles/SimpleEval.h:
+
+../src/Translator.h:
+
+../src/CVC4Problem.h:
+
+/home/sadra/masterThesis/Modaber/VALfiles/FastEnvironment.h:
+
+../src/MyAnalyzer.h:
