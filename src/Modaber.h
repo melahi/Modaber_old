@@ -9,6 +9,7 @@
 #include <iostream>
 #include <fstream>
 #include "CVC4Problem.h"
+#include "NumericRPG.h"
 
 using namespace std;
 using namespace VAL;
@@ -21,6 +22,7 @@ private:
 
 	CVC4Problem *smtProblem;
 	MyAnalyzer *myAnalyzer;
+	NumericRPG *numericRPG;
 
 	void instantiation(char *domainFile, char *problemFile){
 		char *argv[2];
@@ -60,15 +62,14 @@ private:
 		CVC4Problem::updateInitialValues();
 		smtProblem = new CVC4Problem(instantiatedOp::howManyNonStaticPNEs(), instantiatedOp::howManyNonStaticLiterals(), instantiatedOp::howMany());
 		myAnalyzer = new MyAnalyzer();
+		numericRPG = new NumericRPG();
 		nSignificantTimePoint = 1;
-
-
 	}
 
 	bool tryToSolve(){
 
 		bool foundSolution = false;
-		Translator myTranslator (smtProblem, myAnalyzer);
+		Translator myTranslator (smtProblem, myAnalyzer, numericRPG);
 		myTranslator.addInitialState();
 
 		while (!foundSolution){
@@ -125,6 +126,7 @@ public:
 	virtual ~Modaber(){
 		delete (smtProblem);
 		delete (myAnalyzer);
+		delete (numericRPG);
 	}
 };
 

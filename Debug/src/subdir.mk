@@ -4,12 +4,27 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/CVC4Problem.cpp \
+../src/EvolutionaryModaber.cpp \
+../src/NumericRPG.cpp \
+../src/SketchyPlan.cpp \
+../src/Translator.cpp \
 ../src/modaberMain.cpp 
 
 OBJS += \
+./src/CVC4Problem.o \
+./src/EvolutionaryModaber.o \
+./src/NumericRPG.o \
+./src/SketchyPlan.o \
+./src/Translator.o \
 ./src/modaberMain.o 
 
 CPP_DEPS += \
+./src/CVC4Problem.d \
+./src/EvolutionaryModaber.d \
+./src/NumericRPG.d \
+./src/SketchyPlan.d \
+./src/Translator.d \
 ./src/modaberMain.d 
 
 

@@ -6,12 +6,12 @@
 #include "VALfiles/instantiation.h"
 #include "VALfiles/FastEnvironment.h"
 #include "MyAnalyzer.h"
+#include "NumericRPG.h"
 #include <ptree.h>
 
 using namespace VAL;
 using namespace Inst;
 
-#define CANT_HANDLE(x) cerr << "********************************" << x << "********************************" << endl;
 
 
 
@@ -19,188 +19,38 @@ class Translator {
 private:
 	CVC4Problem *smtProblem;
 	MyAnalyzer *myAnalyzer;
+	NumericRPG *numericRPG;
 public:
-	Translator (CVC4Problem *smtProblem, MyAnalyzer *myAnalyzer): smtProblem(smtProblem), myAnalyzer(myAnalyzer) {};
+	Translator (CVC4Problem *smtProblem, MyAnalyzer *myAnalyzer, NumericRPG *numericRPG): smtProblem(smtProblem), myAnalyzer(myAnalyzer), numericRPG(numericRPG) {};
 
 	//Translate initial state of planning problem to SMT problem
-	void addInitialState(){
-		vector <bool> initialState;
-		initialState.resize(instantiatedOp::howManyNonStaticLiterals(), false);
-
-		pc_list<simple_effect*>::const_iterator it = current_analysis->the_problem->initial_state->add_effects.begin();
-		pc_list<simple_effect*>::const_iterator itEnd = current_analysis->the_problem->initial_state->add_effects.end();
-		FastEnvironment env(0);
-
-		for (; it != itEnd; it++){
-			Literal lit ((*it)->prop, &env);
-			Literal *lit2 = instantiatedOp::findLiteral(&lit);
-			if (lit2->getStateID() != -1){
-				initialState[lit2->getStateID()] = true;
-			}
-		}
-
-		for (unsigned int i = 0; i < initialState.size(); i++) {
-			smtProblem->startNewClause();
-			smtProblem->addConditionToCluase(i, 0, initialState[i]);
-			smtProblem->endClause();
-		}
-
-		addAssignmentList(current_analysis->the_problem->initial_state->assign_effects, &env, 0);
-	}
+	void addInitialState();
 
 	//Add goals to the smt problem
-	void addGoals (int significantTimePoint){
-		FastEnvironment env(0);
-		addGoal(current_analysis->the_problem->the_goal, &env, significantTimePoint);
-	}
+	void addGoals (int significantTimePoint);
 
 
 	//Insert actions' conditions for the specified time point in smt problem
-	void addActions (int significantTimePoint){
-		OpStore::const_iterator iter, iterEnd;
-		iter = instantiatedOp::opsBegin();
-		iterEnd = instantiatedOp::opsEnd();
-		FastEnvironment *env;
-		for (; iter != iterEnd; ++iter){
-			env = (*iter)->getEnv();
-			addEffectList((*iter)->forOp()->effects, env, significantTimePoint + 1, (*iter)->getID());
-			addGoal((*iter)->forOp()->precondition, env, significantTimePoint, (*iter)->getID());
-		}
-	}
+	void addActions (int significantTimePoint);
 
 
 	//Insert Explanatory Axioms which is needed for SMT problem
-	void addExplanatoryAxioms (int significantTimePoint){
-		int nProposition = instantiatedOp::howManyNonStaticLiterals();
-		for (int i = 0; i < nProposition; i++){
-			int nAdder = myAnalyzer->adderActions[i].size();
-			if (nAdder > 0){
-				smtProblem->startNewClause();
-				smtProblem->addConditionToCluase(i, significantTimePoint, false);
-				smtProblem->addConditionToCluase(i, significantTimePoint - 1, true);
-				for (int j = 0; j < nAdder; j++){
-					smtProblem->addActionToClause(myAnalyzer->adderActions[i][j], significantTimePoint - 1, true);
-				}
-				smtProblem->endClause();
-			}
-		}
+	void addExplanatoryAxioms (int significantTimePoint);
 
-		for (int i = 0; i < nProposition; i++){
-			int nDeleter = myAnalyzer->deleterActions[i].size();
-			if (nDeleter > 0){
-				smtProblem->startNewClause();
-				smtProblem->addConditionToCluase(i, significantTimePoint, true);
-				smtProblem->addConditionToCluase(i, significantTimePoint - 1, false);
-				for (int j = 0; j < nDeleter; j++){
-					smtProblem->addActionToClause(myAnalyzer->deleterActions[i][j], significantTimePoint - 1, true);
-				}
-				smtProblem->endClause();
-			}
-		}
-
-		int nVariable = instantiatedOp::howManyNonStaticPNEs();
-		for (int i = 0; i < nVariable; i++){
-			int nModifier = myAnalyzer->variableModifierActions[i].size();
-			if (nModifier > 0){
-				smtProblem->startNewClause();
-				smtProblem->AddEqualityCondition(i, significantTimePoint, i, significantTimePoint - 1);
-				for (int j = 0; j < nModifier; j++){
-					smtProblem->addActionToClause(myAnalyzer->variableModifierActions[i][j], significantTimePoint - 1, true);
-				}
-				smtProblem->endClause();
-			}
-		}
-	}
-
-	//Inset action mutex to the SMT problem
-	void addActionMutex (int significantTimePoint){
-		int nAction = myAnalyzer->mutexActions.size();
-		for (int i = 0; i < nAction; ++i){
-			set <int>::const_iterator iter, iterEnd;
-			iter = myAnalyzer->mutexActions[i].begin();
-			iterEnd = myAnalyzer->mutexActions[i].end();
-			for (; iter != iterEnd; iter++){
-				smtProblem->startNewClause();
-				smtProblem->addActionToClause(i, significantTimePoint, false);
-				smtProblem->addActionToClause(*iter, significantTimePoint, false);
-				smtProblem->endClause();
-			}
-		}
-	}
-
+	//Insert action mutex to the SMT problem
+	void addActionMutex (int significantTimePoint);
 
 	virtual ~Translator(){}
 
 private:
 
-	inline void addSimpleEffectList (polarity plrty, const pc_list<simple_effect*> &simpleEffectList, FastEnvironment *env, int significantTimePoint, int actionID = -1){
-		pc_list<simple_effect*>::const_iterator it = simpleEffectList.begin();
-		pc_list<simple_effect*>::const_iterator itEnd = simpleEffectList.end();
-		for (; it != itEnd; ++it){
-			smtProblem->startNewClause();
-			if (actionID != -1){
-				smtProblem->addActionToClause(actionID, significantTimePoint - 1, false);
-			}
-			smtProblem->addLiteral(plrty, (*it)->prop, env, significantTimePoint);
-			smtProblem->endClause();
-		}
-	}
+	void addSimpleEffectList (polarity plrty, const pc_list<simple_effect*> &simpleEffectList, FastEnvironment *env, int significantTimePoint, int actionID = -1);
 
-	void addAssignmentList (const pc_list <assignment *> &assignmentEffects, FastEnvironment *env, int significantTimePoint, int actionID = -1){
-		pc_list<assignment*>::const_iterator it = assignmentEffects.begin();
-		pc_list<assignment*>::const_iterator itEnd = assignmentEffects.end();
-		for (; it != itEnd; ++it){
-			smtProblem->startNewClause();
-			if (actionID != -1){
-				smtProblem->addActionToClause(actionID, significantTimePoint - 1, false);
-			}
-			smtProblem->AddConditionToCluase(*it, env, significantTimePoint);
-			smtProblem->endClause();
-		}
-	}
+	void addAssignmentList (const pc_list <assignment *> &assignmentEffects, FastEnvironment *env, int significantTimePoint, int actionID = -1);
 
-	void addEffectList (const effect_lists *effects, FastEnvironment *env, int significantTimePoint, int actionId = -1){
-		addSimpleEffectList(E_POS, effects->add_effects, env, significantTimePoint, actionId);
-		addSimpleEffectList(E_NEG, effects->del_effects, env, significantTimePoint, actionId);
-		addAssignmentList(effects->assign_effects, env, significantTimePoint, actionId);
-		if ((!effects->forall_effects.empty()) || (!effects->cond_effects.empty()) || (!effects->cond_assign_effects.empty()) || (!effects->timed_effects.empty())){
-			CANT_HANDLE("Some kinds of Effects");
-		}
-	}
+	void addEffectList (const effect_lists *effects, FastEnvironment *env, int significantTimePoint, int actionId = -1);
 
-	void addGoal (const goal *gl, FastEnvironment *env, int significantTimePoint, int actionId = -1){
-		const simple_goal *simple = dynamic_cast<const simple_goal *>(gl);
-		if (simple){
-			smtProblem->startNewClause();
-			if (actionId != -1){
-				smtProblem->addActionToClause(actionId, significantTimePoint, false);
-			}
-			smtProblem->addLiteral(simple->getPolarity(), simple->getProp(),env, significantTimePoint);
-			smtProblem->endClause();
-			return;
-		}
-		const comparison *comp = dynamic_cast<const comparison*> (gl);
-		if (comp){
-			smtProblem->startNewClause();
-			if (actionId != -1){
-				smtProblem->addActionToClause(actionId, significantTimePoint, false);
-			}
-			smtProblem->AddConditionToCluase(comp, env, significantTimePoint);
-			smtProblem->endClause();
-			return;
-		}
-		const conj_goal *conjunctive = dynamic_cast<const conj_goal *>(gl);
-		if (conjunctive){
-			const goal_list *goalList = conjunctive->getGoals();
-			goal_list::const_iterator it = goalList->begin();
-			goal_list::const_iterator itEnd = goalList->end();
-			for (; it != itEnd; it++){
-				addGoal(*it, env, significantTimePoint, actionId);
-			}
-			return;
-		}
-		CANT_HANDLE("translating some GOAL");
-	}
+	void addGoal (const goal *gl, FastEnvironment *env, int significantTimePoint, int actionId = -1);
 
 
 };

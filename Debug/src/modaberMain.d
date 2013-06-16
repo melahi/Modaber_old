@@ -22,7 +22,9 @@ src/modaberMain.d: ../src/modaberMain.cpp ../src/Modaber.h \
  /home/sadra/masterThesis/Modaber/VALfiles/SimpleEval.h \
  ../src/Translator.h ../src/CVC4Problem.h \
  /home/sadra/masterThesis/Modaber/VALfiles/FastEnvironment.h \
- ../src/MyAnalyzer.h
+ ../src/Utilities.h \
+ /home/sadra/masterThesis/Modaber/VALfiles/parsing/ptree.h \
+ ../src/MyAnalyzer.h ../src/NumericRPG.h
 
 ../src/Modaber.h:
 
@@ -74,4 +76,10 @@ src/modaberMain.d: ../src/modaberMain.cpp ../src/Modaber.h \
 
 /home/sadra/masterThesis/Modaber/VALfiles/FastEnvironment.h:
 
+../src/Utilities.h:
+
+/home/sadra/masterThesis/Modaber/VALfiles/parsing/ptree.h:
+
 ../src/MyAnalyzer.h:
+
+../src/NumericRPG.h:
