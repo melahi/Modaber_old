@@ -138,6 +138,18 @@ void Translator::addActionMutex (int significantTimePoint){
 	}
 }
 
+//Insert the sketchy plan to the SMT problem
+void Translator::addSkechyPlan(SketchyPlan *sketchyPlan){
+	int length = sketchyPlan->milestones.size();
+	FastEnvironment env(0);
+	for (int i = 0; i < length; i++){
+		int mySize = sketchyPlan->milestones[i].size();
+		for (int j = 0; j < mySize; j++){
+			addGoal(sketchyPlan->milestones[i][j].get(), &env, i);
+		}
+	}
+}
+
 
 void Translator::addSimpleEffectList (polarity plrty, const pc_list<simple_effect*> &simpleEffectList, FastEnvironment *env, int significantTimePoint, int actionID){
 	pc_list<simple_effect*>::const_iterator it = simpleEffectList.begin();

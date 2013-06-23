@@ -7,7 +7,7 @@
 #include "Utilities.h"
 #include <vector>
 #include <iostream>
-
+#include <cmath>
 
 using namespace VAL;
 using namespace Inst;
@@ -281,8 +281,54 @@ NumericRPG::NumericRPG() {
 	bool canContinue = true;
 	while (canContinue){
 		numberOfLayers++;
+		/*
+		 *@FIXME: we extend NumericRPG until no new action can be executed.
+		 *		  So there can be a problem for numeric preconditions;
+		 *		  If a numeric precondition can be satisfied after executing
+		 *		  of a series of action we missed it!
+		 */
 		canContinue = extendOneLayer();
 	}
+	FastEnvironment env(0);
+	minimumPlanLength = 1 + findMinimumLevelSatisfyingGoal(current_analysis->the_problem->the_goal, &env);
+}
+
+int NumericRPG::findMinimumLevelSatisfyingGoal(goal *gl, FastEnvironment *env){
+	const simple_goal *simple = dynamic_cast<const simple_goal *>(gl);
+	if (simple){
+		if (simple->getPolarity() == E_NEG){
+			return 0;
+		}
+		Literal lit(simple->getProp(), env);
+		Literal *lit2 = instantiatedOp::getLiteral(&lit);
+		return firstVisitedProposition[lit2->getStateID()];
+	}
+	const comparison *comp = dynamic_cast<const comparison*> (gl);
+	if (comp){
+		for (int i = 0; i < numberOfLayers; i++){
+			if (isPreconditionSatisfied(gl, env)){
+				return i;
+			}
+		}
+		return -1;
+	}
+	const conj_goal *conjunctive = dynamic_cast<const conj_goal *>(gl);
+	if (conjunctive){
+		int ret = 0;
+		const goal_list *goalList = conjunctive->getGoals();
+		goal_list::const_iterator it = goalList->begin();
+		goal_list::const_iterator itEnd = goalList->end();
+		for (; it != itEnd; it++){
+			int temp = findMinimumLevelSatisfyingGoal(*it, env);
+			if (temp == -1)
+				return -1;
+			if (temp > ret)
+				ret = temp;
+		}
+		return ret;
+	}
+	CANT_HANDLE("can't evaluate some precondition");
+	return 0;
 }
 
 void NumericRPG::print(ostream &sout){
@@ -308,6 +354,7 @@ void NumericRPG::print(ostream &sout){
 
 
 	sout << "Number of Layers: " << numberOfLayers << endl;
+	sout << "Lower bound for plan length: " << minimumPlanLength << endl;
 	for (int i = 0; i < numberOfLayers; i++){
 		for (int j = 0; j < nPropositions; j++){
 			if (firstVisitedProposition[j] == i){

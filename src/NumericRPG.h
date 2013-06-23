@@ -44,10 +44,13 @@ public:
 	vector < vector <double> > minPNEValue;   //The first index corresponds to layer number and second index corresponds to PNE index
 	vector < vector <double> > maxPNEValue;   //The first index corresponds to layer number and second index corresponds to PNE index
 	int numberOfLayers;
+	int minimumPlanLength;
 
 
 
 	NumericRPG();
+
+	int findMinimumLevelSatisfyingGoal (goal *gl, FastEnvironment *env);
 
 	void print(ostream &sout);
 

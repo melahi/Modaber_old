@@ -10,7 +10,15 @@ using namespace VAL;
 using namespace std;
 
 
+//Declaration for static variables
 vector <double> CVC4Problem::initialValue;
+ExprManager CVC4Problem::em;
+vector <Expr> CVC4Problem::variableExpr;
+vector <Expr> CVC4Problem::propositionExpr;
+vector <Expr> CVC4Problem::actionExpr;
+unsigned int CVC4Problem::maximumSignificantTimePoint;
+
+
 
 
 void CVC4Problem::updateInitialValues (){
@@ -38,63 +46,81 @@ void CVC4Problem::updateInitialValues (){
 }
 
 
-void CVC4Problem::increaseSizeForAnotherStep (bool initialStep){
+void CVC4Problem::guaranteeSize (unsigned int nSignificantTimePoint){
 
-	int size;
+	while (maximumSignificantTimePoint < nSignificantTimePoint){
+		int size;
 
-	//Creating variable expressions
-	Type real = em.realType();
-	size = variableExpr.size();
-	for (int i = 0; i < nVariables; i++){
-		ostringstream oss;
-		oss << "variable(" << (size + i) % nVariables << "," << (size + i) / nVariables << ")";
-		variableExpr.push_back(em.mkVar(oss.str(),real));
-	}
-
-
-	//Creating boolean expressions
-
-
-	//For proposition
-	Type boolean = em.booleanType();
-	size = propositionExpr.size();
-	for (int i = 0; i < nProposition; i++){
-		ostringstream oss;
-		oss << "proposition(" << (size + i) % nProposition << "," << (size + i) / nProposition << ")";
-		propositionExpr.push_back(em.mkVar(oss.str(), boolean));
-	}
-
-
-	//For action
-
-	if (!initialStep){
-
-		//		@TODO: for now we doesn't target temporal problems, perhaps for future it will be not bad to handle temporal problems!
-		//		size = nSignificantTimePoint * nAction * 3;
-
-		size = actionExpr.size();
-		for (int i = 0; i < nAction; i++){
+		//Creating variable expressions
+		Type real = em.realType();
+		size = variableExpr.size();
+		for (int i = 0; i < nVariables; i++){
 			ostringstream oss;
-			oss << "action(" << (size + i) % nAction << "," << (size + i) / nAction << ")";
-			actionExpr.push_back(em.mkVar (oss.str(), boolean));
+			oss << "variable(" << (size + i) % nVariables << "," << (size + i) / nVariables << ")";
+			variableExpr.push_back(em.mkVar(oss.str(),real));
 		}
 
-	}
 
+		//Creating boolean expressions
+
+		//For proposition
+		Type boolean = em.booleanType();
+		size = propositionExpr.size();
+		for (int i = 0; i < nProposition; i++){
+			ostringstream oss;
+			oss << "proposition(" << (size + i) % nProposition << "," << (size + i) / nProposition << ")";
+			propositionExpr.push_back(em.mkVar(oss.str(), boolean));
+		}
+
+
+		//For action
+
+		if (size){
+
+			//		@TODO: for now we doesn't target temporal problems, perhaps for future it will be not bad to handle temporal problems!
+			//		size = nSignificantTimePoint * nAction * 3;
+
+			size = actionExpr.size();
+			for (int i = 0; i < nAction; i++){
+				ostringstream oss;
+				oss << "action(" << (size + i) % nAction << "," << (size + i) / nAction << ")";
+				actionExpr.push_back(em.mkVar (oss.str(), boolean));
+			}
+
+		}
+		maximumSignificantTimePoint++;
+	}
 }
 
-CVC4Problem::CVC4Problem (int nVariables, int nProposition, int nAction): em(), smt(&em), nVariables(nVariables), nProposition(nProposition), nAction(nAction) {
+void CVC4Problem::initialization(){
 
 	CVC4Problem::updateInitialValues();
 
 	smt.setOption("produce-models", SExpr("true"));
 	smt.setOption("check-models", SExpr("false"));		//In the case of debugging we can turn it to "true"
-	smt.setOption("interactive-mode", SExpr("false"));		//In the case of debugging we can turn it to "true"
+	smt.setOption("interactive-mode", SExpr("true"));		//In the case of debugging we can turn it to "true"
 	smt.setOption("produce-assignments", SExpr("true"));
-	smt.setOption("verbosity", SExpr("0"));
+	smt.setOption("verbosity", SExpr("9"));
 	smt.setOption("incremental", SExpr("true"));
 
-	increaseSizeForAnotherStep(true);
+	maximumSignificantTimePoint = 0;
+	guaranteeSize(1);
+}
+
+
+
+CVC4Problem::CVC4Problem (int nVariables, int nProposition, int nAction): smt(&em), nVariables(nVariables), nProposition(nProposition), nAction(nAction) {
+	initialization();
+}
+
+CVC4Problem::CVC4Problem(const CVC4Problem &old): smt(&em), nVariables(old.nVariables), nProposition(old.nProposition), nAction(old.nAction) {
+	initialization();
+	CVC4Problem *old2 = const_cast <CVC4Problem *>(&old);
+	const vector <Expr> oldAssertions = old2->smt.getAssertions();
+	int mySize = oldAssertions.size();
+	for (int i = 0; i < mySize; i++){
+		smt.assertFormula(oldAssertions[i]);
+	}
 }
 
 //Start to build new clause for SMT problem
@@ -282,7 +308,6 @@ void CVC4Problem::push(){
 void CVC4Problem::pop(){
 	smt.pop();
 }
-
 
 CVC4Problem::~CVC4Problem(){
 }

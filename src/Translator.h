@@ -7,6 +7,7 @@
 #include "VALfiles/FastEnvironment.h"
 #include "MyAnalyzer.h"
 #include "NumericRPG.h"
+#include "SketchyPlan.h"
 #include <ptree.h>
 
 using namespace VAL;
@@ -22,6 +23,9 @@ private:
 	NumericRPG *numericRPG;
 public:
 	Translator (CVC4Problem *smtProblem, MyAnalyzer *myAnalyzer, NumericRPG *numericRPG): smtProblem(smtProblem), myAnalyzer(myAnalyzer), numericRPG(numericRPG) {};
+
+	void setSMTProblem (CVC4Problem *smtProblem) {this->smtProblem = smtProblem;}
+	CVC4Problem *getSMTProblem () {return this->smtProblem;}
 
 	//Translate initial state of planning problem to SMT problem
 	void addInitialState();
@@ -39,6 +43,10 @@ public:
 
 	//Insert action mutex to the SMT problem
 	void addActionMutex (int significantTimePoint);
+
+	//Insert the sketchy plan to the SMT problem
+	void addSkechyPlan (SketchyPlan *sketchyPlan);
+
 
 	virtual ~Translator(){}
 

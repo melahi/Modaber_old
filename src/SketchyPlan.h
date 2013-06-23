@@ -4,25 +4,41 @@
 
 
 #include "VALfiles/parsing/ptree.h"
+#include "NumericRPG.h"
+#include <vector>
+#include <boost/shared_ptr.hpp>
 
 using namespace VAL;
+using namespace std;
+using namespace boost;
+
 
 class SketchyPlan {
 	/*
 	 * This class in equivalent to chromosome term in Evolutionary Algorithm
 	 * and every element intermediateGoals vector is equivalent to a Gene in EA
 	 */
+private:
+	NumericRPG *numericRPG;
+	double propositionSelectionRatio;
 public:
 
 	double fitness;
-	goal_list intermediateGoals;
+
+	vector < vector < shared_ptr <goal> > > milestones;
 
 
-	SketchyPlan();
+
+	SketchyPlan(NumericRPG *numericRPG);
+
 	void createRandomSketchyPlan();
-	void calculateFitness();
+
 	SketchyPlan crossover(SketchyPlan *mother);
+
 	SketchyPlan mutation();
+
+	void print();
+
 	virtual ~SketchyPlan();
 };
 

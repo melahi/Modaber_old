@@ -1,11 +1,18 @@
 //In the name of God
 
 
-#include "Modaber.h"
+//#include "SimpleModaber.h"
+#include "EvolutionaryModaber.h"
+
+using namespace std;
+
 
 
 
 int main (int argc, char * argv[]){
-	Modaber modaber (argv[1], argv[2]);
+//	SimpleModaber simpleModaber (argv[1], argv[2]);
+
+	EvolutionaryModaber evolutionaryModaber(argv[1], argv[2]);
+
 	return 0;
 }

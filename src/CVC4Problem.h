@@ -31,10 +31,14 @@ public:
 	static void updateInitialValues ();
 
 
-	void increaseSizeForAnotherStep (bool initialStep = false);
+	void guaranteeSize (unsigned int maxSignificantTimePoint);
 
+
+	void initialization();
 
 	CVC4Problem (int nVariables, int nProposition, int nAction);
+
+	CVC4Problem (const CVC4Problem&);
 
 	//Start to build new clause for SMT problem
 	virtual void startNewClause();
@@ -69,17 +73,24 @@ public:
 
 	void pop();
 
+	unsigned int getMaximumSignificantTimePoint() {return maximumSignificantTimePoint;}
+
+
+	/* I don't know how to implement following function, perhaps it's not bad to learn it!
+	CVC4Problem& operator=(const CVC4Problem&);
+	*/
 
 	virtual ~CVC4Problem();
 
 private:
 
-	ExprManager em;
+	static ExprManager em;
 	SmtEngine smt;
 
-	vector <Expr> variableExpr;
-	vector <Expr> propositionExpr;
-	vector <Expr> actionExpr;
+	static vector <Expr> variableExpr;
+	static vector <Expr> propositionExpr;
+	static vector <Expr> actionExpr;
+	static unsigned int maximumSignificantTimePoint;
 
 
 	vector <Expr> buildingClause;
