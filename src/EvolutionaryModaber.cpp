@@ -29,7 +29,7 @@ double EvolutionaryModaber::calculateFitness(SketchyPlan *sketchyPlan){
 //	myTranslator->getSMTProblem()->push();
 	cout << "End pushing" << endl;
 
-	sketchyPlan->print();
+//	sketchyPlan->print();
 
 	bool foundSolution = myTranslator->solve(length, sketchyPlan);
 //	myTranslator->getSMTProblem()->pop();

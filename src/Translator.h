@@ -8,6 +8,7 @@
 #include "MyAnalyzer.h"
 #include "NumericRPG.h"
 #include "SketchyPlan.h"
+#include "MyTimer.h"
 #include <ptree.h>
 
 using namespace VAL;
@@ -21,6 +22,8 @@ private:
 	CVC4Problem *smtProblem;
 	MyAnalyzer *myAnalyzer;
 	NumericRPG *numericRPG;
+	MyTimer solverTimer;
+	MyTimer prepareTimer;
 
 	static vector <Expr> baseSATProblem;
 	static vector <Expr> goals;

@@ -7,6 +7,7 @@ CPP_SRCS += \
 ../src/CVC4Problem.cpp \
 ../src/EvolutionaryModaber.cpp \
 ../src/Modaber.cpp \
+../src/MyTimer.cpp \
 ../src/NumericRPG.cpp \
 ../src/SketchyPlan.cpp \
 ../src/Translator.cpp \
@@ -17,6 +18,7 @@ OBJS += \
 ./src/CVC4Problem.o \
 ./src/EvolutionaryModaber.o \
 ./src/Modaber.o \
+./src/MyTimer.o \
 ./src/NumericRPG.o \
 ./src/SketchyPlan.o \
 ./src/Translator.o \
@@ -27,6 +29,7 @@ CPP_DEPS += \
 ./src/CVC4Problem.d \
 ./src/EvolutionaryModaber.d \
 ./src/Modaber.d \
+./src/MyTimer.d \
 ./src/NumericRPG.d \
 ./src/SketchyPlan.d \
 ./src/Translator.d \

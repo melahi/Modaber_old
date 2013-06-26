@@ -17,7 +17,7 @@ src/NumericRPG.d: ../src/NumericRPG.cpp ../src/NumericRPG.h \
  /home/sadra/masterThesis/Modaber/VALfiles/typecheck.h \
  /home/sadra/masterThesis/Modaber/VALfiles/Cascader.h \
  /home/sadra/masterThesis/Modaber/VALfiles/Environment.h \
- ../src/CVC4Problem.h ../src/Utilities.h
+ ../src/CVC4Problem.h ../src/Utilities.h ../src/MyTimer.h
 
 ../src/NumericRPG.h:
 
@@ -60,3 +60,5 @@ src/NumericRPG.d: ../src/NumericRPG.cpp ../src/NumericRPG.h \
 ../src/CVC4Problem.h:
 
 ../src/Utilities.h:
+
+../src/MyTimer.h:

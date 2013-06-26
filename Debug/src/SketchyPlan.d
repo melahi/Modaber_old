@@ -7,7 +7,7 @@ src/SketchyPlan.d: ../src/SketchyPlan.cpp ../src/SketchyPlan.h \
  ../src/NumericRPG.h \
  /home/sadra/masterThesis/Modaber/VALfiles/FastEnvironment.h \
  /home/sadra/masterThesis/Modaber/VALfiles/parsing/ptree.h \
- ../src/Utilities.h \
+ ../src/Utilities.h ../src/MyTimer.h \
  /home/sadra/masterThesis/Modaber/VALfiles/instantiation.h \
  /home/sadra/masterThesis/Modaber/VALfiles/FastEnvironment.h \
  /home/sadra/masterThesis/Modaber/VALfiles/SimpleEval.h \
@@ -39,6 +39,8 @@ src/SketchyPlan.d: ../src/SketchyPlan.cpp ../src/SketchyPlan.h \
 /home/sadra/masterThesis/Modaber/VALfiles/parsing/ptree.h:
 
 ../src/Utilities.h:
+
+../src/MyTimer.h:
 
 /home/sadra/masterThesis/Modaber/VALfiles/instantiation.h:
 

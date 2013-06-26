@@ -17,7 +17,7 @@ src/modaberMain.d: ../src/modaberMain.cpp ../src/EvolutionaryModaber.h \
  /home/sadra/masterThesis/Modaber/VALfiles/Cascader.h \
  /home/sadra/masterThesis/Modaber/VALfiles/Environment.h \
  /home/sadra/masterThesis/Modaber/VALfiles/FastEnvironment.h \
- ../src/Utilities.h \
+ ../src/Utilities.h ../src/MyTimer.h \
  /home/sadra/masterThesis/Modaber/VALfiles/parsing/ptree.h \
  ../src/NumericRPG.h ../src/MyAnalyzer.h ../src/SketchyPlan.h \
  ../src/Translator.h
@@ -63,6 +63,8 @@ src/modaberMain.d: ../src/modaberMain.cpp ../src/EvolutionaryModaber.h \
 /home/sadra/masterThesis/Modaber/VALfiles/FastEnvironment.h:
 
 ../src/Utilities.h:
+
+../src/MyTimer.h:
 
 /home/sadra/masterThesis/Modaber/VALfiles/parsing/ptree.h:
 

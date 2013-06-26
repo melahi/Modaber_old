@@ -4,6 +4,7 @@
 #include "MyAnalyzer.h"
 #include "Utilities.h"
 #include "Translator.h"
+#include "MyTimer.h"
 #include <ptree.h>
 
 using namespace VAL;
@@ -81,7 +82,6 @@ void Translator::addActions (int significantTimePoint){
 			addEffectList((*iter)->forOp()->effects, env, significantTimePoint + 1, (*iter)->getID());
 			addGoal((*iter)->forOp()->precondition, env, significantTimePoint, (*iter)->getID());
 		}
-
 	}
 }
 
@@ -246,6 +246,7 @@ void Translator::addGoal (const goal *gl, FastEnvironment *env, int significantT
 
 bool Translator::solve(int length, SketchyPlan *sketchyPlan){
 
+	prepareTimer.startTimer();
 	prepare(length);
 
 	//Find expression for sketchy plan
@@ -261,7 +262,11 @@ bool Translator::solve(int length, SketchyPlan *sketchyPlan){
 	smtProblem->assertExpression(sketchyPlanExpr);
 	Expr translatedProblem = smtProblem->getAssertions();
 
-
+	prepareTimer.endTimer();
 	//try to solve the problem
-	return smtProblem->solve(translatedProblem);
+	solverTimer.startTimer();
+	bool ret = smtProblem->solve(translatedProblem);
+	solverTimer.endTimer();
+	cout << "prepare timer: " << prepareTimer.getDuration() << " solver timer: " << solverTimer.getDuration() << endl;
+	return ret;
 }
