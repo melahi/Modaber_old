@@ -8,43 +8,31 @@
 #include "EvolutionaryModaber.h"
 
 
+#include <vector>
+#include <cvc4/cvc4.h>
+using namespace std;
+
+using namespace CVC4;
+
+
+
 void EvolutionaryModaber::initialization(char *domainFilePath, char *problemFilePath){
 	Modaber::initialization(domainFilePath, problemFilePath);
-	smtProblems.push_back(new CVC4Problem(instantiatedOp::howManyNonStaticPNEs(), instantiatedOp::howManyNonStaticLiterals(), instantiatedOp::howMany()));
-	myTranslator = new Translator(smtProblems[0], myAnalyzer, numericRPG);
-	myTranslator->addInitialState();
-	smtProblems.push_back(new CVC4Problem(*smtProblems[0]));
-	myTranslator->addGoals(0);
-}
-
-//The following function set suitable smtProblem for myTranslator according to the number of significant time point
-void EvolutionaryModaber::prepareTranslatorFor (unsigned int nSignificantTimePoint){
-	unsigned int smtProblemsSize = smtProblems.size();
-
-	//The last smtProblem is not completed so even if nSignificantPoint corresponds to
-	//the last element of smtProblems, we need to expand it first.
-	while (smtProblemsSize <= nSignificantTimePoint){
-		myTranslator->setSMTProblem(smtProblems[smtProblemsSize - 1]);
-		smtProblems[smtProblemsSize - 1]->guaranteeSize(smtProblemsSize);
-		myTranslator->addActions(smtProblemsSize - 2);
-		myTranslator->addActionMutex(smtProblemsSize - 2);
-		myTranslator->addExplanatoryAxioms(smtProblemsSize - 1);
-		smtProblems.push_back(new CVC4Problem(*smtProblems[smtProblemsSize - 1]));
-		myTranslator->addGoals(smtProblemsSize - 1);
-		smtProblemsSize++;
-	}
-	myTranslator->setSMTProblem(smtProblems[nSignificantTimePoint - 1]);
-
+	smtProblem = new CVC4Problem(instantiatedOp::howManyNonStaticPNEs(), instantiatedOp::howManyNonStaticLiterals(), instantiatedOp::howMany());
+	myTranslator = new Translator(smtProblem, myAnalyzer, numericRPG);
 }
 
 double EvolutionaryModaber::calculateFitness(SketchyPlan *sketchyPlan){
 	unsigned int length = sketchyPlan->milestones.size();
-	prepareTranslatorFor(length);
-	myTranslator->getSMTProblem()->push();
+	cout << "Now we are going to attack the problem" << endl;
+	cout << "Start pushing" << endl;
+//	myTranslator->getSMTProblem()->push();
+	cout << "End pushing" << endl;
+
 	sketchyPlan->print();
-	myTranslator->addSkechyPlan(sketchyPlan);
-	bool foundSolution = myTranslator->getSMTProblem()->solve();
-	myTranslator->getSMTProblem()->pop();
+
+	bool foundSolution = myTranslator->solve(length, sketchyPlan);
+//	myTranslator->getSMTProblem()->pop();
 	cout << "fitness value for the sketchy plan: " << foundSolution << endl;
 	return foundSolution;
 }
@@ -68,12 +56,12 @@ EvolutionaryModaber::EvolutionaryModaber(char *domainFilePath, char *problemFile
 	foundSolution = tryToSolve();
 	if (foundSolution){
 		cout << "The plan is: " << endl;
-		extractSolution(cout, myTranslator->getSMTProblem());
+		extractSolution(cout, smtProblem);
 		cout << endl << endl;
 		cout << "Modaber finished his task!!! ;)" << endl;
 		cout << "*******************************" << endl;
 		ofstream fout ("solution");
-		extractSolution(fout, myTranslator->getSMTProblem());
+		extractSolution(fout, smtProblem);
 	}
 }
 

@@ -21,32 +21,46 @@ private:
 	CVC4Problem *smtProblem;
 	MyAnalyzer *myAnalyzer;
 	NumericRPG *numericRPG;
-public:
-	Translator (CVC4Problem *smtProblem, MyAnalyzer *myAnalyzer, NumericRPG *numericRPG): smtProblem(smtProblem), myAnalyzer(myAnalyzer), numericRPG(numericRPG) {};
 
-	void setSMTProblem (CVC4Problem *smtProblem) {this->smtProblem = smtProblem;}
-	CVC4Problem *getSMTProblem () {return this->smtProblem;}
+	static vector <Expr> baseSATProblem;
+	static vector <Expr> goals;
 
-	//Translate initial state of planning problem to SMT problem
+	//Prepare "baseSATproblem" and "goals" vectors for a specified length
+	void prepare (int length);
+
+	//Translate initial state of planning problem to SAT problem
 	void addInitialState();
 
-	//Add goals to the smt problem
+	//Add goals to the SAT problem
 	void addGoals (int significantTimePoint);
 
 
-	//Insert actions' conditions for the specified time point in smt problem
+	//Insert actions' conditions for the specified time point in SAT problem
 	void addActions (int significantTimePoint);
 
 
-	//Insert Explanatory Axioms which is needed for SMT problem
+	//Insert Explanatory Axioms which is needed for SAT problem
 	void addExplanatoryAxioms (int significantTimePoint);
 
-	//Insert action mutex to the SMT problem
+	//Insert action mutex to the SAT problem
 	void addActionMutex (int significantTimePoint);
 
-	//Insert the sketchy plan to the SMT problem
+	//Insert the sketchy plan to the SAT problem
 	void addSkechyPlan (SketchyPlan *sketchyPlan);
 
+
+public:
+	Translator (CVC4Problem *smtProblem, MyAnalyzer *myAnalyzer, NumericRPG *numericRPG): smtProblem(smtProblem), myAnalyzer(myAnalyzer), numericRPG(numericRPG)
+	{
+		if (baseSATProblem.size() == 0){
+			smtProblem->clearAssertionList();
+			addInitialState();
+			baseSATProblem.push_back(smtProblem->getAssertions());
+		}
+		prepare(25);
+	}
+
+	bool solve (int length, SketchyPlan *sketchyPlan);
 
 	virtual ~Translator(){}
 

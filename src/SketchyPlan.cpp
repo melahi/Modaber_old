@@ -24,8 +24,6 @@ void SketchyPlan::createRandomSketchyPlan() {
 	int length = numericRPG->minimumPlanLength + (10 * drand48());
 	milestones.resize(length);
 
-	cout << "CREATE RANDOME SKETCYPLAN" << endl;
-
 	LiteralStore::iterator it, itEnd;
 	itEnd = instantiatedOp::literalsEnd();
 
@@ -39,7 +37,7 @@ void SketchyPlan::createRandomSketchyPlan() {
 					for(VAL::parameter_symbol_list::iterator it2 = (*it)->toProposition()->args->begin();it2 != (*it)->toProposition()->args->end();++it2)
 					{
 						pl->push_back(*it2);
-					};
+					}
 					proposition *prop = new VAL::proposition((*it)->toProposition()->head,pl);
 					shared_ptr <goal> simpleGoal (new simple_goal(prop, E_POS));
 					milestones[i].push_back(simpleGoal);

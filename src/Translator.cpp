@@ -10,6 +10,30 @@ using namespace VAL;
 using namespace Inst;
 
 
+vector <Expr> Translator::baseSATProblem;
+vector <Expr> Translator::goals;
+
+
+//Prepare "baseSATproblem" and "goals" vectors for a specified length
+void Translator::prepare (int length){
+	smtProblem->guaranteeSize(length);
+	for (int i = baseSATProblem.size() - 1; i < length - 1; i++){
+		smtProblem->clearAssertionList();
+		smtProblem->assertExpression(baseSATProblem[i]);
+		addActions(i);
+		addActionMutex(i);
+		addExplanatoryAxioms(i + 1);
+		baseSATProblem.push_back(smtProblem->getAssertions());
+		cout << "Base sat problem: " << i + 1 << endl;
+	}
+
+	for (int i = goals.size() ; i < length; i++){
+		smtProblem->clearAssertionList();
+		addGoals(i);
+		goals.push_back(smtProblem->getAssertions());
+		cout << "Goal " << i << endl;
+	}
+}
 
 
 //Translate initial state of planning problem to SMT problem
@@ -218,4 +242,26 @@ void Translator::addGoal (const goal *gl, FastEnvironment *env, int significantT
 		return;
 	}
 	CANT_HANDLE("translating some GOAL");
+}
+
+bool Translator::solve(int length, SketchyPlan *sketchyPlan){
+
+	prepare(length);
+
+	//Find expression for sketchy plan
+	smtProblem->clearAssertionList();
+	addSkechyPlan(sketchyPlan);
+	Expr sketchyPlanExpr = smtProblem->getAssertions();
+
+
+	//create formula for the corresponding problem
+	smtProblem->clearAssertionList();
+	smtProblem->assertExpression(baseSATProblem[length - 1]);
+	smtProblem->assertExpression(goals[length - 1]);
+	smtProblem->assertExpression(sketchyPlanExpr);
+	Expr translatedProblem = smtProblem->getAssertions();
+
+
+	//try to solve the problem
+	return smtProblem->solve(translatedProblem);
 }

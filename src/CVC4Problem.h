@@ -38,8 +38,6 @@ public:
 
 	CVC4Problem (int nVariables, int nProposition, int nAction);
 
-	CVC4Problem (const CVC4Problem&);
-
 	//Start to build new clause for SMT problem
 	virtual void startNewClause();
 
@@ -63,7 +61,7 @@ public:
 
 	void AddEqualityCondition (int variableId1, int significantTimePoint1, int variableId2, int significantTimePoint2);
 
-	bool solve();
+	bool solve(const Expr &assertExpr);
 
 	void print();
 
@@ -73,6 +71,14 @@ public:
 
 	void pop();
 
+	void assertExpression(const Expr &e);
+
+	Expr getAssertions ();
+
+	Expr andAssertionList (int begin, int end);
+
+	void clearAssertionList ();
+
 	unsigned int getMaximumSignificantTimePoint() {return maximumSignificantTimePoint;}
 
 
@@ -81,6 +87,8 @@ public:
 	*/
 
 	virtual ~CVC4Problem();
+
+
 
 private:
 
@@ -94,9 +102,11 @@ private:
 
 
 	vector <Expr> buildingClause;
+	vector <Expr> assertions;
 	int nVariables;
 	int nProposition;
 	int nAction;
+
 
 	//find and return the index of corresponding PVariableExpression in the variableExpr array
 	int getVariableIndex (int variableStateId, int significantTimePoint);

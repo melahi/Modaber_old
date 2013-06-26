@@ -55,9 +55,10 @@ void CVC4Problem::guaranteeSize (unsigned int nSignificantTimePoint){
 		Type real = em.realType();
 		size = variableExpr.size();
 		for (int i = 0; i < nVariables; i++){
-			ostringstream oss;
-			oss << "variable(" << (size + i) % nVariables << "," << (size + i) / nVariables << ")";
-			variableExpr.push_back(em.mkVar(oss.str(),real));
+//			ostringstream oss;
+//			oss << "variable(" << (size + i) % nVariables << "," << (size + i) / nVariables << ")";
+//			variableExpr.push_back(em.mkVar(oss.str(),real));
+			variableExpr.push_back(em.mkVar(real));
 		}
 
 
@@ -67,9 +68,10 @@ void CVC4Problem::guaranteeSize (unsigned int nSignificantTimePoint){
 		Type boolean = em.booleanType();
 		size = propositionExpr.size();
 		for (int i = 0; i < nProposition; i++){
-			ostringstream oss;
-			oss << "proposition(" << (size + i) % nProposition << "," << (size + i) / nProposition << ")";
-			propositionExpr.push_back(em.mkVar(oss.str(), boolean));
+//			ostringstream oss;
+//			oss << "proposition(" << (size + i) % nProposition << "," << (size + i) / nProposition << ")";
+//			propositionExpr.push_back(em.mkVar(oss.str(), boolean));
+			propositionExpr.push_back(em.mkVar(boolean));
 		}
 
 
@@ -82,9 +84,11 @@ void CVC4Problem::guaranteeSize (unsigned int nSignificantTimePoint){
 
 			size = actionExpr.size();
 			for (int i = 0; i < nAction; i++){
-				ostringstream oss;
-				oss << "action(" << (size + i) % nAction << "," << (size + i) / nAction << ")";
-				actionExpr.push_back(em.mkVar (oss.str(), boolean));
+//				ostringstream oss;
+//				oss << "action(" << (size + i) % nAction << "," << (size + i) / nAction << ")";
+//				actionExpr.push_back(em.mkVar (oss.str(), boolean));
+				actionExpr.push_back(em.mkVar (boolean));
+
 			}
 
 		}
@@ -98,9 +102,9 @@ void CVC4Problem::initialization(){
 
 	smt.setOption("produce-models", SExpr("true"));
 	smt.setOption("check-models", SExpr("false"));		//In the case of debugging we can turn it to "true"
-	smt.setOption("interactive-mode", SExpr("true"));		//In the case of debugging we can turn it to "true"
+	smt.setOption("interactive-mode", SExpr("false"));		//In the case of debugging we can turn it to "true"
 	smt.setOption("produce-assignments", SExpr("true"));
-	smt.setOption("verbosity", SExpr("9"));
+	smt.setOption("verbosity", SExpr("1073741823"));
 	smt.setOption("incremental", SExpr("true"));
 
 	maximumSignificantTimePoint = 0;
@@ -113,15 +117,6 @@ CVC4Problem::CVC4Problem (int nVariables, int nProposition, int nAction): smt(&e
 	initialization();
 }
 
-CVC4Problem::CVC4Problem(const CVC4Problem &old): smt(&em), nVariables(old.nVariables), nProposition(old.nProposition), nAction(old.nAction) {
-	initialization();
-	CVC4Problem *old2 = const_cast <CVC4Problem *>(&old);
-	const vector <Expr> oldAssertions = old2->smt.getAssertions();
-	int mySize = oldAssertions.size();
-	for (int i = 0; i < mySize; i++){
-		smt.assertFormula(oldAssertions[i]);
-	}
-}
 
 //Start to build new clause for SMT problem
 void CVC4Problem::startNewClause(){
@@ -133,10 +128,10 @@ void CVC4Problem::endClause(){
 	if (buildingClause.size() == 0)
 		return;
 	if (buildingClause.size() == 1){
-		smt.assertFormula(buildingClause[0]);
+		assertions.push_back(buildingClause[0]);
 		return;
 	}
-	smt.assertFormula(em.mkExpr(kind::OR, buildingClause));
+	assertions.push_back(em.mkExpr(kind::OR, buildingClause));
 	return;
 }
 
@@ -251,13 +246,13 @@ void CVC4Problem::AddEqualityCondition (int variableId1, int significantTimePoin
 	buildingClause.push_back(equalityCondition);
 }
 
-bool CVC4Problem::solve(){
+bool CVC4Problem::solve(const Expr &assertExpr){
 
 	// TODO: For now, we don't considered processing time, we should consider it ASAP
 	// TODO: We need statistical information
 
 	cout << "Start to try solving the problem" << endl;
-	Result result = smt.checkSat();
+	Result result = smt.checkSat(assertExpr);
 
 
 
@@ -307,6 +302,35 @@ void CVC4Problem::push(){
 
 void CVC4Problem::pop(){
 	smt.pop();
+}
+
+void CVC4Problem::assertExpression(const Expr &e){
+	if (!e.isNull()) {
+		assertions.push_back(e);
+	}
+}
+
+Expr CVC4Problem::andAssertionList (int begin, int end){
+	if (end - begin <= em.maxArity(kind::AND)){
+		return em.mkExpr(kind::AND, vector <Expr> (assertions.begin() + begin, assertions.begin() + end));
+	}
+	int middle = (begin + end) / 2;
+	return em.mkExpr(kind::AND, andAssertionList(begin, middle), andAssertionList(middle, end));
+}
+
+
+Expr CVC4Problem::getAssertions(){
+	if (assertions.size() == 0){
+		return Expr();
+	}
+	if (assertions.size() == 1){
+		return assertions[0];
+	}
+	return smt.simplify(andAssertionList(0, assertions.size()));
+}
+
+void CVC4Problem::clearAssertionList(){
+	assertions.clear();
 }
 
 CVC4Problem::~CVC4Problem(){

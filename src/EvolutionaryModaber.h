@@ -20,16 +20,12 @@ using namespace std;
 class EvolutionaryModaber : public Modaber {
 private:
 
-	vector <CVC4Problem *> smtProblems;
+	CVC4Problem * smtProblem;
 	Translator *myTranslator;
 
 protected:
 
 	virtual void initialization(char *domainFilePath, char *problemFilePath);
-
-	//The following function set suitable smtProblem for myTranslator according to the number of significant time point
-	void prepareTranslatorFor (unsigned int nSignificantTimePoint);
-
 
 	virtual bool tryToSolve();
 

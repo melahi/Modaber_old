@@ -8,7 +8,6 @@ CPP_SRCS += \
 ../src/EvolutionaryModaber.cpp \
 ../src/Modaber.cpp \
 ../src/NumericRPG.cpp \
-../src/SimpleModaber.cpp \
 ../src/SketchyPlan.cpp \
 ../src/Translator.cpp \
 ../src/Utilities.cpp \
@@ -19,7 +18,6 @@ OBJS += \
 ./src/EvolutionaryModaber.o \
 ./src/Modaber.o \
 ./src/NumericRPG.o \
-./src/SimpleModaber.o \
 ./src/SketchyPlan.o \
 ./src/Translator.o \
 ./src/Utilities.o \
@@ -30,7 +28,6 @@ CPP_DEPS += \
 ./src/EvolutionaryModaber.d \
 ./src/Modaber.d \
 ./src/NumericRPG.d \
-./src/SimpleModaber.d \
 ./src/SketchyPlan.d \
 ./src/Translator.d \
 ./src/Utilities.d \
