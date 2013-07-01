@@ -11,29 +11,25 @@ using namespace VAL;
 using namespace Inst;
 
 
-vector <Expr> Translator::baseSATProblem;
-vector <Expr> Translator::goals;
 
-
-//Prepare "baseSATproblem" and "goals" vectors for a specified length
 void Translator::prepare (int length){
+	if (translatedLength >= length){
+		CANT_HANDLE("prepare function is called with the smaller number of length than it is translated");
+		return;
+	}
 	smtProblem->guaranteeSize(length);
-	for (int i = baseSATProblem.size() - 1; i < length - 1; i++){
+	for (; translatedLength < length; translatedLength++){
 		smtProblem->clearAssertionList();
-		smtProblem->assertExpression(baseSATProblem[i]);
-		addActions(i);
-		addActionMutex(i);
-		addExplanatoryAxioms(i + 1);
-		baseSATProblem.push_back(smtProblem->getAssertions());
-		cout << "Base sat problem: " << i + 1 << endl;
+		addActions(translatedLength - 1);
+		addActionMutex(translatedLength - 1);
+		addExplanatoryAxioms(translatedLength);
+		smtProblem->assertFormula();
 	}
 
-	for (int i = goals.size() ; i < length; i++){
-		smtProblem->clearAssertionList();
-		addGoals(i);
-		goals.push_back(smtProblem->getAssertions());
-		cout << "Goal " << i << endl;
-	}
+	//Find goals expression
+	smtProblem->clearAssertionList();
+	addGoals(translatedLength - 1);
+	goals = smtProblem->getAssertions();
 }
 
 
@@ -244,29 +240,16 @@ void Translator::addGoal (const goal *gl, FastEnvironment *env, int significantT
 	CANT_HANDLE("translating some GOAL");
 }
 
-bool Translator::solve(int length, SketchyPlan *sketchyPlan){
+bool firstTime = true;
 
-	prepareTimer.startTimer();
-	prepare(length);
+double Translator::solve(SketchyPlan *sketchyPlan){
 
-	//Find expression for sketchy plan
+	//create assertions for intermediate and final goals
 	smtProblem->clearAssertionList();
 	addSkechyPlan(sketchyPlan);
-	Expr sketchyPlanExpr = smtProblem->getAssertions();
+	smtProblem->insertAssertion(goals);
+	Expr translatedGoals = smtProblem->getAssertions();
 
-
-	//create formula for the corresponding problem
-	smtProblem->clearAssertionList();
-	smtProblem->assertExpression(baseSATProblem[length - 1]);
-	smtProblem->assertExpression(goals[length - 1]);
-	smtProblem->assertExpression(sketchyPlanExpr);
-	Expr translatedProblem = smtProblem->getAssertions();
-
-	prepareTimer.endTimer();
 	//try to solve the problem
-	solverTimer.startTimer();
-	bool ret = smtProblem->solve(translatedProblem);
-	solverTimer.endTimer();
-	cout << "prepare timer: " << prepareTimer.getDuration() << " solver timer: " << solverTimer.getDuration() << endl;
-	return ret;
+	return smtProblem->solve(translatedGoals);
 }

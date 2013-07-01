@@ -4,6 +4,7 @@
 #include "VALfiles/parsing/ptree.h"
 
 #include "sstream"
+#include <limits>
 
 
 using namespace VAL;
@@ -79,8 +80,8 @@ void CVC4Problem::guaranteeSize (unsigned int nSignificantTimePoint){
 
 		if (size){
 
-			//		@TODO: for now we doesn't target temporal problems, perhaps for future it will be not bad to handle temporal problems!
-			//		size = nSignificantTimePoint * nAction * 3;
+//			@TODO: for now we doesn't target temporal problems, perhaps for future it will be not bad to handle temporal problems!
+//			size = nSignificantTimePoint * nAction * 3;
 
 			size = actionExpr.size();
 			for (int i = 0; i < nAction; i++){
@@ -108,6 +109,9 @@ void CVC4Problem::initialization(){
 	smt.setOption("incremental", SExpr("true"));
 
 	maximumSignificantTimePoint = 0;
+
+	resourceLimit = 5;
+	lastNumberOfDecision = 0;
 	guaranteeSize(1);
 }
 
@@ -246,12 +250,13 @@ void CVC4Problem::AddEqualityCondition (int variableId1, int significantTimePoin
 	buildingClause.push_back(equalityCondition);
 }
 
-bool CVC4Problem::solve(const Expr &assertExpr){
+double CVC4Problem::solve(const Expr &assertExpr){
 
 	// TODO: For now, we don't considered processing time, we should consider it ASAP
 	// TODO: We need statistical information
 
 	cout << "Start to try solving the problem" << endl;
+	smt.setResourceLimit(resourceLimit);
 	Result result = smt.checkSat(assertExpr);
 
 
@@ -267,7 +272,7 @@ bool CVC4Problem::solve(const Expr &assertExpr){
 	switch (result.isSat()){
 	case Result::SAT:
 		cout << "OH yeay!, the problem is solved" << endl;
-		return true;
+		return numeric_limits <double>::max();
 		break;
 	case Result::UNSAT:
 		cout << "The problem is not satisfiable!!!" << endl;
@@ -276,7 +281,15 @@ bool CVC4Problem::solve(const Expr &assertExpr){
 		cout << "The result is neither \"SAT\" nor \"UNSAT\"!!" << endl;
 		break;
 	}
-	return false;
+	cout << "Number of conflicts: " << smt.getStatistic("sat::conflicts").getValue() << endl;
+	cout << "Number of decision: " << smt.getStatistic("sat::decisions").getValue() << endl;
+	istringstream sin (smt.getStatistic("sat::decisions").getValue());
+	double ret;
+	unsigned long int newNumberOfDecision;
+	sin >> newNumberOfDecision;
+	ret = newNumberOfDecision - lastNumberOfDecision;
+	lastNumberOfDecision = newNumberOfDecision;
+	return ret;
 }
 
 void CVC4Problem::print(){
@@ -304,17 +317,17 @@ void CVC4Problem::pop(){
 	smt.pop();
 }
 
-void CVC4Problem::assertExpression(const Expr &e){
+void CVC4Problem::insertAssertion(const Expr &e){
 	if (!e.isNull()) {
 		assertions.push_back(e);
 	}
 }
 
-Expr CVC4Problem::andAssertionList (int begin, int end){
+Expr CVC4Problem::andAssertionList (unsigned int begin, unsigned int end){
 	if (end - begin <= em.maxArity(kind::AND)){
 		return em.mkExpr(kind::AND, vector <Expr> (assertions.begin() + begin, assertions.begin() + end));
 	}
-	int middle = (begin + end) / 2;
+	unsigned int middle = (begin + end) / 2;
 	return em.mkExpr(kind::AND, andAssertionList(begin, middle), andAssertionList(middle, end));
 }
 
@@ -326,7 +339,9 @@ Expr CVC4Problem::getAssertions(){
 	if (assertions.size() == 1){
 		return assertions[0];
 	}
-	return smt.simplify(andAssertionList(0, assertions.size()));
+//	Expr ret = smt.simplify(andAssertionList(0, assertions.size()));
+	Expr ret = andAssertionList(0, assertions.size());
+	return ret;
 }
 
 void CVC4Problem::clearAssertionList(){

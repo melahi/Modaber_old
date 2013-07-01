@@ -22,14 +22,8 @@ private:
 	CVC4Problem *smtProblem;
 	MyAnalyzer *myAnalyzer;
 	NumericRPG *numericRPG;
-	MyTimer solverTimer;
-	MyTimer prepareTimer;
+	Expr goals;
 
-	static vector <Expr> baseSATProblem;
-	static vector <Expr> goals;
-
-	//Prepare "baseSATproblem" and "goals" vectors for a specified length
-	void prepare (int length);
 
 	//Translate initial state of planning problem to SAT problem
 	void addInitialState();
@@ -53,17 +47,23 @@ private:
 
 
 public:
+
+	int translatedLength;
+
 	Translator (CVC4Problem *smtProblem, MyAnalyzer *myAnalyzer, NumericRPG *numericRPG): smtProblem(smtProblem), myAnalyzer(myAnalyzer), numericRPG(numericRPG)
 	{
-		if (baseSATProblem.size() == 0){
-			smtProblem->clearAssertionList();
-			addInitialState();
-			baseSATProblem.push_back(smtProblem->getAssertions());
-		}
-		prepare(25);
+		smtProblem->clearAssertionList();
+		addInitialState();
+		smtProblem->assertFormula();
+		translatedLength = 1;
+
+		prepare(numericRPG->minimumPlanLength);
 	}
 
-	bool solve (int length, SketchyPlan *sketchyPlan);
+	//Prepare "baseSATproblem" and "goals" vectors for a specified length
+	void prepare (int length);
+
+	double solve (SketchyPlan *sketchyPlan);
 
 	virtual ~Translator(){}
 

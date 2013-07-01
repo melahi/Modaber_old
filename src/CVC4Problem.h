@@ -61,7 +61,7 @@ public:
 
 	void AddEqualityCondition (int variableId1, int significantTimePoint1, int variableId2, int significantTimePoint2);
 
-	bool solve(const Expr &assertExpr);
+	double solve(const Expr &assertExpr);
 
 	void print();
 
@@ -71,15 +71,20 @@ public:
 
 	void pop();
 
-	void assertExpression(const Expr &e);
+	void insertAssertion (const Expr &e);
 
 	Expr getAssertions ();
 
-	Expr andAssertionList (int begin, int end);
+	Expr andAssertionList (unsigned int begin, unsigned int end);
 
 	void clearAssertionList ();
 
 	unsigned int getMaximumSignificantTimePoint() {return maximumSignificantTimePoint;}
+
+	Expr simplify (const Expr & expr){ return smt.simplify(expr); }
+
+	void assertFormula  () { smt.assertFormula (getAssertions());}
+	void assertFormula  (const Expr &expr) { smt.assertFormula (expr);}
 
 
 	/* I don't know how to implement following function, perhaps it's not bad to learn it!
@@ -88,12 +93,11 @@ public:
 
 	virtual ~CVC4Problem();
 
-
-
 private:
 
 	static ExprManager em;
 	SmtEngine smt;
+
 
 	static vector <Expr> variableExpr;
 	static vector <Expr> propositionExpr;
@@ -106,6 +110,8 @@ private:
 	int nVariables;
 	int nProposition;
 	int nAction;
+	unsigned long int resourceLimit;
+	unsigned long int lastNumberOfDecision;
 
 
 	//find and return the index of corresponding PVariableExpression in the variableExpr array

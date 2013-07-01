@@ -22,6 +22,29 @@ private:
 
 	CVC4Problem * smtProblem;
 	Translator *myTranslator;
+	int populationSize;
+	double improvementThreshold;
+	double lastConsideredFitness;
+	int numberOfNonImprovingGeneration;
+	int lengthOfChromosomes;
+	int maximumNumberOfNonImprovingGeneration;
+
+
+	void calculateFitness (SketchyPlan *sketchyPlan);
+
+	void calculateFitness (vector <SketchyPlan> &population);
+
+	void increasingLength(vector <SketchyPlan> &population);
+
+	vector <SketchyPlan> crossover (vector <SketchyPlan> &population);
+
+	vector <SketchyPlan> mutation (vector <SketchyPlan> &population);
+
+	vector <SketchyPlan> selectNextGeneration(vector <SketchyPlan> &populations);
+
+	int nextParent (int currentParent, vector <SketchyPlan> &population);
+
+	void testSketchyPlan ();
 
 protected:
 
@@ -30,9 +53,8 @@ protected:
 	virtual bool tryToSolve();
 
 public:
-	EvolutionaryModaber(char *domainFilePath, char *problemFilePath);
 
-	double calculateFitness (SketchyPlan *sketchyPlan);
+	EvolutionaryModaber(char *domainFilePath, char *problemFilePath);
 
 	virtual ~EvolutionaryModaber();
 };

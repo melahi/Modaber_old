@@ -21,6 +21,7 @@ class SketchyPlan {
 private:
 	NumericRPG *numericRPG;
 	double propositionSelectionRatio;
+	int length;
 public:
 
 	double fitness;
@@ -29,17 +30,25 @@ public:
 
 
 
-	SketchyPlan(NumericRPG *numericRPG);
+	SketchyPlan(NumericRPG *numericRPG, int length);
 
-	void createRandomSketchyPlan();
+	void createRandomIntermediateGoalLayer (int layerNumber);
+
+	void createRandomSketchyPlan(int length);
+
+	void increaseOneLayer ();
 
 	SketchyPlan crossover(SketchyPlan *mother);
 
-	SketchyPlan mutation();
+	SketchyPlan mutate();
 
 	void print();
 
 	virtual ~SketchyPlan();
+
+	bool operator < (const SketchyPlan &a) const{
+		return fitness > a.fitness;
+	}
 };
 
 #endif /* SKETCHYPLAN_H_ */
