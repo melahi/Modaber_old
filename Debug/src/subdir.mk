@@ -9,6 +9,9 @@ CPP_SRCS += \
 ../src/Modaber.cpp \
 ../src/MyTimer.cpp \
 ../src/NumericRPG.cpp \
+../src/NumericalPlanningGraph.cpp \
+../src/PlanningGraphAction.cpp \
+../src/PlanningGraphProposition.cpp \
 ../src/SketchyPlan.cpp \
 ../src/Translator.cpp \
 ../src/Utilities.cpp \
@@ -20,6 +23,9 @@ OBJS += \
 ./src/Modaber.o \
 ./src/MyTimer.o \
 ./src/NumericRPG.o \
+./src/NumericalPlanningGraph.o \
+./src/PlanningGraphAction.o \
+./src/PlanningGraphProposition.o \
 ./src/SketchyPlan.o \
 ./src/Translator.o \
 ./src/Utilities.o \
@@ -31,6 +37,9 @@ CPP_DEPS += \
 ./src/Modaber.d \
 ./src/MyTimer.d \
 ./src/NumericRPG.d \
+./src/NumericalPlanningGraph.d \
+./src/PlanningGraphAction.d \
+./src/PlanningGraphProposition.d \
 ./src/SketchyPlan.d \
 ./src/Translator.d \
 ./src/Utilities.d \

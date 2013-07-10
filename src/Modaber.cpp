@@ -9,6 +9,7 @@
 #include "CVC4Problem.h"
 #include "NumericRPG.h"
 #include "SketchyPlan.h"
+#include "NumericalPlanningGraph.h"
 
 using namespace std;
 using namespace VAL;
@@ -53,6 +54,8 @@ void Modaber::initialization(char *domainFilePath, char *problemFilePath){
 	CVC4Problem::updateInitialValues();
 	myAnalyzer = new MyAnalyzer();
 	numericRPG = new NumericRPG();
+	NumericalPlanningGraph myGraph (instantiatedOp::howManyNonStaticLiterals(), instantiatedOp::howMany(), myAnalyzer);
+
 }
 
 void Modaber::extractSolution(ostream &oss, CVC4Problem *smtProblem){

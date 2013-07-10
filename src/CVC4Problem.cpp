@@ -105,12 +105,13 @@ void CVC4Problem::initialization(){
 	smt.setOption("check-models", SExpr("false"));		//In the case of debugging we can turn it to "true"
 	smt.setOption("interactive-mode", SExpr("false"));		//In the case of debugging we can turn it to "true"
 	smt.setOption("produce-assignments", SExpr("true"));
-	smt.setOption("verbosity", SExpr("1073741823"));
+//	smt.setOption("verbosity", SExpr("1073741823"));
+	smt.setOption("verbosity", SExpr("0"));
 	smt.setOption("incremental", SExpr("true"));
 
 	maximumSignificantTimePoint = 0;
 
-	resourceLimit = 5;
+	resourceLimit = 50;
 	lastNumberOfDecision = 0;
 	guaranteeSize(1);
 }
@@ -255,7 +256,7 @@ double CVC4Problem::solve(const Expr &assertExpr){
 	// TODO: For now, we don't considered processing time, we should consider it ASAP
 	// TODO: We need statistical information
 
-	cout << "Start to try solving the problem" << endl;
+//	cout << "Start to try solving the problem" << endl;
 	smt.setResourceLimit(resourceLimit);
 	Result result = smt.checkSat(assertExpr);
 
@@ -275,14 +276,14 @@ double CVC4Problem::solve(const Expr &assertExpr){
 		return numeric_limits <double>::max();
 		break;
 	case Result::UNSAT:
-		cout << "The problem is not satisfiable!!!" << endl;
+//		cout << "The problem is not satisfiable!!!" << endl;
 		break;
 	default:
-		cout << "The result is neither \"SAT\" nor \"UNSAT\"!!" << endl;
+//		cout << "The result is neither \"SAT\" nor \"UNSAT\"!!" << endl;
 		break;
 	}
-	cout << "Number of conflicts: " << smt.getStatistic("sat::conflicts").getValue() << endl;
-	cout << "Number of decision: " << smt.getStatistic("sat::decisions").getValue() << endl;
+//	cout << "Number of conflicts: " << smt.getStatistic("sat::conflicts").getValue() << endl;
+//	cout << "Number of decision: " << smt.getStatistic("sat::decisions").getValue() << endl;
 	istringstream sin (smt.getStatistic("sat::decisions").getValue());
 	double ret;
 	unsigned long int newNumberOfDecision;

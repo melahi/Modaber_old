@@ -147,6 +147,10 @@ void Translator::addActionMutex (int significantTimePoint){
 		iter = myAnalyzer->mutexActions[i].begin();
 		iterEnd = myAnalyzer->mutexActions[i].end();
 		for (; iter != iterEnd; iter++){
+			if (i >= *iter){
+				// Because we want to ensure just one clause for each mutex is inserted so just if the id of first action is less than the second one we inserted the corresponding mutex clause
+				continue;
+			}
 			if (numericRPG->firstVisitedAcotion[*iter] > significantTimePoint){
 				continue;
 			}

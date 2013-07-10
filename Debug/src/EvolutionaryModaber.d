@@ -20,7 +20,8 @@ src/EvolutionaryModaber.d: ../src/EvolutionaryModaber.cpp \
  ../src/Utilities.h ../src/MyTimer.h \
  /home/sadra/masterThesis/Modaber/VALfiles/parsing/ptree.h \
  ../src/NumericRPG.h ../src/MyAnalyzer.h ../src/SketchyPlan.h \
- ../src/Translator.h
+ ../src/Translator.h ../src/NumericalPlanningGraph.h \
+ ../src/PlanningGraphAction.h ../src/PlanningGraphProposition.h
 
 ../src/EvolutionaryModaber.h:
 
@@ -75,3 +76,9 @@ src/EvolutionaryModaber.d: ../src/EvolutionaryModaber.cpp \
 ../src/SketchyPlan.h:
 
 ../src/Translator.h:
+
+../src/NumericalPlanningGraph.h:
+
+../src/PlanningGraphAction.h:
+
+../src/PlanningGraphProposition.h:

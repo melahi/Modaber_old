@@ -6,6 +6,7 @@
  */
 
 #include "EvolutionaryModaber.h"
+#include "NumericalPlanningGraph.h"
 
 
 #include <vector>
@@ -13,6 +14,7 @@
 #include <algorithm>
 #include <limits>
 #include "Utilities.h"
+
 using namespace std;
 
 using namespace CVC4;
@@ -26,14 +28,14 @@ void EvolutionaryModaber::initialization(char *domainFilePath, char *problemFile
 
 	//Genetic Algorithm parameters
 	lengthOfChromosomes = numericRPG->minimumPlanLength;
-	maximumNumberOfNonImprovingGeneration = 5;
-	improvementThreshold = 20;
-	populationSize = 50;
+
+	maximumNumberOfNonImprovingGeneration = 20;
+	improvementThreshold = 5;
+	populationSize = 400;
 }
 
 void EvolutionaryModaber::calculateFitness(SketchyPlan *sketchyPlan){
 	sketchyPlan->fitness = myTranslator->solve(sketchyPlan);
-	cout << "The fitness is: " << sketchyPlan->fitness << endl;
 }
 
 void EvolutionaryModaber::calculateFitness(vector <SketchyPlan> &population){
@@ -53,7 +55,7 @@ void EvolutionaryModaber::increasingLength(vector <SketchyPlan> &population){
 	 */
 
 
-	double selectRatioFromLastGeneration = 0.3;
+	double selectRatioFromLastGeneration = 0.9;
 	int selectedPopulation = (selectRatioFromLastGeneration * population.size()) ;
 
 	lengthOfChromosomes++;
@@ -167,6 +169,7 @@ bool EvolutionaryModaber::tryToSolve(){
 		cout << "Generation number: " << generationNumber << ", with the length of: " << lengthOfChromosomes << endl;
 
 		sort(population.begin(), population.end());
+		cout << "Best fitness: " << population[0].fitness << endl;
 		if (population[0].fitness == numeric_limits <double>::max()){
 			population[0].print();
 			foundSolution = true;
@@ -216,6 +219,9 @@ void EvolutionaryModaber::testSketchyPlan (){
 
 EvolutionaryModaber::EvolutionaryModaber(char *domainFilePath, char *problemFilePath) {
 	initialization(domainFilePath, problemFilePath);
+
+	return;
+
 	bool foundSolution;
 	foundSolution = tryToSolve();
 	if (foundSolution){

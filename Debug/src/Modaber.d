@@ -24,7 +24,8 @@ src/Modaber.d: ../src/Modaber.cpp ../src/Modaber.h ../src/CVC4Problem.h \
  /home/sadra/masterThesis/Modaber/VALfiles/TIMUtilities.h \
  ../src/ProblemPrinter.h \
  /home/sadra/masterThesis/Modaber/VALfiles/SimpleEval.h \
- ../src/Translator.h
+ ../src/Translator.h ../src/NumericalPlanningGraph.h \
+ ../src/PlanningGraphAction.h ../src/PlanningGraphProposition.h
 
 ../src/Modaber.h:
 
@@ -87,3 +88,9 @@ src/Modaber.d: ../src/Modaber.cpp ../src/Modaber.h ../src/CVC4Problem.h \
 /home/sadra/masterThesis/Modaber/VALfiles/SimpleEval.h:
 
 ../src/Translator.h:
+
+../src/NumericalPlanningGraph.h:
+
+../src/PlanningGraphAction.h:
+
+../src/PlanningGraphProposition.h:

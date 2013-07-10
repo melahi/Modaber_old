@@ -13,23 +13,24 @@
 #include <algorithm>
 #include "VALfiles/instantiation.h"
 #include "VALfiles/FastEnvironment.h"
-
+#include "Utilities.h"
 
 using namespace std;
 using namespace Inst;
 using namespace VAL;
 
-#define CANT_HANDLE(x) cerr << "********************************" << x << "********************************" << endl;
 
 
 
 
 class MyAnalyzer{
 public:
+
+	vector < set <int> > mutexActions;
 	vector < vector <int> > adderActions;
 	vector < vector <int> > deleterActions;
 	vector < vector <int> > variableModifierActions;
-	vector < set <int> > mutexActions;
+
 
 	MyAnalyzer(){
 		adderActions.resize(instantiatedOp::howManyNonStaticLiterals());
@@ -38,6 +39,13 @@ public:
 		mutexActions.resize(instantiatedOp::howMany());
 		findRelationOfActionsPropositions();
 		findActionsMutexes();
+	}
+
+	bool isTwoActionMutex (int actionId1, int actionId2){
+		if (actionId1 > actionId2){
+			swap(actionId1, actionId2);
+		}
+		return (mutexActions[actionId1].find(actionId2) != mutexActions[actionId2].end());
 	}
 
 	void findRelationOfActionsPropositions(){
@@ -80,25 +88,11 @@ public:
 				variableModifierActions [pne2->getStateID()].push_back((*iter)->getID());
 			}
 		}
-
-		//FIXME: for now we don't consider effect of more than one action on a single variable, so we consider two actions are mutex if they affect on a single variable
-		int nVariable = variableModifierActions.size();
-		for (int i = 0; i < nVariable; i++){
-			int nMutexes = variableModifierActions[i].size();
-			for (int j1 = 0; j1 < nMutexes; j1++){
-				for (int j2 = j1 + 1; j2 < nMutexes; j2++){
-					insert2MutexActions(variableModifierActions[i][j1], variableModifierActions[i][j2]);
-				}
-			}
-		}
 	}
 
 	void insert2MutexActions(int actionId1, int actionId2){
-		if (actionId1 < actionId2){
-			mutexActions[actionId1].insert(actionId2);
-		}else if (actionId2 < actionId1){
-			mutexActions[actionId2].insert(actionId1);
-		}
+		mutexActions[actionId1].insert(actionId2);
+		mutexActions[actionId2].insert(actionId1);
 	}
 
 
@@ -190,7 +184,31 @@ public:
 	};
 
 	void findActionsMutexes(){
-		//Actions which add some propositions are mutexes with actions which delete them
+
+		//Action which adds some proposition is mutex with action which deletes it
+		int nPropositions = deleterActions.size();
+		for (int i = 0; i < nPropositions; i++){
+			int numberOfAdderActions = adderActions[i].size();
+			int numberOfDeleterActions = deleterActions[i].size();
+			for (int j1 = 0; j1 < numberOfAdderActions; j1++){
+				for (int j2 = 0; j2 < numberOfDeleterActions; j2++){
+					insert2MutexActions(adderActions[i][j1], deleterActions[i][j2]);
+				}
+			}
+		}
+
+		//For now, we don't consider effect of more than one action on a single variable, so we consider two actions are mutex if they affect on a single variable
+		int nVariable = variableModifierActions.size();
+		for (int i = 0; i < nVariable; i++){
+			int nMutexes = variableModifierActions[i].size();
+			for (int j1 = 0; j1 < nMutexes; j1++){
+				for (int j2 = j1 + 1; j2 < nMutexes; j2++){
+					insert2MutexActions(variableModifierActions[i][j1], variableModifierActions[i][j2]);
+				}
+			}
+		}
+
+		//Action which needs some precondition is mutex with action which modifies (delete or change the value of) it
 		OpStore::iterator iter, itEnd;
 		iter = instantiatedOp::opsBegin();
 		itEnd = instantiatedOp::opsEnd();
@@ -200,6 +218,7 @@ public:
 			MutexFinder myMutexFinder(this, env, (*iter)->getID());
 			myMutexFinder(oper->precondition);
 		}
+
 		return;
 	}
 

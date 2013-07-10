@@ -15,7 +15,7 @@ using namespace VAL;
 using namespace Inst;
 
 SketchyPlan::SketchyPlan(NumericRPG *numericRPG, int length): numericRPG(numericRPG), length (length) {
-	propositionSelectionRatio = 1.0 / 50.0;
+	propositionSelectionRatio = 1.0 / 10.0;
 	fitness = -1;
 	createRandomSketchyPlan(length);
 }
