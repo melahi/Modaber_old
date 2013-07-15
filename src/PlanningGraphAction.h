@@ -25,21 +25,18 @@ public:
 	int actionId;
 
 	set < int > permanentMutex;
+	set < int > permanentPropositionMutex;
 
-	list < set <int> > mutexInLayer;
-	list < set <int> > propositionMutexInLayer;
+	list < set <int> > mutex;
+	list < set <int> > propositionMutex;
 
 	list < PlanningGraphProposition *> precondition;
 
-	bool checkPropositionMutex (int layerNumber, PlanningGraphProposition *proposition);
-
+	bool isMutex (int layerNumber, PlanningGraphAction *otherAction);
 	bool isPropositionMutex (int layerNumber, PlanningGraphProposition *proposition);
 
-	bool isMutex (int layerNumber, PlanningGraphAction *otherAction);
-
-	bool checkLayerMutex (int layerNumber, PlanningGraphAction *otherAction);
-
-	bool checkPermanentMutex (PlanningGraphAction *otherAction);
+	bool checkMutex (int layerNumber, PlanningGraphAction *otherAction);
+	bool checkPropositionMutex (int layerNumber, PlanningGraphProposition *proposition);
 
 	void insertMutex (int layerNumber, int otherAcitonId);
 	void insertPropositionMutex (int layerNumber, int otherAcitonId);

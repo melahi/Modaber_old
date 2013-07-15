@@ -1,9 +1,8 @@
 
 #include "PlanningGraphProposition.h"
 
-
 bool PlanningGraphProposition::checkMutex (int layerNumber, PlanningGraphProposition *otherProposition){
-	list < set <int> >::iterator mutexActionInLayer;
+	list < set <int> >::iterator mutexActionList;
 	list <PlanningGraphAction *>::iterator it, itEnd;
 
 
@@ -42,16 +41,11 @@ bool PlanningGraphProposition::checkMutex (int layerNumber, PlanningGraphProposi
 	it = provider.begin(); itEnd = provider.end();
 	for (; it != itEnd; ++it){
 
-		mutexActionInLayer = (*it)->mutexInLayer.end();
-		for (int ii = (*it)->mutexInLayer.size(); ii > layerNumber; --ii, --mutexActionInLayer);
-
 		list <PlanningGraphAction *>::iterator othIt, othItEnd;
 		othIt = otherProposition->provider.begin(); othItEnd = otherProposition->provider.end();
 		for (; othIt != othItEnd; ++othIt){
 
-			if ( (*it)->permanentMutex.find((*othIt)->actionId) == (*it)->permanentMutex.end()
-					&& mutexActionInLayer->find((*othIt)->actionId) == mutexActionInLayer->end() ){
-
+			if ( !((*it)->isMutex(layerNumber - 1, *othIt)) ){
 				return false;
 			}
 		}
@@ -64,7 +58,7 @@ bool PlanningGraphProposition::isMutex (int layerNumber, PlanningGraphPropositio
 	it = mutex.end();
 	for (int i = mutex.size(); i > layerNumber; --i, --it);
 
-	if (it->find(otherProposition->propositionId) != it->end()){
+	if (it != mutex.end() && it->find(otherProposition->propositionId) != it->end()){
 		return true;
 	}
 	return false;

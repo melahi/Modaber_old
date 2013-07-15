@@ -44,10 +44,12 @@ bool NumericalPlanningGraph::extendOneLayer(){
 	int nPropositions = propositions.size();
 	int nAction = actions.size();
 	for (int i = 0; i < nAction; i++){
-		if (actions[i].firstVisitedLayer == -1){
+		if (actions[i].firstVisitedLayer == -1 && actions[i].permanentMutex.find(i) == actions[i].permanentMutex.end()){
 			if (isApplicable(i, numberOfLayers - 1)){
-				//We should check that no precondition of the action is mutex with any other precondition of it
-				if (!actions[i].checkLayerMutex(numberOfLayers - 1, &actions[i])){
+				/* We should check that no precondition of the action be
+				 * mutex with any other precondition of it
+				 */
+				if (!actions[i].checkMutex(numberOfLayers - 1, &actions[i])){
 					applyAction(i, numberOfLayers - 1);
 					// If a new action can be applied it means that our graph doesn't level off and we should continue for another layer
 					canContinue = true;
@@ -66,7 +68,7 @@ bool NumericalPlanningGraph::extendOneLayer(){
 			continue;
 		}
 		for (int j = 0; j < nPropositions; j++){
-			if (propositions[j].firstVisitedLayer == -1 || propositions[i].firstVisitedLayer >= numberOfLayers){
+			if (propositions[j].firstVisitedLayer == -1 || propositions[j].firstVisitedLayer >= numberOfLayers){
 				continue;
 			}
 			if (actions[i].checkPropositionMutex(numberOfLayers - 1, &propositions[j])){
@@ -83,12 +85,11 @@ bool NumericalPlanningGraph::extendOneLayer(){
 		if (actions[i].firstVisitedLayer == -1){
 			continue;
 		}
-		numberOfMutexesInLastLayer += actions[i].permanentMutex.size();
 		for (int j = i + 1; j < nAction; j++){
-			if (actions[j].firstVisitedLayer == -1 || actions[i].checkPermanentMutex(&actions[j])){
+			if (actions[j].firstVisitedLayer == -1){
 				continue;
 			}
-			if (actions[i].checkLayerMutex(numberOfLayers - 1, &actions[j])){
+			if (actions[i].checkMutex(numberOfLayers - 1, &actions[j])){
 				numberOfMutexesInLastLayer += 2;
 				actions[i].insertMutex(numberOfLayers - 1, j);
 				actions[j].insertMutex(numberOfLayers - 1, i);
@@ -101,7 +102,7 @@ bool NumericalPlanningGraph::extendOneLayer(){
 		if (propositions[i].firstVisitedLayer == -1){
 			continue;
 		}
-		for (int j = i + 1; j < nAction; j++){
+		for (int j = i + 1; j < nPropositions; j++){
 			if (propositions[j].firstVisitedLayer == -1){
 				continue;
 			}
@@ -132,15 +133,18 @@ void NumericalPlanningGraph::applyAction (int actionId, int layerNumber){
 
 	instantiatedOp *op = instantiatedOp::getInstOp(actionId);
 	FastEnvironment *env = op->getEnv();
-	addSimpleEffectList(op->forOp()->effects->add_effects, env, layerNumber + 1);
+	addSimpleEffectList(op->forOp()->effects->add_effects, env, layerNumber + 1, actionId);
 }
 
-void NumericalPlanningGraph::addSimpleEffectList (const pc_list<simple_effect*> &simpleEffectList, FastEnvironment *env, int layerNumber){
+void NumericalPlanningGraph::addSimpleEffectList (const pc_list<simple_effect*> &simpleEffectList, FastEnvironment *env, int layerNumber, int actionId){
 	pc_list<simple_effect*>::const_iterator it = simpleEffectList.begin();
 	pc_list<simple_effect*>::const_iterator itEnd = simpleEffectList.end();
 	for (; it != itEnd; ++it){
 		Literal lit ((*it)->prop,env);
 		Literal *lit2 = instantiatedOp::getLiteral(&lit);
+
+		propositions[lit2->getStateID()].provider.push_back(&actions[actionId]);
+
 		if (lit2->getStateID() != -1 && propositions[lit2->getStateID()].firstVisitedLayer == -1){
 			propositions[lit2->getStateID()].firstVisitedLayer = layerNumber;
 		}
@@ -168,6 +172,9 @@ bool NumericalPlanningGraph::isPreconditionSatisfied(goal *precondition, FastEnv
 		Literal *lit2 = instantiatedOp::getLiteral(&lit);
 
 		actions[actionId].precondition.push_back(&propositions[lit2->getStateID()]);
+		if (lit2->getStateID() == -1){
+			return true;
+		}
 
 		if (propositions[lit2->getStateID()].firstVisitedLayer != -1 && propositions[lit2->getStateID()].firstVisitedLayer <= layerNumber){
 			return true;
@@ -211,6 +218,7 @@ NumericalPlanningGraph::NumericalPlanningGraph(int nPropositions, int nActions, 
 	createInitialLayer();
 	bool canContinue = true;
 	while (canContinue){
+		cout << numberOfLayers << endl;
 		canContinue = extendOneLayer();
 	}
 	print(cout);
@@ -232,6 +240,8 @@ void NumericalPlanningGraph::print(ostream &sout){
 
 	sout << "Number of Layers: " << numberOfLayers << endl;
 	for (int i = 0; i < numberOfLayers; i++){
+
+		//Print propositions
 		for (int j = 0; j < nPropositions; j++){
 			if (propositions[j].firstVisitedLayer == i){
 				nonStaticLiterals[j]->write(sout);
@@ -239,9 +249,14 @@ void NumericalPlanningGraph::print(ostream &sout){
 			}
 		}
 		sout << endl;
+
+		//Print propositions mutexes
 		for (int j = 0; j < nPropositions; j++){
+			if (propositions[j].firstVisitedLayer == -1 || propositions[j].firstVisitedLayer > i){
+				continue;
+			}
 			for (int k = 0; k < nPropositions; k++){
-				if (propositions[j].firstVisitedLayer <= i && propositions[k].firstVisitedLayer <= i){
+				if (propositions[k].firstVisitedLayer != -1 && propositions[k].firstVisitedLayer <= i){
 					if (propositions[j].isMutex(i, &propositions[k])){
 						sout << '(';
 						nonStaticLiterals[j]->write(sout);
@@ -254,6 +269,7 @@ void NumericalPlanningGraph::print(ostream &sout){
 		}
 		sout << endl;
 
+		//Print actions
 		for (int j = 0; j < nActions; j++){
 			if (actions[j].firstVisitedLayer == i){
 				instantiatedOp::getInstOp(j)->write(sout);
@@ -262,9 +278,13 @@ void NumericalPlanningGraph::print(ostream &sout){
 		}
 		sout << endl;
 
+		//Print actions mutexes
 		for (int j = 0; j < nActions; j++){
+			if (actions[j].firstVisitedLayer == -1 || actions[j].firstVisitedLayer > i){
+				continue;
+			}
 			for (int k = 0; k < nActions; k++){
-				if (actions[j].firstVisitedLayer <= i && actions[k].firstVisitedLayer <= i){
+				if (actions[k].firstVisitedLayer != -1 && actions[k].firstVisitedLayer <= i){
 					if (actions[j].isMutex(i, &actions[k])){
 						sout << '(';
 						instantiatedOp::getInstOp(j)->write(sout);

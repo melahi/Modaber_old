@@ -117,7 +117,9 @@ public:
 			iter = analyzer->deleterActions[lit2->getStateID()].begin();
 			iterEnd = analyzer->deleterActions[lit2->getStateID()].end();
 			for (;iter != iterEnd; ++iter){
-				analyzer->insert2MutexActions(*iter, operatorId);
+				if ( *iter != operatorId){
+					analyzer->insert2MutexActions(*iter, operatorId);
+				}
 			}
 		}
 
@@ -149,7 +151,9 @@ public:
 				iter = analyzer->variableModifierActions[pne2->getStateID()].begin();
 				iterEnd = analyzer->variableModifierActions[pne2->getStateID()].end();
 				for (;iter != iterEnd; ++iter){
-					analyzer->insert2MutexActions(operatorId, *iter);
+					if (operatorId != *iter){
+						analyzer->insert2MutexActions(operatorId, *iter);
+					}
 				}
 
 				return;

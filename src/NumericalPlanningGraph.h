@@ -39,7 +39,7 @@ public:
 
 	void applyAction (int actionId, int layerNumber);
 
-	void addSimpleEffectList (const pc_list <simple_effect*> &simpleEffectList, FastEnvironment *env, int layerNumber);
+	void addSimpleEffectList (const pc_list <simple_effect*> &simpleEffectList, FastEnvironment *env, int layerNumber, int actionId);
 
 	bool isPreconditionSatisfied(goal *precondition, FastEnvironment *env, int layerNumber, int actionId);
 
