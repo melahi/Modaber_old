@@ -1,17 +1,11 @@
 
 
-#include "NumericalPlanningGraph.h"
+#include "OldNumericalPlanningGraph.h"
 #include "VALfiles/parsing/ptree.h"
 #include "VALfiles/instantiation.h"
 
-
-#include <fstream>
-#include <string>
-
 using namespace VAL;
 using namespace Inst;
-
-using namespace std;
 
 void NumericalPlanningGraph::createInitialLayer(){
 	if (numberOfLayers > 0){
@@ -307,28 +301,5 @@ void NumericalPlanningGraph::print(ostream &sout){
 
 NumericalPlanningGraph::~NumericalPlanningGraph() {
 	// TODO Auto-generated destructor stub
-}
-
-
-//////////////////////////////////////////////////////////////////////
-
-void NumericalPlanningGraph::readingSASPlusVariables() {
-	ifstream fin ("test.groups");
-	int nVariables;
-
-	nVariables = instantiatedOp::howManyNonStaticPNEs();
-
-	int nextReadingNumber;
-	string nextReadingString;
-	fin >> nextReadingNumber;
-	nVariables += nextReadingNumber;
-
-	variables.resize(nVariables);
-	for (int i = instantiatedOp::howManyNonStaticPNEs(); i < nVariables; i++){
-		int nValues;
-		fin >> nextReadingString >> nextReadingNumber;
-		fin >> nValues;
-
-	}
 }
 

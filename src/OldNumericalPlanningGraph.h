@@ -15,7 +15,6 @@
 #include "VALfiles/parsing/ptree.h"
 #include "VALfiles/FastEnvironment.h"
 
-
 #include <vector>
 
 using namespace std;
