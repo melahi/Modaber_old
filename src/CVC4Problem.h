@@ -12,6 +12,7 @@
 #include "VALfiles/FastEnvironment.h"
 #include "Utilities.h"
 #include "VALfiles/parsing/ptree.h"
+#include "MyProblem.h"
 #include <cvc4/cvc4.h>
 #include <vector>
 #include <cmath>
@@ -21,14 +22,11 @@ using namespace CVC4;
 using namespace std;
 using namespace Inst;
 using namespace VAL;
+using namespace mdbr;
 
 
 class CVC4Problem {
 public:
-
-	static vector <double> initialValue;		//This vector contains initial value for each function (variable); Index of this vector corresponds to global variable of the function (variable);
-
-	static void updateInitialValues ();
 
 
 	void guaranteeSize (unsigned int maxSignificantTimePoint);
@@ -175,7 +173,7 @@ private:
 				PNE pne = PNE(functionTerm, env);
 				PNE *pne2 = instantiatedOp::findPNE(&pne);
 				if (pne2->getStateID() == -1){
-					double myDouble = CVC4Problem::initialValue[pne2->getGlobalID()];
+					double myDouble = myProblem.initialValue[pne2->getGlobalID()];
 					int nominator, denominator;
 					simpleConvertToRational(myDouble, nominator, denominator);
 					return cvc4Problem->em.mkConst(Rational(nominator, denominator));

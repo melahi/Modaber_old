@@ -3,6 +3,7 @@
 #include "CVC4Problem.h"
 #include "VALfiles/parsing/ptree.h"
 
+
 #include "sstream"
 #include <limits>
 
@@ -12,7 +13,6 @@ using namespace std;
 
 
 //Declaration for static variables
-vector <double> CVC4Problem::initialValue;
 ExprManager CVC4Problem::em;
 vector <Expr> CVC4Problem::variableExpr;
 vector <Expr> CVC4Problem::propositionExpr;
@@ -22,29 +22,6 @@ unsigned int CVC4Problem::maximumSignificantTimePoint;
 
 
 
-void CVC4Problem::updateInitialValues (){
-	if (CVC4Problem::initialValue.size() > 0){
-		//initialValue vector has been initialized so we can return!
-		return;
-	}
-
-	pc_list<assignment*>::const_iterator it = current_analysis->the_problem->initial_state->assign_effects.begin();
-	pc_list<assignment*>::const_iterator itEnd = current_analysis->the_problem->initial_state->assign_effects.end();
-	CVC4Problem::initialValue.resize(current_analysis->the_problem->initial_state->assign_effects.size());    //we assume in the initial state the value of every function (variable) has been declared
-	FastEnvironment env(0);
-
-	for (; it != itEnd; ++it){
-		PNE pne ((*it)->getFTerm(), &env);
-		PNE *pne2 = instantiatedOp::findPNE(&pne);
-		const num_expression *numExpr = dynamic_cast <const num_expression *>((*it)->getExpr());
-		if (pne2 && numExpr && (*it)->getOp() == E_ASSIGN){
-			CVC4Problem::initialValue[pne2->getGlobalID()] = numExpr->double_value();
-		}else{
-			CANT_HANDLE("Can't find Some Initial Value ")
-		}
-	}
-	return;
-}
 
 
 void CVC4Problem::guaranteeSize (unsigned int nSignificantTimePoint){
@@ -98,8 +75,6 @@ void CVC4Problem::guaranteeSize (unsigned int nSignificantTimePoint){
 }
 
 void CVC4Problem::initialization(){
-
-	CVC4Problem::updateInitialValues();
 
 	smt.setOption("produce-models", SExpr("true"));
 	smt.setOption("check-models", SExpr("false"));		//In the case of debugging we can turn it to "true"

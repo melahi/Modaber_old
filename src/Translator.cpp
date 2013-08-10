@@ -244,7 +244,7 @@ void Translator::addGoal (const goal *gl, FastEnvironment *env, int significantT
 	CANT_HANDLE("translating some GOAL");
 }
 
-bool firstTime = true;
+//bool firstTime = true;
 
 double Translator::solve(SketchyPlan *sketchyPlan){
 
