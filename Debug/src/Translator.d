@@ -18,7 +18,7 @@ src/Translator.d: ../src/Translator.cpp ../src/CVC4Problem.h \
  /home/sadra/masterThesis/Modaber/VALfiles/FastEnvironment.h \
  ../src/Utilities.h ../src/MyTimer.h \
  /home/sadra/masterThesis/Modaber/VALfiles/parsing/ptree.h \
- ../src/MyAnalyzer.h ../src/Translator.h ../src/NumericRPG.h \
+ ../src/MyProblem.h ../src/MyAction.h ../src/MyAtom.h ../src/Translator.h \
  ../src/SketchyPlan.h
 
 ../src/CVC4Problem.h:
@@ -63,10 +63,12 @@ src/Translator.d: ../src/Translator.cpp ../src/CVC4Problem.h \
 
 /home/sadra/masterThesis/Modaber/VALfiles/parsing/ptree.h:
 
-../src/MyAnalyzer.h:
+../src/MyProblem.h:
+
+../src/MyAction.h:
+
+../src/MyAtom.h:
 
 ../src/Translator.h:
-
-../src/NumericRPG.h:
 
 ../src/SketchyPlan.h:

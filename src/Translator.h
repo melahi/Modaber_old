@@ -5,8 +5,6 @@
 #include "CVC4Problem.h"
 #include "VALfiles/instantiation.h"
 #include "VALfiles/FastEnvironment.h"
-#include "MyAnalyzer.h"
-#include "NumericRPG.h"
 #include "SketchyPlan.h"
 #include "MyTimer.h"
 #include <ptree.h>
@@ -20,8 +18,6 @@ using namespace Inst;
 class Translator {
 private:
 	CVC4Problem *smtProblem;
-	MyAnalyzer *myAnalyzer;
-	NumericRPG *numericRPG;
 	Expr goals;
 
 
@@ -50,14 +46,12 @@ public:
 
 	int translatedLength;
 
-	Translator (CVC4Problem *smtProblem, MyAnalyzer *myAnalyzer, NumericRPG *numericRPG): smtProblem(smtProblem), myAnalyzer(myAnalyzer), numericRPG(numericRPG)
+	Translator (CVC4Problem *smtProblem): smtProblem(smtProblem)
 	{
 		smtProblem->clearAssertionList();
 		addInitialState();
 		smtProblem->assertFormula();
 		translatedLength = 1;
-
-		prepare(numericRPG->minimumPlanLength);
 	}
 
 	//Prepare "baseSATproblem" and "goals" vectors for a specified length

@@ -17,7 +17,8 @@ src/CVC4Problem.d: ../src/CVC4Problem.cpp ../src/CVC4Problem.h \
  /home/sadra/masterThesis/Modaber/VALfiles/Environment.h \
  /home/sadra/masterThesis/Modaber/VALfiles/FastEnvironment.h \
  ../src/Utilities.h ../src/MyTimer.h \
- /home/sadra/masterThesis/Modaber/VALfiles/parsing/ptree.h
+ /home/sadra/masterThesis/Modaber/VALfiles/parsing/ptree.h \
+ ../src/MyProblem.h ../src/MyAction.h ../src/MyAtom.h
 
 ../src/CVC4Problem.h:
 
@@ -60,3 +61,9 @@ src/CVC4Problem.d: ../src/CVC4Problem.cpp ../src/CVC4Problem.h \
 ../src/MyTimer.h:
 
 /home/sadra/masterThesis/Modaber/VALfiles/parsing/ptree.h:
+
+../src/MyProblem.h:
+
+../src/MyAction.h:
+
+../src/MyAtom.h:

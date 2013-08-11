@@ -37,10 +37,12 @@ bool MyAtom::checkMutex (int layerNumber, MyAtom *otherAtom){
 	}
 
 	it = provider.begin(); itEnd = provider.end();
+	list <MyGroundedAction *>::iterator othIt, othItEnd;
+	othItEnd = otherAtom->provider.end();
+
 	for (; it != itEnd; ++it){
 
-		list <MyGroundedAction *>::iterator othIt, othItEnd;
-		othIt = otherAtom->provider.begin(); othItEnd = otherAtom->provider.end();
+		othIt = otherAtom->provider.begin();
 		for (; othIt != othItEnd; ++othIt){
 
 			if ( !((*it)->isMutex(layerNumber - 1, *othIt)) ){
@@ -54,8 +56,8 @@ bool MyAtom::checkMutex (int layerNumber, MyAtom *otherAtom){
 
 bool MyAtom::isMutex (int layerNumber, MyAtom *otherAtom){
 	map <MyAtom *, int>::iterator it;
-	it = lastLayerMutex.find(otherAtom);
-	if (it == lastLayerMutex.end()){
+	it = lastLayerMutexivity.find(otherAtom);
+	if (it == lastLayerMutexivity.end()){
 		return false;
 	}
 	if (it->second < layerNumber){
@@ -65,12 +67,12 @@ bool MyAtom::isMutex (int layerNumber, MyAtom *otherAtom){
 }
 
 void MyAtom::insertMutex (int layerNumber, MyAtom *mutexAtom){
-	if (lastLayerMutex[mutexAtom] < layerNumber){
-		lastLayerMutex[mutexAtom] = layerNumber;
+	if (lastLayerMutexivity[mutexAtom] < layerNumber){
+		lastLayerMutexivity[mutexAtom] = layerNumber;
 	}
 }
 
-void MyAtom::visiting(int layerNumber, MyGroundedAction *action){
+void MyAtom::visiting(int layerNumber, MyGroundedAction *action) {
 	if (firstVisitedLayer == -1 || firstVisitedLayer > layerNumber){
 		firstVisitedLayer = layerNumber;
 	}
@@ -90,4 +92,20 @@ MyAtom::MyAtom() {
 MyAtom::~MyAtom() {
 	// TODO Auto-generated destructor stub
 }
+
+
+
+bool MyValue::operator < (const MyValue &otherValue) const {
+	if (variable->originalPNE->getStateID() == otherValue.variable->originalPNE->getStateID()){
+		return value < otherValue.value;
+	}
+	return variable->originalPNE->getStateID() < otherValue.variable->originalPNE->getStateID();
+}
+
+void MyValue::write (ostream &sout){
+	sout << "(";
+	variable->originalPNE->write(sout);
+	sout << ": " << value << ")";
+}
+
 

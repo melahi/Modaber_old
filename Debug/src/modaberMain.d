@@ -1,4 +1,4 @@
-src/modaberMain.d: ../src/modaberMain.cpp ../src/EvolutionaryModaber.h \
+src/modaberMain.d: ../src/modaberMain.cpp ../src/SimpleModaber.h \
  ../src/Modaber.h ../src/CVC4Problem.h \
  /home/sadra/masterThesis/Modaber/VALfiles/instantiation.h \
  /home/sadra/masterThesis/Modaber/VALfiles/FastEnvironment.h \
@@ -19,10 +19,11 @@ src/modaberMain.d: ../src/modaberMain.cpp ../src/EvolutionaryModaber.h \
  /home/sadra/masterThesis/Modaber/VALfiles/FastEnvironment.h \
  ../src/Utilities.h ../src/MyTimer.h \
  /home/sadra/masterThesis/Modaber/VALfiles/parsing/ptree.h \
- ../src/NumericRPG.h ../src/MyAnalyzer.h ../src/SketchyPlan.h \
- ../src/Translator.h
+ ../src/MyProblem.h ../src/MyAction.h ../src/MyAtom.h \
+ ../src/NumericalPlanningGraph.h ../src/EvolutionaryModaber.h \
+ ../src/Translator.h ../src/SketchyPlan.h
 
-../src/EvolutionaryModaber.h:
+../src/SimpleModaber.h:
 
 ../src/Modaber.h:
 
@@ -68,10 +69,16 @@ src/modaberMain.d: ../src/modaberMain.cpp ../src/EvolutionaryModaber.h \
 
 /home/sadra/masterThesis/Modaber/VALfiles/parsing/ptree.h:
 
-../src/NumericRPG.h:
+../src/MyProblem.h:
 
-../src/MyAnalyzer.h:
+../src/MyAction.h:
 
-../src/SketchyPlan.h:
+../src/MyAtom.h:
+
+../src/NumericalPlanningGraph.h:
+
+../src/EvolutionaryModaber.h:
 
 ../src/Translator.h:
+
+../src/SketchyPlan.h:

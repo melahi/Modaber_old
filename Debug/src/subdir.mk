@@ -5,42 +5,42 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../src/CVC4Problem.cpp \
-../src/EvolutionaryModaber.cpp \
 ../src/Modaber.cpp \
+../src/MyAction.cpp \
+../src/MyAtom.cpp \
+../src/MyProblem.cpp \
 ../src/MyTimer.cpp \
-../src/NumericRPG.cpp \
 ../src/NumericalPlanningGraph.cpp \
-../src/PlanningGraphAction.cpp \
-../src/PlanningGraphProposition.cpp \
-../src/SketchyPlan.cpp \
+../src/PreconditionFinder.cpp \
+../src/SimpleModaber.cpp \
 ../src/Translator.cpp \
 ../src/Utilities.cpp \
 ../src/modaberMain.cpp 
 
 OBJS += \
 ./src/CVC4Problem.o \
-./src/EvolutionaryModaber.o \
 ./src/Modaber.o \
+./src/MyAction.o \
+./src/MyAtom.o \
+./src/MyProblem.o \
 ./src/MyTimer.o \
-./src/NumericRPG.o \
 ./src/NumericalPlanningGraph.o \
-./src/PlanningGraphAction.o \
-./src/PlanningGraphProposition.o \
-./src/SketchyPlan.o \
+./src/PreconditionFinder.o \
+./src/SimpleModaber.o \
 ./src/Translator.o \
 ./src/Utilities.o \
 ./src/modaberMain.o 
 
 CPP_DEPS += \
 ./src/CVC4Problem.d \
-./src/EvolutionaryModaber.d \
 ./src/Modaber.d \
+./src/MyAction.d \
+./src/MyAtom.d \
+./src/MyProblem.d \
 ./src/MyTimer.d \
-./src/NumericRPG.d \
 ./src/NumericalPlanningGraph.d \
-./src/PlanningGraphAction.d \
-./src/PlanningGraphProposition.d \
-./src/SketchyPlan.d \
+./src/PreconditionFinder.d \
+./src/SimpleModaber.d \
 ./src/Translator.d \
 ./src/Utilities.d \
 ./src/modaberMain.d 

@@ -110,22 +110,22 @@ bool MyGroundedAction::isPreconditionSatisfied(goal *precondition, FastEnvironme
 		double right = evaluateExpression(comp->getRHS(), env);
 		switch(comp->getOp()){
 		case E_GREATER:
-			if (left > right){
+			if (left - right > EPSILON){
 				return true;
 			}
 			break;
 		case E_GREATEQ:
-			if (left >= right){
+			if (left - right >= -EPSILON){
 				return true;
 			}
 			break;
 		case E_LESS:
-			if (left < right){
+			if (left - right < -EPSILON){
 				return true;
 			}
 			break;
 		case E_LESSEQ:
-			if (left <= right){
+			if (left - right <= EPSILON){
 				return true;
 			}
 			break;
@@ -163,7 +163,7 @@ bool MyGroundedAction::isApplicable(int layerNumber){
 	return (isPreconditionSatisfied(op->forOp()->precondition, env, layerNumber));
 }
 
-void MyGroundedAction::applyAction(int layerNumber){
+void MyGroundedAction::applyAction(int layerNumber) {
 
 	if (firstVisitedLayer != -1 && firstVisitedLayer <= layerNumber){
 		//This action has been applied before!
@@ -172,7 +172,7 @@ void MyGroundedAction::applyAction(int layerNumber){
 
 	firstVisitedLayer = layerNumber;
 
-	instantiatedOp *op = parentAction;
+	instantiatedOp *op = parentAction->valAction;
 	FastEnvironment *env = op->getEnv();
 	addSimpleEffectList(op->forOp()->effects->add_effects, env, layerNumber + 1);
 	addAssignmentList(op->forOp()->effects->assign_effects, env, layerNumber + 1);
@@ -198,7 +198,7 @@ void MyGroundedAction::addAssignmentList (const pc_list <assignment *> &assignme
 
 		PNE pne ( (*it)->getFTerm(), env );
 		PNE *pne2 = instantiatedOp::getPNE(&pne);
-		double value = variablePrecondition[pne2->getStateID()];
+		double value = variablePrecondition[pne2->getStateID()]->value;
 
 		double expressionValue = evaluateExpression((*it)->getExpr(), env);
 
@@ -265,7 +265,7 @@ bool MyGroundedAction::isAtomDynamicallyMutex (int layerNumber, MyAtom *otherAto
 
 	map <MyAtom *, int>::iterator it;
 	it = lastLayerAtomMutexivity.find(otherAtom);
-	if (it == lastLayerMutexivity.end()){
+	if (it == lastLayerAtomMutexivity.end()){
 		return false;
 	}
 	if (it->second < layerNumber){
@@ -295,8 +295,9 @@ bool MyGroundedAction::checkDynamicMutex(int layerNumber, MyGroundedAction *othe
 	 * precondition (one precondition of first action be mutex with one precondition of second action).
 	 */
 
-	list <MyAtom *>::iterator it, itEnd;
-	it = otherAction->parentAction->propositionPrecondition.begin(); itEnd = otherAction->parentAction->propositionPrecondition.end();
+	list <MyProposition *>::iterator it, itEnd;
+	it = otherAction->parentAction->propositionPrecondition.begin();
+	itEnd = otherAction->parentAction->propositionPrecondition.end();
 
 	for (; it != itEnd; ++it){
 		if (isAtomMutex(layerNumber, *it)){
@@ -305,11 +306,12 @@ bool MyGroundedAction::checkDynamicMutex(int layerNumber, MyGroundedAction *othe
 		}
 	}
 
+	map <int, MyValue *>::iterator it1, itEnd1;
+	it1 = otherAction->variablePrecondition.begin();
+	itEnd1 = otherAction->variablePrecondition.end();
 
-	it = otherAction->variablePrecondition.begin(); itEnd = otherAction->variablePrecondition.end();
-
-	for (; it != itEnd; ++it){
-		if (isAtomMutex(layerNumber, *it)){
+	for (; it1 != itEnd1; ++it1){
+		if (isAtomDynamicallyMutex(layerNumber, it1->second)){
 			//There are at least one precondition for first action and one precondition for second action which are mutex
 			return true;
 		}
@@ -331,8 +333,9 @@ bool MyGroundedAction::checkDynamicAtomMutex (int layerNumber, MyAtom *otherAtom
 
 
 
-	list <MyAtom *>::iterator it, itEnd;
-	it = this->parentAction->propositionPrecondition.begin(); itEnd = this->parentAction->propositionPrecondition.end();
+	list <MyProposition *>::iterator it, itEnd;
+	it = this->parentAction->propositionPrecondition.begin();
+	itEnd = this->parentAction->propositionPrecondition.end();
 
 	for (; it != itEnd; ++it){
 		if (otherAtom->isMutex(layerNumber, *it)){
@@ -341,10 +344,13 @@ bool MyGroundedAction::checkDynamicAtomMutex (int layerNumber, MyAtom *otherAtom
 	}
 
 
-	it = this->variablePrecondition.begin(); itEnd = this->variablePrecondition.end();
 
-	for (; it != itEnd; ++it){
-		if (otherAtom->isMutex(layerNumber, *it)){
+	map <int, MyValue *>::iterator it1, itEnd1;
+	it1 = this->variablePrecondition.begin();
+	itEnd1 = this->variablePrecondition.end();
+
+	for (; it1 != itEnd1; ++it1){
+		if (otherAtom->isMutex(layerNumber, it1->second)){
 			return true;
 		}
 	}
@@ -370,6 +376,7 @@ void MyGroundedAction::insertAtomMutex(int layerNumber, MyAtom *otherAtom){
 
 void MyAction::initialize (instantiatedOp *valAction){
 	this->valAction = valAction;
+
 
 	const operator_ *oper = valAction->forOp();
 	FastEnvironment *env = valAction->getEnv();
@@ -537,23 +544,19 @@ bool MyAction::computeGroundedAction(int layerNumber){
 	 * check whether there exist any pair of mutex between them, and if there is no mutex
 	 * a grounded action is constructed.
 	 * After that we check whether the grounded action is applicable in the mentioned layer number or not
-	 * if it is applicable then we are adding it to the collection of grounded actions
+	 * if it is applicable then we add it to the collection of grounded actions
 	 */
 
 	bool foundNewGroundedAction = false;
-	bool newPropositionPrecondition = false;
 
 	list <MyProposition *>::iterator it1, itEnd1;
 	it1 = propositionPrecondition.begin();
 	itEnd1 = propositionPrecondition.end();
 	for (; it1 != itEnd1; ++it1){
-		if ((*it1)->firstVisitedLayer == layerNumber){
-			newPropositionPrecondition = true;
-		}
 		list <MyProposition *>::iterator it2;
 		it2 = propositionPrecondition.begin();
 		for (; it2 != it1; ++it2){
-			if ( (*it1)->isMutex(layerNumber,  *it2)) {
+			if ( (*it1)->isMutex(layerNumber,  *it2) ) {
 				return foundNewGroundedAction;
 			}
 		}
@@ -574,15 +577,9 @@ bool MyAction::computeGroundedAction(int layerNumber){
 		map <int, MyValue* > selectedValue;
 		it3 = variableNeeded.begin();
 		bool foundedMutex = false;
-		bool newNeededValue = false;
 
 		for (; it3 != itEnd3 && !foundedMutex; ++ it3){
 			MyValue *lastSelectedValue = (*it3)->getValue();
-
-			if (lastSelectedValue->firstVisitedLayer == layerNumber){
-				newNeededValue = true;
-			}
-
 
 			//check if lastValue is mutex with other selected atoms
 			list <MyProposition *>::iterator it2, itEnd2;
@@ -604,34 +601,49 @@ bool MyAction::computeGroundedAction(int layerNumber){
 			selectedValue [(*it3)->originalPNE->getStateID()] = lastSelectedValue;
 		}
 
-		if (!foundedMutex && (newNeededValue || newPropositionPrecondition)){   //we should ensure that the grounded action use at least one new atom
+		if (!foundedMutex){
 			MyGroundedAction newGroundedAction (this, selectedValue);
-			if (newGroundedAction.isApplicable(layerNumber)){
-				groundedAction.push_back(newGroundedAction);
-				groundedAction.back().applyAction(layerNumber);
-				foundNewGroundedAction = true;
+			if (groundedActions.find(newGroundedAction) == groundedActions.end()){
+				if (newGroundedAction.isApplicable(layerNumber)){
+					visitNewGroundedAction(layerNumber, newGroundedAction);
+					foundNewGroundedAction = true;
+				}
 			}
 		}
 
-		list <MyVariable *>::iterator itBegin5, it5;
-		it5 = variableNeeded.end();
-		--it5;
-		itBegin5 = variableNeeded.begin();
-		while (true){
-			if ((*it5)->isEnd()){
-				(*it5)->restart();
-				if (it5 == itBegin5){
-					canContinue = false;
-					break;
+		if (variableNeeded.size() > 0){
+			list <MyVariable *>::iterator itBegin5, it5;
+			it5 = variableNeeded.end();
+			--it5;
+			itBegin5 = variableNeeded.begin();
+			while (true){
+				if ((*it5)->isEnd()){
+					(*it5)->restart();
+					if (it5 == itBegin5){
+						canContinue = false;
+						break;
+					}else{
+						it5--;
+					}
 				}else{
-					it5--;
+					(*it5)->next();
+					break;
 				}
-			}else{
-				(*it5)->next();
 			}
+		}else{
+			canContinue = false;
 		}
 	}
 	return foundNewGroundedAction;
+}
+
+void MyAction::visitNewGroundedAction(int layerNumber, const MyGroundedAction &newGroundedAction){
+	if (firstVisitedLayer == -1 || firstVisitedLayer > layerNumber){
+		firstVisitedLayer = layerNumber;
+	}
+	pair <set <MyGroundedAction>::iterator, bool >inserted = groundedActions.insert(newGroundedAction);
+	MyGroundedAction *insertedGAction = const_cast <MyGroundedAction *> (&(*(inserted.first)));
+	insertedGAction->applyAction(layerNumber);
 }
 
 void MyGroundedAction::write(ostream &sout){
@@ -647,6 +659,26 @@ void MyGroundedAction::write(ostream &sout){
 		it->second->write(sout);
 	}
 	sout <<"]";
+}
+
+bool MyGroundedAction::operator < (const MyGroundedAction & a) const{
+	if (parentAction->valAction->getID() == a.parentAction->valAction->getID()){
+		if (variablePrecondition.size() != a.variablePrecondition.size()){
+			return variablePrecondition.size() < a.variablePrecondition.size();
+		}
+		map <int, MyValue*>::const_iterator it1, itEnd1, it2, itEnd2;
+		it1 = variablePrecondition.begin();
+		itEnd1 = variablePrecondition.end();
+		it2 = a.variablePrecondition.begin();
+		itEnd2 = a.variablePrecondition.end();
+		for (; it1 != itEnd1; ++it1, ++it2){
+			if (it1->second->value != it2->second->value){
+				return it1->second->value < it2->second->value;
+			}
+		}
+		return false;
+	}
+	return parentAction->valAction->getID() < a.parentAction->valAction->getID();
 }
 
 MyAction::~MyAction() {

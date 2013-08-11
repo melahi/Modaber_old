@@ -22,6 +22,12 @@ namespace mdbr{
 
 
 class MyAtom;
+class   MyProposition;
+class   MyValue;
+class MyVariable;
+
+class MyAction;
+class MyGroundedAction;
 
 class MyAction {
 public:
@@ -41,14 +47,19 @@ public:
 	list < MyVariable *> variableNeeded;
 	list < MyProposition *> propositionPrecondition;
 
+
+	set < MyGroundedAction > groundedActions;
+
+
 	void initialize (instantiatedOp *valAction);
 
 	void computeStaticMutex();
 	bool isStaticallyMutex(int layerNumber, MyAction *otherAction);
 	bool isAtomStaticallyMutex (int layerNumber, MyAtom *atom);
 
-	list< MyGroundedAction > groundedAction;
 	bool computeGroundedAction (int layerNumber);
+	void visitNewGroundedAction (int layerNumber, const MyGroundedAction &newGroundedAction);
+
 
 
 	MyAction();
@@ -69,8 +80,8 @@ public:
 	map <MyGroundedAction*, int > lastLayerMutexivity;
 	map < MyAtom *, int > lastLayerAtomMutexivity;
 
-	map < int, MyValue *> variablePrecondition;  //it's a map from variable id (or PNE id) to an atom (or MyValue *)
 	MyAction *parentAction;
+	map < int, MyValue *> variablePrecondition;  //it's a map from variable id (or PNE id) to an atom (or MyValue *)
 
 
 	bool isApplicable (int layerNumber);
@@ -93,6 +104,8 @@ public:
 	void insertAtomMutex (int layerNumber, MyAtom *otherAtom);
 
 	MyGroundedAction (MyAction *parentAction, const map <int, MyValue*> &variablePrecondition): parentAction(parentAction), variablePrecondition(variablePrecondition) {}
+
+	bool operator < (const MyGroundedAction &a) const;
 
 	void write (ostream &sout);
 

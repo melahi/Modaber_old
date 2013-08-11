@@ -16,6 +16,8 @@ using namespace Inst;
 
 namespace mdbr {
 
+MyProblem myProblem;
+
 void MyProblem::updateInitialValues(){
 	pc_list<assignment*>::const_iterator it = current_analysis->the_problem->initial_state->assign_effects.begin();
 	pc_list<assignment*>::const_iterator itEnd = current_analysis->the_problem->initial_state->assign_effects.end();
@@ -33,6 +35,42 @@ void MyProblem::updateInitialValues(){
 		}
 	}
 
+}
+
+void MyProblem::initializing(){
+
+	//Preparing propositions
+	int nPropositions = instantiatedOp::howManyNonStaticLiterals();
+	propositions.resize(nPropositions);
+	LiteralStore::iterator litIt, litItEnd;
+	litIt = instantiatedOp::literalsBegin();
+	litItEnd = instantiatedOp::literalsEnd();
+	for (; litIt != litItEnd; ++litIt){
+		if ((*litIt)->getStateID() != -1){
+			propositions[(*litIt)->getStateID()].originalLiteral = *litIt;
+		}
+	}
+
+	//Preparing variables
+	int nVariables = instantiatedOp::howManyNonStaticPNEs();
+	variables.resize(nVariables);
+	PNEStore::iterator pneIt, pneItEnd;
+	pneIt = instantiatedOp::pnesBegin();
+	pneItEnd = instantiatedOp::pnesEnd();
+	for (; pneIt != pneItEnd; ++pneIt){
+		if ((*pneIt)->getStateID() != -1){
+			variables[(*pneIt)->getStateID()].originalPNE = *pneIt;
+		}
+	}
+
+	//Preparing actions
+	int nAction = instantiatedOp::howMany();
+	actions.resize(nAction);
+	for (int i = 0; i < nAction; i++){
+		actions[i].initialize(instantiatedOp::getInstOp(i));
+	}
+
+	updateInitialValues();
 }
 
 MyProblem::MyProblem() {

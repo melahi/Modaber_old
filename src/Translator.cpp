@@ -1,7 +1,6 @@
 #include "CVC4Problem.h"
 #include "VALfiles/instantiation.h"
 #include "VALfiles/FastEnvironment.h"
-#include "MyAnalyzer.h"
 #include "Utilities.h"
 #include "Translator.h"
 #include "MyTimer.h"
@@ -73,8 +72,8 @@ void Translator::addActions (int significantTimePoint){
 	iterEnd = instantiatedOp::opsEnd();
 	FastEnvironment *env;
 	for (; iter != iterEnd; ++iter){
-		if (numericRPG->firstVisitedAcotion[(*iter)->getID()] <= significantTimePoint){
 			env = (*iter)->getEnv();
+		if (myProblem.actions[(*iter)->getID()].firstVisitedLayer <= significantTimePoint){
 			addEffectList((*iter)->forOp()->effects, env, significantTimePoint + 1, (*iter)->getID());
 			addGoal((*iter)->forOp()->precondition, env, significantTimePoint, (*iter)->getID());
 		}
@@ -84,79 +83,81 @@ void Translator::addActions (int significantTimePoint){
 
 //Insert Explanatory Axioms which is needed for SMT problem
 void Translator::addExplanatoryAxioms (int significantTimePoint){
+
+	list <MyAction *>::iterator actionIt, actionItEnd;
+
 	int nProposition = instantiatedOp::howManyNonStaticLiterals();
+
+
 	for (int i = 0; i < nProposition; i++){
-		int nAdder = myAnalyzer->adderActions[i].size();
-		if (nAdder > 0){
-			smtProblem->startNewClause();
-			smtProblem->addConditionToCluase(i, significantTimePoint, false);
-			if (numericRPG->firstVisitedProposition[i] <= significantTimePoint){
-				smtProblem->addConditionToCluase(i, significantTimePoint - 1, true);
-				for (int j = 0; j < nAdder; j++){
-					if (numericRPG->firstVisitedAcotion[myAnalyzer->adderActions[i][j]] < significantTimePoint){
-						smtProblem->addActionToClause(myAnalyzer->adderActions[i][j], significantTimePoint - 1, true);
-					}
+		smtProblem->startNewClause();
+		smtProblem->addConditionToCluase(i, significantTimePoint, false);
+		if (myProblem.propositions[i].firstVisitedLayer <= significantTimePoint){
+			smtProblem->addConditionToCluase(i, significantTimePoint - 1, true);
+			actionIt = myProblem.propositions[i].adderActions.begin();
+			actionItEnd = myProblem.propositions[i].adderActions.end();
+			for (; actionIt != actionItEnd; ++actionIt){
+				if ((*actionIt)->firstVisitedLayer < significantTimePoint){
+					smtProblem->addActionToClause((*actionIt)->valAction->getID(), significantTimePoint - 1, true);
 				}
 			}
-			smtProblem->endClause();
 		}
+		smtProblem->endClause();
 	}
 
 	for (int i = 0; i < nProposition; i++){
-		if (numericRPG->firstVisitedProposition[i] >= significantTimePoint){
+		if (myProblem.propositions[i].firstVisitedLayer >= significantTimePoint){
 			continue;
 		}
-		int nDeleter = myAnalyzer->deleterActions[i].size();
-		if (nDeleter > 0){
-			smtProblem->startNewClause();
-			smtProblem->addConditionToCluase(i, significantTimePoint, true);
-			smtProblem->addConditionToCluase(i, significantTimePoint - 1, false);
-			for (int j = 0; j < nDeleter; j++){
-				if (numericRPG->firstVisitedAcotion[myAnalyzer->deleterActions[i][j]] < significantTimePoint){
-					smtProblem->addActionToClause(myAnalyzer->deleterActions[i][j], significantTimePoint - 1, true);
-				}
+		smtProblem->startNewClause();
+		smtProblem->addConditionToCluase(i, significantTimePoint, true);
+		smtProblem->addConditionToCluase(i, significantTimePoint - 1, false);
+		actionIt = myProblem.propositions[i].deleterActions.begin();
+		actionItEnd = myProblem.propositions[i].deleterActions.end();
+		for (; actionIt != actionItEnd; ++actionIt){
+			if ((*actionIt)->firstVisitedLayer < significantTimePoint){
+				smtProblem->addActionToClause((*actionIt)->valAction->getID(), significantTimePoint - 1, true);
 			}
-			smtProblem->endClause();
 		}
+		smtProblem->endClause();
 	}
 
 	int nVariable = instantiatedOp::howManyNonStaticPNEs();
 	for (int i = 0; i < nVariable; i++){
-		int nModifier = myAnalyzer->variableModifierActions[i].size();
-		if (nModifier > 0){
-			smtProblem->startNewClause();
-			smtProblem->AddEqualityCondition(i, significantTimePoint, i, significantTimePoint - 1);
-			for (int j = 0; j < nModifier; j++){
-				if (numericRPG->firstVisitedAcotion[myAnalyzer->variableModifierActions[i][j]] < significantTimePoint){
-					smtProblem->addActionToClause(myAnalyzer->variableModifierActions[i][j], significantTimePoint - 1, true);
-				}
+		smtProblem->startNewClause();
+		smtProblem->AddEqualityCondition(i, significantTimePoint, i, significantTimePoint - 1);
+		actionIt = myProblem.variables[i].modifierActions.begin();
+		actionItEnd = myProblem.variables[i].modifierActions.end();
+		for (; actionIt != actionItEnd; ++actionIt){
+			if ((*actionIt)->firstVisitedLayer < significantTimePoint){
+				smtProblem->addActionToClause((*actionIt)->valAction->getID(), significantTimePoint - 1, true);
 			}
-			smtProblem->endClause();
 		}
+		smtProblem->endClause();
 	}
 }
 
 //Inset action mutex to the SMT problem
 void Translator::addActionMutex (int significantTimePoint){
-	int nAction = myAnalyzer->mutexActions.size();
+	int nAction = myProblem.actions.size();
 	for (int i = 0; i < nAction; ++i){
-		if (numericRPG->firstVisitedAcotion[i] > significantTimePoint){
+		if (myProblem.actions[i].firstVisitedLayer > significantTimePoint){
 			continue;
 		}
-		set <int>::const_iterator iter, iterEnd;
-		iter = myAnalyzer->mutexActions[i].begin();
-		iterEnd = myAnalyzer->mutexActions[i].end();
-		for (; iter != iterEnd; iter++){
-			if (i >= *iter){
+		set <MyAction *>::const_iterator iter, iterEnd;
+		iter = myProblem.actions[i].staticMutex.begin();
+		iterEnd = myProblem.actions[i].staticMutex.end();
+		for (; iter != iterEnd; ++iter){
+			if (myProblem.actions[i].valAction->getID() >= (*iter)->valAction->getID()){
 				// Because we want to ensure just one clause for each mutex is inserted so just if the id of first action is less than the second one we inserted the corresponding mutex clause
 				continue;
 			}
-			if (numericRPG->firstVisitedAcotion[*iter] > significantTimePoint){
+			if ((*iter)->firstVisitedLayer > significantTimePoint){
 				continue;
 			}
 			smtProblem->startNewClause();
-			smtProblem->addActionToClause(i, significantTimePoint, false);
-			smtProblem->addActionToClause(*iter, significantTimePoint, false);
+			smtProblem->addActionToClause(myProblem.actions[i].valAction->getID(), significantTimePoint, false);
+			smtProblem->addActionToClause((*iter)->valAction->getID(), significantTimePoint, false);
 			smtProblem->endClause();
 		}
 	}

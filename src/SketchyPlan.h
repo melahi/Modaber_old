@@ -4,7 +4,6 @@
 
 
 #include "VALfiles/parsing/ptree.h"
-#include "NumericRPG.h"
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
@@ -19,7 +18,6 @@ class SketchyPlan {
 	 * and every element intermediateGoals vector is equivalent to a Gene in EA
 	 */
 private:
-	NumericRPG *numericRPG;
 	double propositionSelectionRatio;
 	int length;
 public:
@@ -30,7 +28,7 @@ public:
 
 
 
-	SketchyPlan(NumericRPG *numericRPG, int length);
+	SketchyPlan(int length);
 
 	void createRandomIntermediateGoalLayer (int layerNumber);
 

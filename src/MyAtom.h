@@ -23,16 +23,23 @@ using namespace Inst;
 
 namespace mdbr{
 
+class MyVariable;
+class MyAtom;
+class   MyProposition;
+class   MyValue;
+
 class MyAction;
+class   MyGroundedAction;
+
 
 class MyAtom {
 public:
 
 	int firstVisitedLayer;
 
-	map <MyAtom *, int> lastLayerMutex;
+	map <MyAtom *, int> lastLayerMutexivity;
 
-	list <MyGroundedAction*> provider;
+	list <MyGroundedAction *> provider;
 
 	bool checkMutex (int layerNumber, MyAtom *otherAtom);
 
@@ -60,6 +67,7 @@ public:
 
 
 	MyProposition(Literal *originalLiteral):MyAtom(), originalLiteral(originalLiteral){}
+	MyProposition():MyAtom() {}
 
 	virtual void write (ostream &sout){
 		originalLiteral->write(sout);
@@ -73,21 +81,12 @@ public:
 	MyVariable *variable;
 	double value;
 
-	MyValue(MyVariable *variable, double value): variable(variable), value(value){}
-	MyValue(){}
+	MyValue(MyVariable *variable, double value): MyAtom(), variable(variable), value(value){}
+	MyValue(): MyAtom(){}
 
-	bool operator < (const MyValue &otherValue) const{
-		if (variable->originalPNE->getStateID() == otherValue.variable->originalPNE->getStateID()){
-			return value < otherValue.value;
-		}
-		return variable->originalPNE->getStateID() < otherValue.variable->originalPNE->getStateID();
-	}
+	bool operator < (const MyValue &otherValue) const;
 
-	virtual void write (ostream &sout){
-		sout << "(";
-		variable->originalPNE->write(sout);
-		sout << ": " << value << ")";
-	}
+	virtual void write (ostream &sout);
 
 	~MyValue(){}
 
@@ -96,7 +95,7 @@ public:
 class MyVariable{
 private:
 
-	list <MyValue>::iterator interanalState;
+	map <double, MyValue>::iterator interanalState;
 
 public:
 	PNE *originalPNE;
@@ -105,15 +104,17 @@ public:
 	list <MyAction *> userActions;
 
 
-	set <MyValue> domain;
+	map <double, MyValue> domain;
 
 	MyVariable (PNE *originalPNE): originalPNE(originalPNE){}
+	MyVariable (){}
+
 
 	void findValue (double value, int layerNumber, MyGroundedAction *action){
-		pair <set <MyValue>::iterator, bool > ret;
-		ret = domain.insert(MyValue (this, value));
-		MyValue *myValue= ret.first;
-		myValue->visiting(layerNumber, action);
+		if (domain.find(value) == domain.end()){
+			domain[value] = MyValue (this, value);
+		}
+		domain[value].visiting(layerNumber, action);
 	}
 
 	void restart (){
@@ -129,8 +130,11 @@ public:
 		interanalState++;
 	}
 	MyValue *getValue(){
-		return *interanalState;
+		return &(interanalState->second);
 	}
+
+	~MyVariable () { }
+
 };
 
 

@@ -5,22 +5,22 @@
 
 
 #include "CVC4Problem.h"
-#include "NumericRPG.h"
-#include "MyAnalyzer.h"
-#include "SketchyPlan.h"
+#include "NumericalPlanningGraph.h"
 #include <ostream>
 
 using namespace std;
 
+namespace mdbr{
+
+
 class Modaber {
 protected:
 
-	MyAnalyzer *myAnalyzer;
-	NumericRPG *numericRPG;
+	NumericalPlanningGraph *nPG;
 
 	void instantiation(char *domainFile, char *problemFile);
 
-	virtual void initialization(char *domainFilePath, char *problemFilePath);
+	virtual void initialization(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph);
 
 	virtual bool tryToSolve() = 0;
 
@@ -34,5 +34,7 @@ public:
 	virtual ~Modaber();
 
 };
+
+} /* namespace mdbr */
 
 #endif /* MODABER_H_ */

@@ -14,7 +14,6 @@
 #include <iostream>
 #include <fstream>
 #include "CVC4Problem.h"
-#include "NumericRPG.h"
 #include "SketchyPlan.h"
 
 using namespace std;
@@ -22,14 +21,18 @@ using namespace VAL;
 using namespace TIM;
 using namespace Inst;
 
-void SimpleModaber::initialization(char *domainFilePath, char *problemFilePath){
-	Modaber::initialization(domainFilePath, problemFilePath);
+void SimpleModaber::initialization(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph){
+	Modaber::initialization(domainFilePath, problemFilePath, usingPlanningGraph);
 	smtProblem = new CVC4Problem(instantiatedOp::howManyNonStaticPNEs(), instantiatedOp::howManyNonStaticLiterals(), instantiatedOp::howMany());
 	nSignificantTimePoint = 1;
+	if (usingPlanningGraph){
+		nPG->constructingGraph(10);
+	}
+	nPG->write(cout);
 }
 
 bool SimpleModaber::tryToSolve(){
-
+/*
 	bool foundSolution = false;
 	Translator myTranslator (smtProblem, myAnalyzer, numericRPG);
 	myTranslator.addInitialState();
@@ -49,13 +52,15 @@ bool SimpleModaber::tryToSolve(){
 		}
 	}
 	return foundSolution;
+	*/
+	return true;
 }
 
 
 
-SimpleModaber::SimpleModaber(char *domainFilePath, char *problemFilePath) {
-	initialization(domainFilePath, problemFilePath);
-	bool foundSolution;
+SimpleModaber::SimpleModaber(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph) {
+	initialization(domainFilePath, problemFilePath, usingPlanningGraph);
+/*	bool foundSolution;
 	foundSolution = tryToSolve();
 	if (foundSolution){
 		cout << "The plan is: " << endl;
@@ -66,6 +71,7 @@ SimpleModaber::SimpleModaber(char *domainFilePath, char *problemFilePath) {
 		ofstream fout ("solution");
 		extractSolution(fout, smtProblem);
 	}
+*/
 }
 
 SimpleModaber::~SimpleModaber() {

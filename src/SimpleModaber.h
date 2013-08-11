@@ -19,12 +19,12 @@ private:
 
 protected:
 
-	virtual void initialization(char *domainFilePath, char *problemFilePath);
+	virtual void initialization(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph);
 
 	virtual bool tryToSolve();
 
 public:
-	SimpleModaber(char *domainFilePath, char *problemFilePath);
+	SimpleModaber(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph);
 	virtual ~SimpleModaber();
 };
 

@@ -18,14 +18,14 @@ src/Modaber.d: ../src/Modaber.cpp ../src/Modaber.h ../src/CVC4Problem.h \
  /home/sadra/masterThesis/Modaber/VALfiles/FastEnvironment.h \
  ../src/Utilities.h ../src/MyTimer.h \
  /home/sadra/masterThesis/Modaber/VALfiles/parsing/ptree.h \
- ../src/NumericRPG.h ../src/MyAnalyzer.h ../src/SketchyPlan.h \
+ ../src/MyProblem.h ../src/MyAction.h ../src/MyAtom.h \
+ ../src/NumericalPlanningGraph.h \
  /home/sadra/masterThesis/Modaber/VALfiles/TIM.h \
  /home/sadra/masterThesis/Modaber/VALfiles/TimSupport.h \
  /home/sadra/masterThesis/Modaber/VALfiles/TIMUtilities.h \
  ../src/ProblemPrinter.h \
  /home/sadra/masterThesis/Modaber/VALfiles/SimpleEval.h \
- ../src/Translator.h ../src/NumericalPlanningGraph.h \
- ../src/PlanningGraphAction.h ../src/PlanningGraphProposition.h
+ ../src/Translator.h ../src/SketchyPlan.h
 
 ../src/Modaber.h:
 
@@ -71,11 +71,13 @@ src/Modaber.d: ../src/Modaber.cpp ../src/Modaber.h ../src/CVC4Problem.h \
 
 /home/sadra/masterThesis/Modaber/VALfiles/parsing/ptree.h:
 
-../src/NumericRPG.h:
+../src/MyProblem.h:
 
-../src/MyAnalyzer.h:
+../src/MyAction.h:
 
-../src/SketchyPlan.h:
+../src/MyAtom.h:
+
+../src/NumericalPlanningGraph.h:
 
 /home/sadra/masterThesis/Modaber/VALfiles/TIM.h:
 
@@ -89,8 +91,4 @@ src/Modaber.d: ../src/Modaber.cpp ../src/Modaber.h ../src/CVC4Problem.h \
 
 ../src/Translator.h:
 
-../src/NumericalPlanningGraph.h:
-
-../src/PlanningGraphAction.h:
-
-../src/PlanningGraphProposition.h:
+../src/SketchyPlan.h:

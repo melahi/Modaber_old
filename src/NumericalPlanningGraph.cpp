@@ -8,6 +8,7 @@
 
 #include <fstream>
 #include <string>
+#include <limits>
 
 using namespace VAL;
 using namespace Inst;
@@ -15,8 +16,33 @@ using namespace Inst;
 using namespace std;
 using namespace mdbr;
 
+
+void NumericalPlanningGraph::ignoreGraph(){
+	/* If this function called, Numerical Planning Graph won't constructed */
+	int nActions = 0;
+	for (int i = 0; i < nActions; i++){
+		myProblem.actions[i].firstVisitedLayer = 0;
+	}
+
+	int nProposition = 0;
+	for (int i = 0; i < nProposition; i++){
+		myProblem.propositions[i].firstVisitedLayer = 0;
+	}
+
+	numberOfLayers = 0;
+	levelOff = true;
+
+}
+
+void NumericalPlanningGraph::constructingGraph (int maxNumberOfLayer /* = numeric_limits <int>::max() */){
+
+	while (!levelOff && numberOfLayers < maxNumberOfLayer){
+		levelOff = !extendOneLayer();
+	}
+}
+
 void NumericalPlanningGraph::createInitialLayer(){
-	if (numberOfLayers > 0){
+	if (numberOfLayers > 0 || levelOff == true){
 		//Initial layer is created already
 		return;
 	}
@@ -34,10 +60,21 @@ void NumericalPlanningGraph::createInitialLayer(){
 		}
 	}
 
-	int nVariable = myProblem.initialValue.size();
-	for (int i = 0; i < nVariable; i++){
-		myProblem.variables[i].findValue(myProblem.initialValue[i], 0, NULL);
+
+
+
+	pc_list<assignment*>::const_iterator it2 = current_analysis->the_problem->initial_state->assign_effects.begin();
+	pc_list<assignment*>::const_iterator itEnd2 = current_analysis->the_problem->initial_state->assign_effects.end();
+
+	for (; it2 != itEnd2; ++it2){
+		PNE pne ((*it2)->getFTerm(), &env);
+		PNE *pne2 = instantiatedOp::findPNE(&pne);
+		if (pne2->getStateID() != -1){
+			myProblem.variables[pne2->getStateID()].findValue(myProblem.initialValue[pne2->getGlobalID()], 0, NULL);
+		}
 	}
+
+
 
 	numberOfLayers = 1;
 	numberOfDynamicMutexesInLastLayer = 0;
@@ -54,7 +91,7 @@ bool NumericalPlanningGraph::extendOneLayer(){
 
 	bool canContinue = false;
 
-	//If there is any action which is not executed before, check its applicability, if it can be applied, then apply it!!!
+	//If there is any instance of an action which is not executed before, check its applicability, if it can be applied, then apply it!!!
 	int nAction = myProblem.actions.size();
 
 	for (int i = 0; i < nAction; i++){
@@ -73,28 +110,27 @@ bool NumericalPlanningGraph::extendOneLayer(){
 			allFoundedAtoms.push_back(&(myProblem.propositions[i]));
 		}
 	}
+
 	int nVariables = myProblem.variables.size();
 	for (int i = 0; i < nVariables; i++){
-		set <MyValue>::iterator it, itEnd;
+		map <double, MyValue>::iterator it, itEnd;
 		it = myProblem.variables[i].domain.begin();
 		itEnd = myProblem.variables[i].domain.end();
 		for (; it != itEnd; ++it){
-			MyValue *value;
-			value = *it;
-			allFoundedAtoms.push_back(value);
+			allFoundedAtoms.push_back(&(it->second));
 		}
 	}
 
-	list <MyGroundedAction *> allFoundedGroundedActions;
 
 	//Prepare allFoundedGroundedActions
+	list <MyGroundedAction *> allFoundedGroundedActions;
 	for (int i = 0; i < nAction; i++){
-		list <MyGroundedAction>::iterator it, itEnd;
-		it = myProblem.actions[i].groundedAction.begin();
-		itEnd = myProblem.actions[i].groundedAction.end();
+		set <MyGroundedAction>::iterator it, itEnd;
+		it = myProblem.actions[i].groundedActions.begin();
+		itEnd = myProblem.actions[i].groundedActions.end();
 		for (; it != itEnd; ++it){
 			MyGroundedAction *groundedAction;
-			groundedAction = *it;
+			groundedAction = const_cast <MyGroundedAction *> (&(*it));
 			allFoundedGroundedActions.push_back(groundedAction);
 		}
 	}
@@ -112,7 +148,7 @@ bool NumericalPlanningGraph::extendOneLayer(){
 	for (; gActionIt != gActionItEnd; ++gActionIt) {
 		atomIt = allFoundedAtoms.begin();
 		for (; atomIt != atomItEnd; ++atomIt){
-			if (atomIt->firstVisitedLayer >= numberOfLayers){
+			if ((*atomIt)->firstVisitedLayer >= numberOfLayers){
 				continue;
 			}
 			if ((*gActionIt)->parentAction->isAtomStaticallyMutex(numberOfLayers - 1, *atomIt)){
@@ -168,14 +204,9 @@ bool NumericalPlanningGraph::extendOneLayer(){
 NumericalPlanningGraph::NumericalPlanningGraph(){
 
 	numberOfLayers = 0;
+	levelOff = false;
 	createInitialLayer();
 
-	bool canContinue = true;
-	while (canContinue){
-		cout << numberOfLayers << endl;
-		canContinue = extendOneLayer();
-	}
-	write(cout);
 }
 
 void NumericalPlanningGraph::write(ostream &sout){
@@ -197,24 +228,22 @@ void NumericalPlanningGraph::write(ostream &sout){
 
 	int nVariables = myProblem.variables.size();
 	for (int i = 0; i < nVariables; i++){
-		set <MyValue>::iterator it, itEnd;
+		map <double, MyValue>::iterator it, itEnd;
 		it = myProblem.variables[i].domain.begin();
 		itEnd = myProblem.variables[i].domain.end();
 		for (; it != itEnd; ++it){
-			MyValue *value;
-			value = *it;
-			atoms.push_back(value);
+			atoms.push_back(&(it->second));
 		}
 	}
 
 	int nActions = myProblem.actions.size();
 	for (int i = 0; i < nActions; i++){
-		list <MyGroundedAction *>::iterator actionIt, actionItEnd;
-		actionIt = myProblem.actions[i].groundedAction.begin();
-		actionItEnd = myProblem.actions[i].groundedAction.end();
+		set <MyGroundedAction>::iterator actionIt, actionItEnd;
+		actionIt = myProblem.actions[i].groundedActions.begin();
+		actionItEnd = myProblem.actions[i].groundedActions.end();
 		for (; actionIt != actionItEnd; ++actionIt){
 			MyGroundedAction *groundedAction;
-			groundedAction = *actionIt;
+			groundedAction = const_cast <MyGroundedAction *> (&(*actionIt));
 			actions.push_back(groundedAction);
 		}
 	}

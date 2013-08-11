@@ -9,6 +9,7 @@
 #define PRECONDITIONFINDER_H_
 
 #include "VALfiles/FastEnvironment.h"
+#include "MyAction.h"
 
 using namespace VAL;
 

@@ -30,11 +30,13 @@ public:
 
 	void updateInitialValues ();
 
+	void initializing();
+
 	MyProblem();
 	virtual ~MyProblem();
 };
 
-MyProblem myProblem;
+extern MyProblem myProblem;
 
 } /* namespace mdbr */
 #endif /* MYPROBLEM_H_ */

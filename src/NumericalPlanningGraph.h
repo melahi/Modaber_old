@@ -16,6 +16,7 @@
 
 
 #include <vector>
+#include <limits>
 
 using namespace std;
 using namespace VAL;
@@ -28,8 +29,13 @@ public:
 
 	int numberOfLayers;
 	int numberOfDynamicMutexesInLastLayer;
+	bool levelOff;
 
 	NumericalPlanningGraph();
+
+	void ignoreGraph();
+
+	void constructingGraph (int maximumLayerNumber = numeric_limits <int>::max());
 
 	void createInitialLayer();
 

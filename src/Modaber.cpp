@@ -7,14 +7,16 @@
 #include <iostream>
 #include <fstream>
 #include "CVC4Problem.h"
-#include "NumericRPG.h"
-#include "SketchyPlan.h"
 #include "NumericalPlanningGraph.h"
+#include "MyProblem.h"
 
 using namespace std;
 using namespace VAL;
 using namespace TIM;
 using namespace Inst;
+
+
+using namespace mdbr;
 
 void Modaber::instantiation(char *domainFile, char *problemFile){
 	char *argv[2];
@@ -41,7 +43,6 @@ void Modaber::instantiation(char *domainFile, char *problemFile){
 	}
 
 	instantiatedOp::assignStateIDsToNonStaticLiteralsAndPNEs();
-	//@TODO: I should do something for static literals and PNEs (In translation make a difference between them and the others)
 
 	cout << "After filtering: " << instantiatedOp::howMany() << endl;
 
@@ -49,13 +50,13 @@ void Modaber::instantiation(char *domainFile, char *problemFile){
 	myPrinter.printProblem();
 }
 
-void Modaber::initialization(char *domainFilePath, char *problemFilePath){
+void Modaber::initialization(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph){
 	instantiation(domainFilePath, problemFilePath);
-	CVC4Problem::updateInitialValues();
-	myAnalyzer = new MyAnalyzer();
-	numericRPG = new NumericRPG();
-	NumericalPlanningGraph myGraph (instantiatedOp::howManyNonStaticLiterals(), instantiatedOp::howMany(), myAnalyzer);
-
+	myProblem.initializing();
+	nPG = new NumericalPlanningGraph();
+	if (!usingPlanningGraph){
+		nPG->ignoreGraph();
+	}
 }
 
 void Modaber::extractSolution(ostream &oss, CVC4Problem *smtProblem){
@@ -81,7 +82,6 @@ Modaber::Modaber(){}
 
 
 Modaber::~Modaber(){
-	delete (myAnalyzer);
-	delete (numericRPG);
+	delete (nPG);
 }
 
