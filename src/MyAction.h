@@ -43,8 +43,10 @@ public:
 	set < MyProposition *> deleteList;
 	set < MyVariable *> modifyingVariable;
 
+	//Perhaps we need a variable more than one in some precondition so we should consider variableNeeded as a set
+	set < MyVariable *> variableNeeded;
+
 	list < MyProposition *> addList;
-	list < MyVariable *> variableNeeded;
 	list < MyProposition *> propositionPrecondition;
 
 
@@ -60,6 +62,7 @@ public:
 	bool computeGroundedAction (int layerNumber);
 	void visitNewGroundedAction (int layerNumber, const MyGroundedAction &newGroundedAction);
 
+	void write (ostream &sout);
 
 
 	MyAction();
@@ -103,7 +106,7 @@ public:
 	void insertMutex (int layerNumber, MyGroundedAction *otherAciton);
 	void insertAtomMutex (int layerNumber, MyAtom *otherAtom);
 
-	MyGroundedAction (MyAction *parentAction, const map <int, MyValue*> &variablePrecondition): parentAction(parentAction), variablePrecondition(variablePrecondition) {}
+	MyGroundedAction (MyAction *parentAction, const map <int, MyValue*> &variablePrecondition): firstVisitedLayer(-1), parentAction(parentAction), variablePrecondition(variablePrecondition)  {}
 
 	bool operator < (const MyGroundedAction &a) const;
 

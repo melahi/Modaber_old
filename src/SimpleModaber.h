@@ -9,11 +9,17 @@
 #define SIMPLEMODABER_H_
 
 #include "Modaber.h"
+#include "CVC4Problem.h"
+#include "Translator.h"
+
+namespace mdbr {
 
 class SimpleModaber: public Modaber {
 private:
 
 	int nSignificantTimePoint;
+
+	Translator *myTranslator;
 
 	CVC4Problem *smtProblem;
 
@@ -27,5 +33,7 @@ public:
 	SimpleModaber(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph);
 	virtual ~SimpleModaber();
 };
+
+} /* namespace mdbr */
 
 #endif /* SIMPLEMODABER_H_ */

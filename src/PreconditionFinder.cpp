@@ -51,7 +51,7 @@ void PreconditionFinder::expressionAnalyzer (const expression *expr){
 		if (pne2->getStateID() == -1){
 			return;
 		}
-		myAction->variableNeeded.push_back( &(myProblem.variables[pne2->getStateID()]) );
+		myAction->variableNeeded.insert( &(myProblem.variables[pne2->getStateID()]) );
 		myProblem.variables[pne2->getStateID()].userActions.push_back(myAction);
 		return;
 	}

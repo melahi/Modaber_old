@@ -117,20 +117,36 @@ public:
 		domain[value].visiting(layerNumber, action);
 	}
 
-	void restart (){
+	void restart () {
 		interanalState = domain.begin();
 	}
-	bool isEnd (){
+	bool isEnd () {
 		if (interanalState == domain.end()){
 			return true;
 		}
 		return false;
 	}
-	void next (){
-		interanalState++;
+	void next (int layerNumber){
+		while (interanalState != domain.end() && (++interanalState)->second.firstVisitedLayer > layerNumber){
+			;
+		}
 	}
 	MyValue *getValue(){
 		return &(interanalState->second);
+	}
+
+	void write (ostream &sout) const{
+		sout << "[";
+		originalPNE->write(sout);
+
+		map <double, MyValue>::const_iterator it, itEnd;
+		it = domain.begin();
+		itEnd = domain.end();
+
+		for (; it != itEnd; ++it){
+			sout << ", " << it->second.value;
+		}
+		sout <<"]";
 	}
 
 	~MyVariable () { }

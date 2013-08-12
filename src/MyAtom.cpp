@@ -1,6 +1,6 @@
 
 #include "MyAtom.h"
-
+#include "Utilities.h"
 using namespace mdbr;
 
 bool MyAtom::checkMutex (int layerNumber, MyAtom *otherAtom){
@@ -8,7 +8,7 @@ bool MyAtom::checkMutex (int layerNumber, MyAtom *otherAtom){
 	list <MyGroundedAction *>::iterator it, itEnd;
 
 
-	if (firstVisitedLayer < layerNumber && otherAtom->firstVisitedLayer < layerNumber){
+	if (isVisited(firstVisitedLayer ,layerNumber - 1) && isVisited(otherAtom->firstVisitedLayer, layerNumber - 1)){
 		if (isMutex(layerNumber - 1, otherAtom) == false){
 			//In the layerNumber - 1 these two proposition were not mutex, so in the layerNumber these two are not mutex too!
 			return false;
@@ -16,7 +16,7 @@ bool MyAtom::checkMutex (int layerNumber, MyAtom *otherAtom){
 	}
 
 	//check mutex of no-op action of this proposition and provider actions of other proposition
-	if (this->firstVisitedLayer < layerNumber){
+	if (isVisited(firstVisitedLayer ,layerNumber - 1)){
 		it = otherAtom->provider.begin(); itEnd = otherAtom->provider.end();
 		for (; it != itEnd; ++it){
 			if ( !(*it)->isAtomMutex(layerNumber - 1, this)){
@@ -27,7 +27,7 @@ bool MyAtom::checkMutex (int layerNumber, MyAtom *otherAtom){
 
 
 	//check mutex of no-op action of other proposition and provider actions of this proposition
-	if (otherAtom->firstVisitedLayer < layerNumber){
+	if (isVisited(otherAtom->firstVisitedLayer, layerNumber - 1)){
 		it = provider.begin(); itEnd = provider.end();
 		for (; it != itEnd; ++it){
 			if ( !(*it)->isAtomMutex(layerNumber - 1, otherAtom)){
@@ -73,7 +73,7 @@ void MyAtom::insertMutex (int layerNumber, MyAtom *mutexAtom){
 }
 
 void MyAtom::visiting(int layerNumber, MyGroundedAction *action) {
-	if (firstVisitedLayer == -1 || firstVisitedLayer > layerNumber){
+	if (!isVisited(firstVisitedLayer, layerNumber)){
 		firstVisitedLayer = layerNumber;
 	}
 

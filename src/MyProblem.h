@@ -32,6 +32,8 @@ public:
 
 	void initializing();
 
+	void print();
+
 	MyProblem();
 	virtual ~MyProblem();
 };

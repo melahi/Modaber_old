@@ -12,11 +12,12 @@ using namespace std;
 
 namespace mdbr{
 
-
 class Modaber {
 protected:
 
 	NumericalPlanningGraph *nPG;
+
+	bool usingPlanningGraph;
 
 	void instantiation(char *domainFile, char *problemFile);
 

@@ -13,6 +13,7 @@
 #include "Utilities.h"
 #include "VALfiles/parsing/ptree.h"
 #include "MyProblem.h"
+#include "MyAtom.h"
 #include <cvc4/cvc4.h>
 #include <vector>
 #include <cmath>
@@ -43,25 +44,32 @@ public:
 
 	void addLiteral ( polarity plrty, const proposition *prop, FastEnvironment *env, int significantTimePoint);
 
-	//Add new boolean condition to the building clause
-	virtual void addConditionToCluase(int propostion, int significantTimePoint, bool polarity);
-
-
 	//Add new action to the building clause
-	virtual void addActionToClause (int actionId, int significantTimePoint, bool polarity);
+	void addActionToClause (int actionId, int significantTimePoint, bool polarity);
+
+	//Add new boolean condition to the building clause
+	void addConditionToCluase(int propostion, int significantTimePoint, bool polarity);
+
+	void AddConditionToCluase(const MyAtom *atom, int significantTimePoint, bool polarity);
 
 	//Add new numerical condition to the building clause
-	virtual void AddConditionToCluase(const comparison* numericalCondition, FastEnvironment *env, int significantTimePoint);
+	void AddConditionToCluase(const comparison* numericalCondition, FastEnvironment *env, int significantTimePoint);
 
 
 	//Add new numerical assignment to the building clause
-	virtual void AddConditionToCluase(const assignment* numericalAssignment, FastEnvironment *env, int significantTimePoint);
+	void AddConditionToCluase(const assignment* numericalAssignment, FastEnvironment *env, int significantTimePoint);
 
-	void AddEqualityCondition (int variableId1, int significantTimePoint1, int variableId2, int significantTimePoint2);
+	void AddEqualityCondition (int variableId1, int significantTimePoint1, int variableId2, int significantTimePoint2, bool polarity);
+
+	void AddEqualityCondition (int variableId1, int significantTimePoint1, double value, bool polarity);
+
+
 
 	double solve(const Expr &assertExpr);
 
 	void print();
+
+	void print(vector <Expr> &expression);
 
 	bool isActionUsed (int actionId, int significantTimePoint);
 
@@ -89,6 +97,8 @@ public:
 	CVC4Problem& operator=(const CVC4Problem&);
 	*/
 
+	void activePermanentChange() { permanentChange = true;}
+	void inActivePermanentChange() { permanentChange = false;}
 	virtual ~CVC4Problem();
 
 private:
@@ -108,8 +118,9 @@ private:
 	int nVariables;
 	int nProposition;
 	int nAction;
-	unsigned long int resourceLimit;
-	unsigned long int lastNumberOfDecision;
+
+	bool ignoreCluase;
+	bool permanentChange;
 
 
 	//find and return the index of corresponding PVariableExpression in the variableExpr array
@@ -185,7 +196,7 @@ private:
 			return Expr();
 		}
 
-		void simpleConvertToRational (double input, int &nominator, int &denominator){
+		static void simpleConvertToRational (double input, int &nominator, int &denominator){
 			nominator = (int) input;
 			denominator = 1;
 			double inputFloor = (double) nominator;

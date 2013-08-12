@@ -33,10 +33,12 @@ void CVC4Problem::guaranteeSize (unsigned int nSignificantTimePoint){
 		Type real = em.realType();
 		size = variableExpr.size();
 		for (int i = 0; i < nVariables; i++){
-//			ostringstream oss;
-//			oss << "variable(" << (size + i) % nVariables << "," << (size + i) / nVariables << ")";
-//			variableExpr.push_back(em.mkVar(oss.str(),real));
-			variableExpr.push_back(em.mkVar(real));
+			ostringstream oss;
+			oss << "[";
+			myProblem.variables[i].write(oss);
+			oss << ", " << (size + i) / nVariables << "]";
+			variableExpr.push_back(em.mkVar(oss.str(),real));
+//			variableExpr.push_back(em.mkVar(real));
 		}
 
 
@@ -46,10 +48,12 @@ void CVC4Problem::guaranteeSize (unsigned int nSignificantTimePoint){
 		Type boolean = em.booleanType();
 		size = propositionExpr.size();
 		for (int i = 0; i < nProposition; i++){
-//			ostringstream oss;
-//			oss << "proposition(" << (size + i) % nProposition << "," << (size + i) / nProposition << ")";
-//			propositionExpr.push_back(em.mkVar(oss.str(), boolean));
-			propositionExpr.push_back(em.mkVar(boolean));
+			ostringstream oss;
+			oss << "[";
+			myProblem.propositions[i].write(oss);
+			oss << ", " << (size + i) / nProposition << "]";
+			propositionExpr.push_back(em.mkVar(oss.str(), boolean));
+//			propositionExpr.push_back(em.mkVar(boolean));
 		}
 
 
@@ -62,10 +66,12 @@ void CVC4Problem::guaranteeSize (unsigned int nSignificantTimePoint){
 
 			size = actionExpr.size();
 			for (int i = 0; i < nAction; i++){
-//				ostringstream oss;
-//				oss << "action(" << (size + i) % nAction << "," << (size + i) / nAction << ")";
-//				actionExpr.push_back(em.mkVar (oss.str(), boolean));
-				actionExpr.push_back(em.mkVar (boolean));
+				ostringstream oss;
+				oss << "[";
+				myProblem.actions[i].write(oss);
+				oss << ", " << (size + i) / nAction << "]";
+				actionExpr.push_back(em.mkVar (oss.str(), boolean));
+//				actionExpr.push_back(em.mkVar (boolean));
 
 			}
 
@@ -78,7 +84,7 @@ void CVC4Problem::initialization(){
 
 	smt.setOption("produce-models", SExpr("true"));
 	smt.setOption("check-models", SExpr("false"));		//In the case of debugging we can turn it to "true"
-	smt.setOption("interactive-mode", SExpr("false"));		//In the case of debugging we can turn it to "true"
+	smt.setOption("interactive-mode", SExpr("true"));		//In the case of debugging we can turn it to "true"
 	smt.setOption("produce-assignments", SExpr("true"));
 //	smt.setOption("verbosity", SExpr("1073741823"));
 	smt.setOption("verbosity", SExpr("0"));
@@ -86,8 +92,6 @@ void CVC4Problem::initialization(){
 
 	maximumSignificantTimePoint = 0;
 
-	resourceLimit = 50;
-	lastNumberOfDecision = 0;
 	guaranteeSize(1);
 }
 
@@ -101,17 +105,29 @@ CVC4Problem::CVC4Problem (int nVariables, int nProposition, int nAction): smt(&e
 //Start to build new clause for SMT problem
 void CVC4Problem::startNewClause(){
 	buildingClause.clear();
+	ignoreCluase = false;
 }
 
 //By calling this function, you mean the clause is already built and it should be inserted to the SMT problem
 void CVC4Problem::endClause(){
+	if (ignoreCluase ){
+		return;
+	}
 	if (buildingClause.size() == 0)
 		return;
 	if (buildingClause.size() == 1){
-		assertions.push_back(buildingClause[0]);
+		if (permanentChange){
+			smt.assertFormula(buildingClause[0]);
+		}else{
+			assertions.push_back(buildingClause[0]);
+		}
 		return;
 	}
-	assertions.push_back(em.mkExpr(kind::OR, buildingClause));
+	if (permanentChange){
+		smt.assertFormula(em.mkExpr(kind::OR, buildingClause));
+	}else{
+		assertions.push_back(em.mkExpr(kind::OR, buildingClause));
+	}
 	return;
 }
 
@@ -120,8 +136,10 @@ void CVC4Problem::endClause(){
 void CVC4Problem::addLiteral ( polarity plrty, const proposition *prop, FastEnvironment *env, int significantTimePoint){
 	Literal lit (prop, env);
 	Literal *lit2 = instantiatedOp::findLiteral(&lit);
-	if (lit2->getStateID() == -1)
+	if (lit2->getStateID() == -1){
+		ignoreCluase = true;
 		return;
+	}
 	addConditionToCluase(lit2->getStateID(), significantTimePoint, (plrty == E_POS));
 }
 
@@ -134,6 +152,25 @@ void CVC4Problem::addConditionToCluase(int propostion, int significantTimePoint,
 		buildingClause.push_back(em.mkExpr(kind::NOT, propositionExpr[index]));
 	}
 }
+
+
+void CVC4Problem::AddConditionToCluase(const MyAtom *atom, int significantTimePoint, bool polarity){
+	const MyProposition *myProposition = dynamic_cast <const MyProposition*> (atom);
+	const MyValue *myValue = dynamic_cast <const MyValue*> (atom);
+
+	if (myProposition){
+		int index = getPropositionIndex(myProposition->originalLiteral->getStateID(), significantTimePoint);
+		if (polarity){
+			buildingClause.push_back(propositionExpr[index]);
+		}else{
+			buildingClause.push_back(em.mkExpr(kind::NOT, propositionExpr[index]));
+		}
+	}else{
+		AddEqualityCondition(myValue->variable->originalPNE->getStateID(), significantTimePoint, myValue->value, polarity);
+	}
+}
+
+
 
 //Add new action to the building clause
 void CVC4Problem::addActionToClause (int actionId, int significantTimePoint, bool polarity){
@@ -219,12 +256,35 @@ void CVC4Problem::AddConditionToCluase(const assignment* numericalAssignment, Fa
 	buildingClause.push_back(em.mkExpr(kind::EQUAL, variable, result));
 }
 
-void CVC4Problem::AddEqualityCondition (int variableId1, int significantTimePoint1, int variableId2, int significantTimePoint2){
+void CVC4Problem::AddEqualityCondition (int variableId1, int significantTimePoint1, int variableId2, int significantTimePoint2, bool polarity){
 	int variableIndex1 = getVariableIndex(variableId1, significantTimePoint1);
 	int variableIndex2 = getVariableIndex(variableId2, significantTimePoint2);
-	Expr equalityCondition = em.mkExpr(kind::EQUAL, variableExpr[variableIndex1], variableExpr[variableIndex2]);
-	buildingClause.push_back(equalityCondition);
+	Kind myKind;
+	if (polarity){
+		myKind = kind::EQUAL;
+	}else{
+		myKind = kind::DISTINCT;
+	}
+	Expr myCondition = em.mkExpr(myKind, variableExpr[variableIndex1], variableExpr[variableIndex2]);
+	buildingClause.push_back(myCondition);
 }
+
+void CVC4Problem::AddEqualityCondition (int variableId1, int significantTimePoint1, double value, bool polarity){
+	int variableIndex1 = getVariableIndex(variableId1, significantTimePoint1);
+
+	int nominator, denominator;
+	ExpressionConvertor::simpleConvertToRational(value, nominator, denominator);
+	Expr valExpr = em.mkConst(Rational(nominator, denominator));
+	Kind myKind;
+	if (polarity){
+		myKind = kind::EQUAL;
+	}else{
+		myKind = kind::DISTINCT;
+	}
+	Expr myCondtion = em.mkExpr(myKind, variableExpr[variableIndex1], valExpr);
+	buildingClause.push_back(myCondtion);
+}
+
 
 double CVC4Problem::solve(const Expr &assertExpr){
 
@@ -232,7 +292,7 @@ double CVC4Problem::solve(const Expr &assertExpr){
 	// TODO: We need statistical information
 
 //	cout << "Start to try solving the problem" << endl;
-	smt.setResourceLimit(resourceLimit);
+//	smt.setResourceLimit(resourceLimit);
 	Result result = smt.checkSat(assertExpr);
 
 
@@ -259,25 +319,35 @@ double CVC4Problem::solve(const Expr &assertExpr){
 	}
 //	cout << "Number of conflicts: " << smt.getStatistic("sat::conflicts").getValue() << endl;
 //	cout << "Number of decision: " << smt.getStatistic("sat::decisions").getValue() << endl;
-	istringstream sin (smt.getStatistic("sat::decisions").getValue());
-	double ret;
-	unsigned long int newNumberOfDecision;
-	sin >> newNumberOfDecision;
-	ret = newNumberOfDecision - lastNumberOfDecision;
-	lastNumberOfDecision = newNumberOfDecision;
-	return ret;
+//	istringstream sin (smt.getStatistic("sat::decisions").getValue());
+//	double ret;
+//	unsigned long int newNumberOfDecision;
+//	sin >> newNumberOfDecision;
+//	ret = newNumberOfDecision - lastNumberOfDecision;
+//	lastNumberOfDecision = newNumberOfDecision;
+	return 0;
 }
 
 void CVC4Problem::print(){
 	vector <Expr> assertions = smt.getAssertions();
-	for (size_t i = 0; i < assertions.size(); i++){
-		if (i){
-			cout << "AND   ";
-		}
-		assertions[i].toStream(cout);
-		cout << endl;
-	}
+	print (assertions);
 }
+int mine = 0;
+void CVC4Problem::print(vector <Expr> &expression){
+	mine++;
+	cout << mine << endl;
+	for (size_t i = 0; i < expression.size(); i++){
+		if (expression[i].getKind() == kind::AND){
+			vector <Expr> child = expression[i].getChildren();
+			print(child);
+		}else{
+			expression[i].toStream(cout);
+			cout << endl;
+		}
+	}
+	mine--;
+}
+
 
 bool CVC4Problem::isActionUsed (int actionId, int significantTimePoint){
 	int actionIndex = getActionIndex(actionId, significantTimePoint);

@@ -21,46 +21,46 @@ using namespace VAL;
 using namespace TIM;
 using namespace Inst;
 
+using namespace mdbr;
+
 void SimpleModaber::initialization(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph){
 	Modaber::initialization(domainFilePath, problemFilePath, usingPlanningGraph);
-	smtProblem = new CVC4Problem(instantiatedOp::howManyNonStaticPNEs(), instantiatedOp::howManyNonStaticLiterals(), instantiatedOp::howMany());
-	nSignificantTimePoint = 1;
 	if (usingPlanningGraph){
-		nPG->constructingGraph(10);
+		nPG->constructingGraph(nSignificantTimePoint);
 	}
-	nPG->write(cout);
+	smtProblem = new CVC4Problem(instantiatedOp::howManyNonStaticPNEs(), instantiatedOp::howManyNonStaticLiterals(), instantiatedOp::howMany());
+	myTranslator = new Translator(smtProblem);
+	nSignificantTimePoint = 1;
+
 }
 
 bool SimpleModaber::tryToSolve(){
-/*
-	bool foundSolution = false;
-	Translator myTranslator (smtProblem, myAnalyzer, numericRPG);
-	myTranslator.addInitialState();
 
+	bool foundSolution = false;
 	while (!foundSolution){
-		smtProblem->push();
-		myTranslator.addGoals(nSignificantTimePoint - 1);
+		myTranslator->prepare(nSignificantTimePoint);
 		cout  << "nSignificantTimePoint: " << nSignificantTimePoint << endl;
-		foundSolution = smtProblem->solve();
+		cout << "solving ..." << endl;
+		foundSolution = myTranslator->solve();
+		cout << "end solving" << endl;
 		if (!foundSolution){
+			if (usingPlanningGraph){
+				cout << "constructing NGP" << endl;
+				nPG->constructingGraph(nSignificantTimePoint);
+				cout << "end constructing" << endl;
+			}
 			nSignificantTimePoint++;
-			smtProblem->pop();
-			smtProblem->guaranteeSize(nSignificantTimePoint);
-			myTranslator.addActions(nSignificantTimePoint - 2);
-			myTranslator.addActionMutex(nSignificantTimePoint - 2);
-			myTranslator.addExplanatoryAxioms(nSignificantTimePoint - 1);
+		}else{
 		}
 	}
 	return foundSolution;
-	*/
-	return true;
 }
 
 
 
 SimpleModaber::SimpleModaber(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph) {
 	initialization(domainFilePath, problemFilePath, usingPlanningGraph);
-/*	bool foundSolution;
+	bool foundSolution;
 	foundSolution = tryToSolve();
 	if (foundSolution){
 		cout << "The plan is: " << endl;
@@ -71,10 +71,10 @@ SimpleModaber::SimpleModaber(char *domainFilePath, char *problemFilePath, bool u
 		ofstream fout ("solution");
 		extractSolution(fout, smtProblem);
 	}
-*/
 }
 
 SimpleModaber::~SimpleModaber() {
+	delete (myTranslator);
 	delete (smtProblem);
 }
 

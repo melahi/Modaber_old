@@ -4,31 +4,46 @@
 #include "Utilities.h"
 #include "Translator.h"
 #include "MyTimer.h"
+#include "MyAtom.h"
 #include <ptree.h>
+#include <limits>
 
 using namespace VAL;
 using namespace Inst;
 
 
+using namespace mdbr;
+
+
+void Translator::prepareGoals() {
+	smtProblem->inActivePermanentChange();
+	smtProblem->clearAssertionList();
+	addGoals(translatedLength - 1);
+	goals = smtProblem->getAssertions();
+}
 
 void Translator::prepare (int length){
+	if (length == 1 && translatedLength == 1) {
+		prepareGoals();
+		return;
+	}
+
 	if (translatedLength >= length){
 		CANT_HANDLE("prepare function is called with the smaller number of length than it is translated");
 		return;
 	}
+
 	smtProblem->guaranteeSize(length);
+	smtProblem->activePermanentChange();
 	for (; translatedLength < length; translatedLength++){
-		smtProblem->clearAssertionList();
 		addActions(translatedLength - 1);
 		addActionMutex(translatedLength - 1);
 		addExplanatoryAxioms(translatedLength);
-		smtProblem->assertFormula();
 	}
+	smtProblem->inActivePermanentChange();
 
 	//Find goals expression
-	smtProblem->clearAssertionList();
-	addGoals(translatedLength - 1);
-	goals = smtProblem->getAssertions();
+	prepareGoals();
 }
 
 
@@ -72,8 +87,8 @@ void Translator::addActions (int significantTimePoint){
 	iterEnd = instantiatedOp::opsEnd();
 	FastEnvironment *env;
 	for (; iter != iterEnd; ++iter){
-			env = (*iter)->getEnv();
-		if (myProblem.actions[(*iter)->getID()].firstVisitedLayer <= significantTimePoint){
+		env = (*iter)->getEnv();
+		if (isVisited(myProblem.actions[(*iter)->getID()].firstVisitedLayer, significantTimePoint)){
 			addEffectList((*iter)->forOp()->effects, env, significantTimePoint + 1, (*iter)->getID());
 			addGoal((*iter)->forOp()->precondition, env, significantTimePoint, (*iter)->getID());
 		}
@@ -92,12 +107,12 @@ void Translator::addExplanatoryAxioms (int significantTimePoint){
 	for (int i = 0; i < nProposition; i++){
 		smtProblem->startNewClause();
 		smtProblem->addConditionToCluase(i, significantTimePoint, false);
-		if (myProblem.propositions[i].firstVisitedLayer <= significantTimePoint){
+		if (isVisited(myProblem.propositions[i].firstVisitedLayer, significantTimePoint)){
 			smtProblem->addConditionToCluase(i, significantTimePoint - 1, true);
 			actionIt = myProblem.propositions[i].adderActions.begin();
 			actionItEnd = myProblem.propositions[i].adderActions.end();
 			for (; actionIt != actionItEnd; ++actionIt){
-				if ((*actionIt)->firstVisitedLayer < significantTimePoint){
+				if (isVisited((*actionIt)->firstVisitedLayer, significantTimePoint - 1)){
 					smtProblem->addActionToClause((*actionIt)->valAction->getID(), significantTimePoint - 1, true);
 				}
 			}
@@ -106,7 +121,7 @@ void Translator::addExplanatoryAxioms (int significantTimePoint){
 	}
 
 	for (int i = 0; i < nProposition; i++){
-		if (myProblem.propositions[i].firstVisitedLayer >= significantTimePoint){
+		if (!isVisited(myProblem.propositions[i].firstVisitedLayer, significantTimePoint - 1)){
 			continue;
 		}
 		smtProblem->startNewClause();
@@ -115,7 +130,7 @@ void Translator::addExplanatoryAxioms (int significantTimePoint){
 		actionIt = myProblem.propositions[i].deleterActions.begin();
 		actionItEnd = myProblem.propositions[i].deleterActions.end();
 		for (; actionIt != actionItEnd; ++actionIt){
-			if ((*actionIt)->firstVisitedLayer < significantTimePoint){
+			if (isVisited((*actionIt)->firstVisitedLayer, significantTimePoint - 1)){
 				smtProblem->addActionToClause((*actionIt)->valAction->getID(), significantTimePoint - 1, true);
 			}
 		}
@@ -129,7 +144,7 @@ void Translator::addExplanatoryAxioms (int significantTimePoint){
 		actionIt = myProblem.variables[i].modifierActions.begin();
 		actionItEnd = myProblem.variables[i].modifierActions.end();
 		for (; actionIt != actionItEnd; ++actionIt){
-			if ((*actionIt)->firstVisitedLayer < significantTimePoint){
+			if (isVisited((*actionIt)->firstVisitedLayer, significantTimePoint - 1)){
 				smtProblem->addActionToClause((*actionIt)->valAction->getID(), significantTimePoint - 1, true);
 			}
 		}
@@ -141,7 +156,7 @@ void Translator::addExplanatoryAxioms (int significantTimePoint){
 void Translator::addActionMutex (int significantTimePoint){
 	int nAction = myProblem.actions.size();
 	for (int i = 0; i < nAction; ++i){
-		if (myProblem.actions[i].firstVisitedLayer > significantTimePoint){
+		if (!isVisited(myProblem.actions[i].firstVisitedLayer, significantTimePoint)){
 			continue;
 		}
 		set <MyAction *>::const_iterator iter, iterEnd;
@@ -152,13 +167,52 @@ void Translator::addActionMutex (int significantTimePoint){
 				// Because we want to ensure just one clause for each mutex is inserted so just if the id of first action is less than the second one we inserted the corresponding mutex clause
 				continue;
 			}
-			if ((*iter)->firstVisitedLayer > significantTimePoint){
+			if (!isVisited((*iter)->firstVisitedLayer, significantTimePoint)){
 				continue;
 			}
 			smtProblem->startNewClause();
 			smtProblem->addActionToClause(myProblem.actions[i].valAction->getID(), significantTimePoint, false);
 			smtProblem->addActionToClause((*iter)->valAction->getID(), significantTimePoint, false);
 			smtProblem->endClause();
+		}
+	}
+}
+
+void Translator::addAtomMutex(int significantTimePoint){
+	// Prepare allFoundedAtoms list
+	list <MyAtom *> allFoundedAtoms;
+
+	int nPropositions = myProblem.propositions.size();
+	for (int i = 0; i < nPropositions; i++){
+		if (isVisited(myProblem.propositions[i].firstVisitedLayer, significantTimePoint)){
+			allFoundedAtoms.push_back(&(myProblem.propositions[i]));
+		}
+	}
+
+	int nVariables = myProblem.variables.size();
+	for (int i = 0; i < nVariables; i++){
+		map <double, MyValue>::iterator it, itEnd;
+		it = myProblem.variables[i].domain.begin();
+		itEnd = myProblem.variables[i].domain.end();
+		for (; it != itEnd; ++it){
+			if (isVisited(it->second.firstVisitedLayer, significantTimePoint)){
+				allFoundedAtoms.push_back(&(it->second));
+			}
+		}
+	}
+
+	list <MyAtom*>::iterator it, itEnd, it2;
+	it = allFoundedAtoms.begin();
+	itEnd = allFoundedAtoms.end();
+	for (; it != itEnd; ++it){
+		it2 = allFoundedAtoms.begin();
+		for (; it2 != it; ++it2){
+			if ((*it)->isMutex(significantTimePoint, *it2)){
+				smtProblem->startNewClause();
+				smtProblem->AddConditionToCluase(*it, significantTimePoint, false);
+				smtProblem->AddConditionToCluase(*it2, significantTimePoint, false);
+				smtProblem->endClause();
+			}
 		}
 	}
 }
@@ -176,7 +230,7 @@ void Translator::addSkechyPlan(SketchyPlan *sketchyPlan){
 }
 
 
-void Translator::addSimpleEffectList (polarity plrty, const pc_list<simple_effect*> &simpleEffectList, FastEnvironment *env, int significantTimePoint, int actionID){
+void Translator::addSimpleEffectList (polarity plrty, const pc_list<simple_effect*> &simpleEffectList, FastEnvironment *env, int significantTimePoint, int actionID /* = -1 */){
 	pc_list<simple_effect*>::const_iterator it = simpleEffectList.begin();
 	pc_list<simple_effect*>::const_iterator itEnd = simpleEffectList.end();
 	for (; it != itEnd; ++it){
@@ -189,7 +243,7 @@ void Translator::addSimpleEffectList (polarity plrty, const pc_list<simple_effec
 	}
 }
 
-void Translator::addAssignmentList (const pc_list <assignment *> &assignmentEffects, FastEnvironment *env, int significantTimePoint, int actionID){
+void Translator::addAssignmentList (const pc_list <assignment *> &assignmentEffects, FastEnvironment *env, int significantTimePoint, int actionID /* = -1 */){
 	pc_list<assignment*>::const_iterator it = assignmentEffects.begin();
 	pc_list<assignment*>::const_iterator itEnd = assignmentEffects.end();
 	for (; it != itEnd; ++it){
@@ -202,7 +256,7 @@ void Translator::addAssignmentList (const pc_list <assignment *> &assignmentEffe
 	}
 }
 
-void Translator::addEffectList (const effect_lists *effects, FastEnvironment *env, int significantTimePoint, int actionId){
+void Translator::addEffectList (const effect_lists *effects, FastEnvironment *env, int significantTimePoint, int actionId /* = -1 */){
 	addSimpleEffectList(E_POS, effects->add_effects, env, significantTimePoint, actionId);
 	addSimpleEffectList(E_NEG, effects->del_effects, env, significantTimePoint, actionId);
 	addAssignmentList(effects->assign_effects, env, significantTimePoint, actionId);
@@ -211,7 +265,7 @@ void Translator::addEffectList (const effect_lists *effects, FastEnvironment *en
 	}
 }
 
-void Translator::addGoal (const goal *gl, FastEnvironment *env, int significantTimePoint, int actionId){
+void Translator::addGoal (const goal *gl, FastEnvironment *env, int significantTimePoint, int actionId /* = -1 */){
 	const simple_goal *simple = dynamic_cast<const simple_goal *>(gl);
 	if (simple){
 		smtProblem->startNewClause();
@@ -250,11 +304,24 @@ void Translator::addGoal (const goal *gl, FastEnvironment *env, int significantT
 double Translator::solve(SketchyPlan *sketchyPlan){
 
 	//create assertions for intermediate and final goals
+
+	smtProblem->inActivePermanentChange();
 	smtProblem->clearAssertionList();
-	addSkechyPlan(sketchyPlan);
+	if (sketchyPlan != NULL){
+		addSkechyPlan(sketchyPlan);
+	}
 	smtProblem->insertAssertion(goals);
 	Expr translatedGoals = smtProblem->getAssertions();
 
 	//try to solve the problem
 	return smtProblem->solve(translatedGoals);
 }
+
+bool Translator::solve(){
+	double ret = solve(NULL);
+	if (ret == numeric_limits <double>::max()) {
+		return true;
+	}
+	return false;
+}
+

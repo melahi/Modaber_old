@@ -46,14 +46,15 @@ void Modaber::instantiation(char *domainFile, char *problemFile){
 
 	cout << "After filtering: " << instantiatedOp::howMany() << endl;
 
-	ProblemPrinter myPrinter;
-	myPrinter.printProblem();
+//	ProblemPrinter myPrinter;
+//	myPrinter.printProblem();
 }
 
 void Modaber::initialization(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph){
 	instantiation(domainFilePath, problemFilePath);
 	myProblem.initializing();
 	nPG = new NumericalPlanningGraph();
+	this->usingPlanningGraph = usingPlanningGraph;
 	if (!usingPlanningGraph){
 		nPG->ignoreGraph();
 	}

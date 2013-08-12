@@ -19,12 +19,12 @@ using namespace mdbr;
 
 void NumericalPlanningGraph::ignoreGraph(){
 	/* If this function called, Numerical Planning Graph won't constructed */
-	int nActions = 0;
+	int nActions = myProblem.actions.size();
 	for (int i = 0; i < nActions; i++){
 		myProblem.actions[i].firstVisitedLayer = 0;
 	}
 
-	int nProposition = 0;
+	int nProposition = myProblem.propositions.size();
 	for (int i = 0; i < nProposition; i++){
 		myProblem.propositions[i].firstVisitedLayer = 0;
 	}
@@ -83,6 +83,9 @@ void NumericalPlanningGraph::createInitialLayer(){
 
 bool NumericalPlanningGraph::extendOneLayer(){
 
+	//@TODO: Extending one layer takes a lot of time,
+	//		 I should do something for it!
+
 	if (numberOfLayers < 1){
 		// First layer is not created yet, so we should first create it!
 		createInitialLayer();
@@ -93,17 +96,30 @@ bool NumericalPlanningGraph::extendOneLayer(){
 
 	//If there is any instance of an action which is not executed before, check its applicability, if it can be applied, then apply it!!!
 	int nAction = myProblem.actions.size();
-
+	bool foundNewGroundedAction;
 	for (int i = 0; i < nAction; i++){
-		canContinue |= myProblem.actions[i].computeGroundedAction(numberOfLayers - 1);
+		foundNewGroundedAction = myProblem.actions[i].computeGroundedAction(numberOfLayers - 1);
+		if (foundNewGroundedAction){
+			set <MyGroundedAction>::iterator it, itEnd;
+			it = myProblem.actions[i].groundedActions.begin();
+			itEnd = myProblem.actions[i].groundedActions.end();
+			for (; it != itEnd; ++it){
+				if (it->firstVisitedLayer == -1){
+					MyGroundedAction *newFounded = const_cast <MyGroundedAction *> (&(*it));
+					newFounded->applyAction(numberOfLayers - 1);
+				}
+			}
+		}
+		canContinue |= foundNewGroundedAction;
 	}
 
 	int tempNumberOfDynamicMutex = numberOfDynamicMutexesInLastLayer;
 	numberOfDynamicMutexesInLastLayer = 0;
 
-	list <MyAtom *> allFoundedAtoms;
 
 	// Prepare allFoundedAtoms list
+	list <MyAtom *> allFoundedAtoms;
+
 	int nPropositions = myProblem.propositions.size();
 	for (int i = 0; i < nPropositions; i++){
 		if (myProblem.propositions[i].firstVisitedLayer != -1){
@@ -134,7 +150,6 @@ bool NumericalPlanningGraph::extendOneLayer(){
 			allFoundedGroundedActions.push_back(groundedAction);
 		}
 	}
-
 
 
 	//Find  no-op actions and other actions mutex for the layer
@@ -289,7 +304,7 @@ void NumericalPlanningGraph::write(ostream &sout){
 		for (actionIt = actions.begin(); actionIt != actionItEnd; ++actionIt){
 			if ((*actionIt)->firstVisitedLayer == i){
 				(*actionIt)->write(sout);
-				sout << ';';
+				sout << ", " << (*actionIt)->parentAction->valAction->getID() << ';';
 			}
 		}
 		sout << endl;

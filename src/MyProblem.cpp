@@ -70,7 +70,34 @@ void MyProblem::initializing(){
 		actions[i].initialize(instantiatedOp::getInstOp(i));
 	}
 
+	for (int i = 0; i < nAction; i++){
+		actions[i].computeStaticMutex();
+	}
+
 	updateInitialValues();
+
+}
+
+void MyProblem::print(){
+
+	cout << "Propositions: " << instantiatedOp::howManyNonStaticLiterals() << endl;
+	for (unsigned int i = 0; i < propositions.size(); i++){
+		cout << i << ' ' << propositions[i].originalLiteral->getStateID() << ' ';
+		propositions[i].originalLiteral->write(cout);
+		cout << endl;
+	}
+	cout << "Variables: " << instantiatedOp::howManyNonStaticPNEs() << endl;
+	for (unsigned int i = 0; i < variables.size(); i++){
+		cout << i << ' ' << variables[i].originalPNE->getStateID() << ' ';
+		variables[i].originalPNE->write(cout);
+		cout << endl;
+	}
+	cout << "Actions: " << instantiatedOp::howMany() << endl;
+	for (unsigned int i = 0; i < actions.size(); i++){
+		cout << i << ' ' << actions[i].valAction->getID() << ' ';
+		actions[i].valAction->write(cout);
+		cout << endl;
+	}
 }
 
 MyProblem::MyProblem() {

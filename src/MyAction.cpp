@@ -98,7 +98,7 @@ bool MyGroundedAction::isPreconditionSatisfied(goal *precondition, FastEnvironme
 			return true;
 		}
 
-		if (myProblem.propositions[lit2->getStateID()].firstVisitedLayer != -1 && myProblem.propositions[lit2->getStateID()].firstVisitedLayer <= layerNumber){
+		if ( isVisited(myProblem.propositions[lit2->getStateID()].firstVisitedLayer, layerNumber)){
 			return true;
 		}
 		return false;
@@ -165,7 +165,7 @@ bool MyGroundedAction::isApplicable(int layerNumber){
 
 void MyGroundedAction::applyAction(int layerNumber) {
 
-	if (firstVisitedLayer != -1 && firstVisitedLayer <= layerNumber){
+	if (isVisited(firstVisitedLayer, layerNumber)){
 		//This action has been applied before!
 		return;
 	}
@@ -547,6 +547,10 @@ bool MyAction::computeGroundedAction(int layerNumber){
 	 * if it is applicable then we add it to the collection of grounded actions
 	 */
 
+	if (valAction -> getID() == 84){
+		cout << "YES" << endl;
+	}
+
 	bool foundNewGroundedAction = false;
 
 	list <MyProposition *>::iterator it1, itEnd1;
@@ -562,7 +566,7 @@ bool MyAction::computeGroundedAction(int layerNumber){
 		}
 	}
 
-	list <MyVariable *>::iterator it3, itEnd3;
+	set <MyVariable *>::iterator it3, itEnd3;
 	it3 = variableNeeded.begin();
 	itEnd3 = variableNeeded.end();
 	for (; it3 != itEnd3; ++it3){
@@ -578,7 +582,7 @@ bool MyAction::computeGroundedAction(int layerNumber){
 		it3 = variableNeeded.begin();
 		bool foundedMutex = false;
 
-		for (; it3 != itEnd3 && !foundedMutex; ++ it3){
+		for (; it3 != itEnd3 && !foundedMutex; ++it3){
 			MyValue *lastSelectedValue = (*it3)->getValue();
 
 			//check if lastValue is mutex with other selected atoms
@@ -612,11 +616,12 @@ bool MyAction::computeGroundedAction(int layerNumber){
 		}
 
 		if (variableNeeded.size() > 0){
-			list <MyVariable *>::iterator itBegin5, it5;
+			set <MyVariable *>::iterator itBegin5, it5;
 			it5 = variableNeeded.end();
 			--it5;
 			itBegin5 = variableNeeded.begin();
 			while (true){
+				(*it5)->next(layerNumber);
 				if ((*it5)->isEnd()){
 					(*it5)->restart();
 					if (it5 == itBegin5){
@@ -626,7 +631,6 @@ bool MyAction::computeGroundedAction(int layerNumber){
 						it5--;
 					}
 				}else{
-					(*it5)->next();
 					break;
 				}
 			}
@@ -638,13 +642,16 @@ bool MyAction::computeGroundedAction(int layerNumber){
 }
 
 void MyAction::visitNewGroundedAction(int layerNumber, const MyGroundedAction &newGroundedAction){
-	if (firstVisitedLayer == -1 || firstVisitedLayer > layerNumber){
+	if (!isVisited(firstVisitedLayer, layerNumber)){
 		firstVisitedLayer = layerNumber;
 	}
-	pair <set <MyGroundedAction>::iterator, bool >inserted = groundedActions.insert(newGroundedAction);
-	MyGroundedAction *insertedGAction = const_cast <MyGroundedAction *> (&(*(inserted.first)));
-	insertedGAction->applyAction(layerNumber);
+	groundedActions.insert(newGroundedAction);
 }
+
+void MyAction::write(ostream &sout){
+	valAction->write(sout);
+}
+
 
 void MyGroundedAction::write(ostream &sout){
 	sout << "[";

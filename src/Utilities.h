@@ -14,6 +14,10 @@ using namespace std;
 #define EPSILON 1e-9
 
 
+#define isVisited(firstVisitedLayer, layerNumber) (firstVisitedLayer != -1 && firstVisitedLayer <= layerNumber)
+
+
+
 /*
  * selectRandom function select "numberOfSelected" unique number from the range of ["from", "to")
  * if "numberOfSelected" be greater than ("to" - "from") then we decrease "numberOfSelected" to

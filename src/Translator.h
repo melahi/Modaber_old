@@ -2,15 +2,20 @@
 #ifndef TRANSLATOR_H_
 #define TRANSLATOR_H_
 
+
 #include "CVC4Problem.h"
 #include "VALfiles/instantiation.h"
 #include "VALfiles/FastEnvironment.h"
 #include "SketchyPlan.h"
 #include "MyTimer.h"
 #include <ptree.h>
+#include "Utilities.h"
 
 using namespace VAL;
 using namespace Inst;
+
+
+
 
 
 
@@ -19,45 +24,30 @@ class Translator {
 private:
 	CVC4Problem *smtProblem;
 	Expr goals;
-
-
-	//Translate initial state of planning problem to SAT problem
+	void prepareGoals();
 	void addInitialState();
-
-	//Add goals to the SAT problem
-	void addGoals (int significantTimePoint);
-
-
-	//Insert actions' conditions for the specified time point in SAT problem
-	void addActions (int significantTimePoint);
-
-
-	//Insert Explanatory Axioms which is needed for SAT problem
-	void addExplanatoryAxioms (int significantTimePoint);
-
-	//Insert action mutex to the SAT problem
-	void addActionMutex (int significantTimePoint);
-
-	//Insert the sketchy plan to the SAT problem
-	void addSkechyPlan (SketchyPlan *sketchyPlan);
-
+	void addGoals(int significantTimePoint);
+	void addActions(int significantTimePoint);
+	void addExplanatoryAxioms(int significantTimePoint);
+	void addActionMutex(int significantTimePoint);
+	void addAtomMutex(int significantTimePoint);
+	void addSkechyPlan(SketchyPlan* sketchyPlan);
 
 public:
-
 	int translatedLength;
 
-	Translator (CVC4Problem *smtProblem): smtProblem(smtProblem)
-	{
-		smtProblem->clearAssertionList();
+	Translator(CVC4Problem* smtProblem) :
+		smtProblem(smtProblem) {
+		this->smtProblem->activePermanentChange();
 		addInitialState();
-		smtProblem->assertFormula();
+		this->smtProblem->inActivePermanentChange();
 		translatedLength = 1;
 	}
-
-	//Prepare "baseSATproblem" and "goals" vectors for a specified length
 	void prepare (int length);
 
 	double solve (SketchyPlan *sketchyPlan);
+
+	bool solve ();
 
 	virtual ~Translator(){}
 

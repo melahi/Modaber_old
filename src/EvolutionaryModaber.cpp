@@ -237,5 +237,6 @@ EvolutionaryModaber::EvolutionaryModaber(char *domainFilePath, char *problemFile
 
 EvolutionaryModaber::~EvolutionaryModaber() {
 	delete (myTranslator);
+	delete (smtProblem);
 }
 
