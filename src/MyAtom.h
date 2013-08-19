@@ -14,6 +14,7 @@
 #include <set>
 #include <iostream>
 #include "MyAction.h"
+#include "MyStateVariable.h"
 #include "VALfiles/instantiation.h"
 
 
@@ -31,6 +32,8 @@ class   MyValue;
 class MyAction;
 class   MyGroundedAction;
 
+class MyStateVariable;
+class MyStateValue;
 
 class MyAtom {
 public:
@@ -60,6 +63,8 @@ class MyProposition: public MyAtom {
 public:
 
 	Literal *originalLiteral;
+
+	MyStateValue *stateValue;
 
 	list <MyAction *> adderActions;
 	list <MyAction *> deleterActions;
@@ -120,17 +125,20 @@ public:
 	void restart () {
 		interanalState = domain.begin();
 	}
+
 	bool isEnd () {
 		if (interanalState == domain.end()){
 			return true;
 		}
 		return false;
 	}
+
 	void next (int layerNumber){
 		while (interanalState != domain.end() && (++interanalState)->second.firstVisitedLayer > layerNumber){
 			;
 		}
 	}
+
 	MyValue *getValue(){
 		return &(interanalState->second);
 	}

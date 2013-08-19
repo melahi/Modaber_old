@@ -20,8 +20,8 @@ src/modaberMain.d: ../src/modaberMain.cpp ../src/SimpleModaber.h \
  ../src/Utilities.h ../src/MyTimer.h \
  /home/sadra/masterThesis/Modaber/VALfiles/parsing/ptree.h \
  ../src/MyProblem.h ../src/MyAction.h ../src/MyAtom.h \
- ../src/NumericalPlanningGraph.h ../src/Translator.h ../src/SketchyPlan.h \
- ../src/EvolutionaryModaber.h
+ ../src/MyStateVariable.h ../src/NumericalPlanningGraph.h \
+ ../src/Translator.h ../src/SketchyPlan.h ../src/EvolutionaryModaber.h
 
 ../src/SimpleModaber.h:
 
@@ -74,6 +74,8 @@ src/modaberMain.d: ../src/modaberMain.cpp ../src/SimpleModaber.h \
 ../src/MyAction.h:
 
 ../src/MyAtom.h:
+
+../src/MyStateVariable.h:
 
 ../src/NumericalPlanningGraph.h:
 

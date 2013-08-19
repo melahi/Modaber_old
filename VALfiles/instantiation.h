@@ -341,6 +341,17 @@ public:
 		o << ")";
 	};
 
+	void myWrite(ostream & o) const
+	{
+		o << prop->head->getName() << "(";
+		transform(prop->args->begin(),--(prop->args->end()),
+			FlexiblePrint<string>(o,"",", "),LiteralParametersOutput(*env));
+		transform(--(prop->args->end()),prop->args->end(),
+			FlexiblePrint<string>(o,"",""),LiteralParametersOutput(*env));
+		o << ")";
+	};
+
+
 	const VAL::pred_symbol * getHead() const
 	{
 		return prop->head;

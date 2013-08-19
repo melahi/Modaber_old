@@ -19,7 +19,7 @@ src/Modaber.d: ../src/Modaber.cpp ../src/Modaber.h ../src/CVC4Problem.h \
  ../src/Utilities.h ../src/MyTimer.h \
  /home/sadra/masterThesis/Modaber/VALfiles/parsing/ptree.h \
  ../src/MyProblem.h ../src/MyAction.h ../src/MyAtom.h \
- ../src/NumericalPlanningGraph.h \
+ ../src/MyStateVariable.h ../src/NumericalPlanningGraph.h \
  /home/sadra/masterThesis/Modaber/VALfiles/TIM.h \
  /home/sadra/masterThesis/Modaber/VALfiles/TimSupport.h \
  /home/sadra/masterThesis/Modaber/VALfiles/TIMUtilities.h \
@@ -76,6 +76,8 @@ src/Modaber.d: ../src/Modaber.cpp ../src/Modaber.h ../src/CVC4Problem.h \
 ../src/MyAction.h:
 
 ../src/MyAtom.h:
+
+../src/MyStateVariable.h:
 
 ../src/NumericalPlanningGraph.h:
 

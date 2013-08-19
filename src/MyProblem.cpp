@@ -9,14 +9,98 @@
 #include "Utilities.h"
 #include "VALfiles/parsing/ptree.h"
 #include "VALfiles/instantiation.h"
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
+
 
 
 using namespace VAL;
 using namespace Inst;
+using namespace std;
 
 namespace mdbr {
 
 MyProblem myProblem;
+
+
+void MyProblem::buildingDTG(){
+	int nActions = actions.size();
+	for (int i = 0; i < nActions; i++){
+		vector <int> deleteStateValue (stateVariables.size(), -1);
+		vector <int> addStateValue (stateVariables.size(), -1);
+		set <MyProposition*>::iterator it1, itEnd1;
+		list <MyProposition*>::iterator it2, itEnd2;
+		itEnd1 = actions[i].deleteList.end();
+		itEnd2 = actions[i].addList.end();
+		for (it1 = actions[i].deleteList.begin(); it1 != itEnd1; ++it1){
+			deleteStateValue[ (*it1)->stateValue->theStateVariable->variableId ] = (*it1)->stateValue->valueId;
+		}
+		for (it2 = actions[i].addList.begin(); it2 != itEnd2; ++it2){
+			addStateValue[ (*it2)->stateValue->theStateVariable->variableId ] = (*it2)->stateValue->valueId;
+		}
+		int nStateVariables = stateVariables.size();
+		for (int j = 0; j < nStateVariables; j++){
+			if (deleteStateValue[j] != -1){
+				if (addStateValue[j] != -1){
+					stateVariables[j].domain[addStateValue[j]].providers[deleteStateValue[j]].push_back(&actions[i]);
+				}else { /* if addStateValue[j] == -1 means the action change the corresponding state value to the "<none of those>" state value */
+					stateVariables[j].domain[stateVariables[j].domain.size() - 1].providers[deleteStateValue[j]].push_back(&actions[i]);
+				}
+			}else if (addStateValue[j] != 1){
+				stateVariables[j].domain[addStateValue[j]].providers[stateVariables[j].domain.size() - 1].push_back(&actions[i]);
+			}
+		}
+	}
+}
+
+
+void MyProblem::readingSASPlusFile(){
+	map <string, MyProposition*> propositionName;
+	int propositionsSize = propositions.size();
+	for (int i = 0; i < propositionsSize; i++){
+		ostringstream sout;
+		propositions[i].originalLiteral->myWrite(sout);
+		propositionName [sout.str()] = &(propositions[i]);
+	}
+
+
+	fstream fin ("test.groups");
+
+	int nStateVariables;
+	fin >> nStateVariables;
+
+	string line;
+	getline(fin, line);
+
+	stateVariables.resize(nStateVariables);
+	for (int i = 0; i < nStateVariables; i++){
+		getline(fin, line);
+		int domainSize;
+		fin >> domainSize;
+		stateVariables[i].domain.resize(domainSize);
+		stateVariables[i].variableId = i;
+		getline(fin, line);
+		for (int j = 0; j < domainSize; j++){
+			getline(fin, line);
+			size_t index = line.find("Atom ");
+			if (index != string::npos){
+				index += 5;   /* strlen("Atom "); */
+				string theName = line.substr(index);
+				stateVariables[i].domain[j] = MyStateValue (j, propositionName[theName], &(stateVariables[i]));
+			}else{
+				index = line.find ("<none of those>");
+				if (index != string::npos){
+					stateVariables[i].domain[j] = MyStateValue (j, NULL, &(stateVariables[i]));
+				}else{
+					CANT_HANDLE("can't handle some state value!!!!");
+				}
+			}
+		}
+	}
+}
+
 
 void MyProblem::updateInitialValues(){
 	pc_list<assignment*>::const_iterator it = current_analysis->the_problem->initial_state->assign_effects.begin();
@@ -76,6 +160,8 @@ void MyProblem::initializing(){
 
 	updateInitialValues();
 
+	readingSASPlusFile();
+	buildingDTG();
 }
 
 void MyProblem::print(){

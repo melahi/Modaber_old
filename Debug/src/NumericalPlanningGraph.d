@@ -1,5 +1,6 @@
 src/NumericalPlanningGraph.d: ../src/NumericalPlanningGraph.cpp \
  ../src/MyProblem.h ../src/MyAction.h ../src/MyAtom.h \
+ ../src/MyStateVariable.h \
  /home/sadra/masterThesis/Modaber/VALfiles/instantiation.h \
  /home/sadra/masterThesis/Modaber/VALfiles/FastEnvironment.h \
  /home/sadra/masterThesis/Modaber/VALfiles/parsing/ptree.h \
@@ -25,6 +26,8 @@ src/NumericalPlanningGraph.d: ../src/NumericalPlanningGraph.cpp \
 ../src/MyAction.h:
 
 ../src/MyAtom.h:
+
+../src/MyStateVariable.h:
 
 /home/sadra/masterThesis/Modaber/VALfiles/instantiation.h:
 

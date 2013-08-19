@@ -9,6 +9,7 @@ CPP_SRCS += \
 ../src/MyAction.cpp \
 ../src/MyAtom.cpp \
 ../src/MyProblem.cpp \
+../src/MyStateVariable.cpp \
 ../src/MyTimer.cpp \
 ../src/NumericalPlanningGraph.cpp \
 ../src/PreconditionFinder.cpp \
@@ -23,6 +24,7 @@ OBJS += \
 ./src/MyAction.o \
 ./src/MyAtom.o \
 ./src/MyProblem.o \
+./src/MyStateVariable.o \
 ./src/MyTimer.o \
 ./src/NumericalPlanningGraph.o \
 ./src/PreconditionFinder.o \
@@ -37,6 +39,7 @@ CPP_DEPS += \
 ./src/MyAction.d \
 ./src/MyAtom.d \
 ./src/MyProblem.d \
+./src/MyStateVariable.d \
 ./src/MyTimer.d \
 ./src/NumericalPlanningGraph.d \
 ./src/PreconditionFinder.d \
