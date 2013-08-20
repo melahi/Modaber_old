@@ -28,16 +28,16 @@ void PreconditionFinder::simpleGoalAnalyzer(const proposition *prop){
 	myProblem.propositions[lit2->getStateID()].userActions.push_back(myAction);
 }
 
-void PreconditionFinder::expressionAnalyzer (const expression *expr){
+void PreconditionFinder::expressionAnalyzer (const expression *expr, bool isPrecondition){
 	const binary_expression* binary = dynamic_cast <const binary_expression *> (expr);
 	if (binary){
-		expressionAnalyzer(binary->getLHS());
-		expressionAnalyzer(binary->getRHS());
+		expressionAnalyzer(binary->getLHS(), true);
+		expressionAnalyzer(binary->getRHS(), true);
 		return;
 	}
 	const uminus_expression* uMinus = dynamic_cast<const uminus_expression *> (expr);
 	if (uMinus){
-		expressionAnalyzer(uMinus->getExpr());
+		expressionAnalyzer(uMinus->getExpr(), true);
 		return;
 	}
 	const num_expression* numExpr = dynamic_cast<const num_expression *> (expr);
@@ -48,11 +48,14 @@ void PreconditionFinder::expressionAnalyzer (const expression *expr){
 	if (functionTerm){
 		PNE pne = PNE(functionTerm, env);
 		PNE *pne2 = instantiatedOp::findPNE(&pne);
-		if (pne2->getStateID() == -1){
+		if (!pne2 || pne2->getStateID() == -1){
 			return;
 		}
 		myAction->variableNeeded.insert( &(myProblem.variables[pne2->getStateID()]) );
 		myProblem.variables[pne2->getStateID()].userActions.push_back(myAction);
+		if (isPrecondition){
+			myProblem.variables[pne2->getStateID()].visitInPrecondition = true;
+		}
 		return;
 	}
 	CANT_HANDLE("Can't handle some expression in analyzing!")
@@ -67,8 +70,8 @@ void PreconditionFinder::operator() (const goal *gl){
 	}
 	const comparison *comp = dynamic_cast<const comparison*> (gl);
 	if (comp){
-		expressionAnalyzer(comp->getLHS());
-		expressionAnalyzer(comp->getRHS());
+		expressionAnalyzer(comp->getLHS(), true);
+		expressionAnalyzer(comp->getRHS(), true);
 		return;
 	}
 	const conj_goal *conjunctive = dynamic_cast<const conj_goal *>(gl);

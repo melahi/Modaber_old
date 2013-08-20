@@ -139,7 +139,8 @@ bool NumericalPlanningGraph::extendOneLayer(){
 
 
 	//Prepare allFoundedGroundedActions
-	list <MyGroundedAction *> allFoundedGroundedActions;
+	list <MyGroundedAction *> oldFoundedGroundedActions;
+	list <MyGroundedAction *> newFoundedGroundedActions;
 	for (int i = 0; i < nAction; i++){
 		set <MyGroundedAction>::iterator it, itEnd;
 		it = myProblem.actions[i].groundedActions.begin();
@@ -147,26 +148,36 @@ bool NumericalPlanningGraph::extendOneLayer(){
 		for (; it != itEnd; ++it){
 			MyGroundedAction *groundedAction;
 			groundedAction = const_cast <MyGroundedAction *> (&(*it));
-			allFoundedGroundedActions.push_back(groundedAction);
+			if (groundedAction->firstVisitedLayer == numberOfLayers - 1){
+				newFoundedGroundedActions.push_back(groundedAction);
+			}else{
+				oldFoundedGroundedActions.push_back(groundedAction);
+			}
 		}
 	}
 
 
-	//Find  no-op actions and other actions mutex for the layer
+cout << "New Actions: " << newFoundedGroundedActions.size() << endl;
+cout << "Old Actions: " << oldFoundedGroundedActions.size() << endl;
+cout << "Atoms: " << allFoundedAtoms.size() << endl;
+
+	/*************** Finding mutex relation between no-op and other actions ***************/
+
 	list <MyAtom *>::iterator atomIt, atomItEnd;
 	atomItEnd = allFoundedAtoms.end();
 
 	list <MyGroundedAction *>::iterator gActionIt, gActionItEnd;
-	gActionIt = allFoundedGroundedActions.begin();
-	gActionItEnd = allFoundedGroundedActions.end();
 
+
+	gActionIt = newFoundedGroundedActions.begin();
+	gActionItEnd = newFoundedGroundedActions.end();
 	for (; gActionIt != gActionItEnd; ++gActionIt) {
 		atomIt = allFoundedAtoms.begin();
 		for (; atomIt != atomItEnd; ++atomIt){
 			if ((*atomIt)->firstVisitedLayer >= numberOfLayers){
 				continue;
 			}
-			if ((*gActionIt)->parentAction->isAtomStaticallyMutex(numberOfLayers - 1, *atomIt)){
+			if ((*gActionIt)->parentAction->isAtomStaticallyMutex(*atomIt)){
 				continue;
 			}
 			if ((*gActionIt)->checkDynamicAtomMutex(numberOfLayers - 1, *atomIt)){
@@ -177,13 +188,83 @@ bool NumericalPlanningGraph::extendOneLayer(){
 	}
 
 
+	gActionIt = oldFoundedGroundedActions.begin();
+	gActionItEnd = oldFoundedGroundedActions.end();
+	for (; gActionIt !=gActionItEnd; ++gActionIt){
+		map <MyAtom *, int>::iterator dynamicAtomMutexIt, dynamicAtomMutexItEnd;
+		dynamicAtomMutexIt = (*gActionIt)->lastLayerAtomMutexivity.begin();
+		dynamicAtomMutexItEnd = (*gActionIt)->lastLayerAtomMutexivity.end();
+		for (;dynamicAtomMutexIt != dynamicAtomMutexItEnd; ++dynamicAtomMutexIt){
+			if (dynamicAtomMutexIt->second == numberOfLayers - 2){
+				if ((*gActionIt)->checkDynamicAtomMutex(numberOfLayers - 1, dynamicAtomMutexIt->first)){
+					numberOfDynamicMutexesInLastLayer += 1;
+					(*gActionIt)->insertAtomMutex(numberOfLayers - 1, dynamicAtomMutexIt->first);
+				}
+			}
+		}
+	}
 
-	//Find action mutex for new layer
-	gActionIt = allFoundedGroundedActions.begin();
+	gActionIt = oldFoundedGroundedActions.begin();
+	gActionItEnd = oldFoundedGroundedActions.end();
+	for (; gActionIt != gActionItEnd; ++gActionIt) {
+		atomIt = allFoundedAtoms.begin();
+		for (; atomIt != atomItEnd; ++atomIt){
+			if ((*atomIt)->firstVisitedLayer == numberOfLayers - 1){
+				if ((*gActionIt)->parentAction->isAtomStaticallyMutex(*atomIt)){
+					continue;
+				}
+				if ((*gActionIt)->checkDynamicAtomMutex(numberOfLayers - 1, *atomIt)){
+					numberOfDynamicMutexesInLastLayer += 1;
+					(*gActionIt)->insertAtomMutex(numberOfLayers - 1, *atomIt);
+				}
+			}
+		}
+	}
+
+	/*************** End of finding mutex relation between no-op and other actions ***************/
+
+
+
+	/*************** Finding mutex relation between actions ***************/
+
+	gActionIt = oldFoundedGroundedActions.begin();
+	gActionItEnd = oldFoundedGroundedActions.end();
 	for (;gActionIt != gActionItEnd; ++gActionIt){
-		list <MyGroundedAction *>::iterator gActionIt2;
-		gActionIt2 = allFoundedGroundedActions.begin();
+		map <MyGroundedAction *, int>::iterator gActionIt2, gActionItEnd2;
+		gActionIt2 = (*gActionIt)->lastLayerMutexivity.begin();
+		gActionItEnd2 = (*gActionIt)->lastLayerMutexivity.end();
+		for (; gActionIt2 != gActionItEnd2; ++gActionIt2){
+			if (gActionIt2->second == numberOfLayers - 2 && (*gActionIt)->checkDynamicMutex(numberOfLayers - 1, gActionIt2->first)){
+				numberOfDynamicMutexesInLastLayer += 1;
+				(*gActionIt)->insertMutex(numberOfLayers - 1, gActionIt2->first);
+				gActionIt2->first->insertMutex(numberOfLayers - 1, *gActionIt);
+			}
+		}
+	}
+
+	gActionIt = newFoundedGroundedActions.begin();
+	gActionItEnd = newFoundedGroundedActions.end();
+	for (;gActionIt != gActionItEnd; ++gActionIt){
+		list<MyGroundedAction*>::iterator gActionIt2, gActionItEnd2;
+
+		gActionIt2 = oldFoundedGroundedActions.begin();
+		gActionItEnd2 = oldFoundedGroundedActions.end();
+		for (;gActionIt2 != gActionItEnd2; ++gActionIt2){
+			if ((*gActionIt)->parentAction->isStaticallyMutex((*gActionIt2)->parentAction)){
+				continue;
+			}
+			if ((*gActionIt)->checkDynamicMutex(numberOfLayers - 1, *gActionIt2)){
+				numberOfDynamicMutexesInLastLayer += 1;
+				(*gActionIt)->insertMutex(numberOfLayers - 1, *gActionIt2);
+				(*gActionIt2)->insertMutex(numberOfLayers - 1, *gActionIt);
+			}
+		}
+
+		gActionIt2 = newFoundedGroundedActions.begin();
 		for (; gActionIt2 != gActionIt; ++gActionIt2){
+			if ((*gActionIt)->parentAction->isStaticallyMutex((*gActionIt2)->parentAction)){
+				continue;
+			}
 			if ((*gActionIt)->checkDynamicMutex(numberOfLayers - 1, *gActionIt2)){
 				numberOfDynamicMutexesInLastLayer += 1;
 				(*gActionIt)->insertMutex(numberOfLayers - 1, *gActionIt2);

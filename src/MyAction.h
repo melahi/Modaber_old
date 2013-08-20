@@ -56,8 +56,8 @@ public:
 	void initialize (instantiatedOp *valAction);
 
 	void computeStaticMutex();
-	bool isStaticallyMutex(int layerNumber, MyAction *otherAction);
-	bool isAtomStaticallyMutex (int layerNumber, MyAtom *atom);
+	bool isStaticallyMutex(MyAction *otherAction);
+	bool isAtomStaticallyMutex (MyAtom *atom);
 
 	bool computeGroundedAction (int layerNumber);
 	void visitNewGroundedAction (int layerNumber, const MyGroundedAction &newGroundedAction);

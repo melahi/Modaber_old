@@ -25,13 +25,12 @@ using namespace mdbr;
 
 void SimpleModaber::initialization(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph){
 	Modaber::initialization(domainFilePath, problemFilePath, usingPlanningGraph);
-	if (usingPlanningGraph){
-		nPG->constructingGraph(nSignificantTimePoint);
-	}
 	smtProblem = new CVC4Problem(instantiatedOp::howManyNonStaticPNEs(), instantiatedOp::howManyNonStaticLiterals(), instantiatedOp::howMany());
 	myTranslator = new Translator(smtProblem);
 	nSignificantTimePoint = 1;
-
+	if (usingPlanningGraph){
+		nPG->constructingGraph(nSignificantTimePoint);
+	}
 }
 
 bool SimpleModaber::tryToSolve(){
@@ -44,13 +43,12 @@ bool SimpleModaber::tryToSolve(){
 		foundSolution = myTranslator->solve();
 		cout << "end solving" << endl;
 		if (!foundSolution){
+			nSignificantTimePoint++;
 			if (usingPlanningGraph){
 				cout << "constructing NGP" << endl;
 				nPG->constructingGraph(nSignificantTimePoint);
 				cout << "end constructing" << endl;
 			}
-			nSignificantTimePoint++;
-		}else{
 		}
 	}
 	return foundSolution;

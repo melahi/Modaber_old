@@ -39,6 +39,7 @@ void Translator::prepare (int length){
 		addActions(translatedLength - 1);
 		addActionMutex(translatedLength - 1);
 		addExplanatoryAxioms(translatedLength);
+		addAtomMutex(translatedLength);
 	}
 	smtProblem->inActivePermanentChange();
 

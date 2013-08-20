@@ -27,7 +27,7 @@ public:
 
 	void simpleGoalAnalyzer(const proposition *prop);
 
-	void expressionAnalyzer (const expression *expr);
+	void expressionAnalyzer (const expression *expr, bool isPrecondition);
 
 	void operator() (const goal *gl);
 

@@ -106,6 +106,10 @@ bool MyGroundedAction::isPreconditionSatisfied(goal *precondition, FastEnvironme
 
 	const comparison *comp = dynamic_cast<const comparison*> (precondition);
 	if (comp){
+
+		//FIXME the following line is just for eliminating variables from Numerical Planning Graph;
+		return true;
+
 		double left = evaluateExpression(comp->getLHS(), env);
 		double right = evaluateExpression(comp->getRHS(), env);
 		switch(comp->getOp()){
@@ -198,6 +202,11 @@ void MyGroundedAction::addAssignmentList (const pc_list <assignment *> &assignme
 
 		PNE pne ( (*it)->getFTerm(), env );
 		PNE *pne2 = instantiatedOp::getPNE(&pne);
+
+		if (myProblem.variables[pne2->getStateID()].visitInPrecondition == false){
+			continue;
+		}
+
 		double value = variablePrecondition[pne2->getStateID()]->value;
 
 		double expressionValue = evaluateExpression((*it)->getExpr(), env);
@@ -249,7 +258,7 @@ bool MyGroundedAction::isDynamicallyMutex(int layerNumber, MyGroundedAction *oth
 bool MyGroundedAction::isMutex (int layerNumber, MyGroundedAction *otherAction){
 
 	//Check if otherAction is statically mutex with this action or not
-	if (parentAction->isStaticallyMutex(layerNumber, otherAction->parentAction)){
+	if (parentAction->isStaticallyMutex(otherAction->parentAction)){
 		return true;
 	}
 
@@ -277,7 +286,7 @@ bool MyGroundedAction::isAtomDynamicallyMutex (int layerNumber, MyAtom *otherAto
 bool MyGroundedAction::isAtomMutex (int layerNumber, MyAtom *otherAtom){
 
 	// Check if otherAtom is statically mutex with this action or not.
-	if (parentAction->isAtomStaticallyMutex(layerNumber, otherAtom)){
+	if (parentAction->isAtomStaticallyMutex(otherAtom)){
 		return true;
 	}
 
@@ -421,8 +430,8 @@ void MyAction::initialize (instantiatedOp *valAction){
 	preconditionFinder(oper->precondition);
 	asgnIter2 = oper->effects->assign_effects.begin();
 	for (;asgnIter2 != asgnIterEnd2; asgnIter2++){
-		preconditionFinder.expressionAnalyzer((*asgnIter2)->getExpr());
-		preconditionFinder.expressionAnalyzer((*asgnIter2)->getFTerm());
+		preconditionFinder.expressionAnalyzer((*asgnIter2)->getExpr(), false);
+		preconditionFinder.expressionAnalyzer((*asgnIter2)->getFTerm(), false);
 	}
 }
 
@@ -506,7 +515,7 @@ void MyAction::computeStaticMutex(){
 	return;
 }
 
-bool MyAction::isStaticallyMutex(int layerNumber, MyAction *otherAction){
+bool MyAction::isStaticallyMutex(MyAction *otherAction){
 
 	if (staticMutex.find(otherAction) != staticMutex.end()){
 			return true;
@@ -514,7 +523,7 @@ bool MyAction::isStaticallyMutex(int layerNumber, MyAction *otherAction){
 	return false;
 }
 
-bool MyAction::isAtomStaticallyMutex (int layerNumber, MyAtom *atom){
+bool MyAction::isAtomStaticallyMutex (MyAtom *atom){
 
 	/* if an atom is a proposition and it appeared in delete list of this action so we count it as a static mutex
 	 * if an atom is a value and the corresponding variable of it appeared in the modified
@@ -547,9 +556,7 @@ bool MyAction::computeGroundedAction(int layerNumber){
 	 * if it is applicable then we add it to the collection of grounded actions
 	 */
 
-	if (valAction -> getID() == 84){
-		cout << "YES" << endl;
-	}
+
 
 	bool foundNewGroundedAction = false;
 
@@ -569,6 +576,22 @@ bool MyAction::computeGroundedAction(int layerNumber){
 	set <MyVariable *>::iterator it3, itEnd3;
 	it3 = variableNeeded.begin();
 	itEnd3 = variableNeeded.end();
+
+
+
+/*  DEBUGGING: finding variable domains!
+if (variableNeeded.size() > 0){
+	write(cout);
+	cout << ", meeding variables: " << endl;
+	set <MyVariable *>::iterator it33;
+	it33 = variableNeeded.begin();
+	for(; it33 != itEnd3; ++it33){
+		(*it33)->write(cout);
+		cout << endl;
+	}
+}
+*/
+
 	for (; it3 != itEnd3; ++it3){
 		(*it3)->restart();
 		if ( (*it3)->isEnd() ){

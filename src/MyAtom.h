@@ -71,8 +71,8 @@ public:
 	list <MyAction *> userActions;    //The actions which need this proposition as their precondition
 
 
-	MyProposition(Literal *originalLiteral):MyAtom(), originalLiteral(originalLiteral){}
-	MyProposition():MyAtom() {}
+	MyProposition(Literal *originalLiteral):MyAtom(), originalLiteral(originalLiteral), stateValue(0){}
+	MyProposition():MyAtom(), originalLiteral(0), stateValue(0) {}
 
 	virtual void write (ostream &sout){
 		originalLiteral->write(sout);
@@ -109,10 +109,19 @@ public:
 	list <MyAction *> userActions;
 
 
+	/* FIXME: for now we assume that every variable which appears in some precondition is
+	 * important; but it is not completely true, perhaps a variable is appeared in an
+	 * assignment and the assignee be an important one, then the variable is also should
+	 * count as important variable!
+	 */
+	bool visitInPrecondition;
+
+
+
 	map <double, MyValue> domain;
 
-	MyVariable (PNE *originalPNE): originalPNE(originalPNE){}
-	MyVariable (){}
+	MyVariable (PNE *originalPNE): originalPNE(originalPNE), visitInPrecondition(false){}
+	MyVariable (): originalPNE(0), visitInPrecondition(false){}
 
 
 	void findValue (double value, int layerNumber, MyGroundedAction *action){

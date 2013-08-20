@@ -23,6 +23,9 @@ class MyProblem {
 private:
 	void readingSASPlusFile();
 	void buildingDTG();
+
+
+	void filterVariables();
 public:
 
 	vector <MyAction> actions;

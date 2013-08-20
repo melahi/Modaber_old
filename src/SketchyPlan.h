@@ -15,7 +15,7 @@ using namespace boost;
 class SketchyPlan {
 	/*
 	 * This class in equivalent to chromosome term in Evolutionary Algorithm
-	 * and every element intermediateGoals vector is equivalent to a Gene in EA
+	 * and every element of intermediateGoals vector is equivalent to a Gene in EA
 	 */
 private:
 	double propositionSelectionRatio;

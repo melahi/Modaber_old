@@ -25,6 +25,33 @@ namespace mdbr {
 MyProblem myProblem;
 
 
+void MyProblem::filterVariables(){
+	int nVariables = variables.size();
+
+	for (int i = 0; i < nVariables; i++){
+
+		//For eliminating variables from Numerical Planning Graph
+		//The following line should be eliminated as soon as possible
+		variables[i].visitInPrecondition = false;
+
+
+		if (variables[i].visitInPrecondition == true){
+			continue;
+		}
+		list <MyAction *>::iterator it, itEnd;
+		it = variables[i].userActions.begin();
+		itEnd = variables[i].userActions.end();
+		for (; it != itEnd; ++it){
+			(*it)->variableNeeded.erase(&variables[i]);
+		}
+		it = variables[i].modifierActions.begin();
+		itEnd = variables[i].modifierActions.end();
+		for (; it != itEnd; ++it){
+			(*it)->modifyingVariable.erase(&variables[i]);
+		}
+	}
+}
+
 void MyProblem::buildingDTG(){
 	int nActions = actions.size();
 	for (int i = 0; i < nActions; i++){
@@ -35,10 +62,14 @@ void MyProblem::buildingDTG(){
 		itEnd1 = actions[i].deleteList.end();
 		itEnd2 = actions[i].addList.end();
 		for (it1 = actions[i].deleteList.begin(); it1 != itEnd1; ++it1){
-			deleteStateValue[ (*it1)->stateValue->theStateVariable->variableId ] = (*it1)->stateValue->valueId;
+			if ((*it1)->stateValue != NULL){
+				deleteStateValue[ (*it1)->stateValue->theStateVariable->variableId ] = (*it1)->stateValue->valueId;
+			}
 		}
 		for (it2 = actions[i].addList.begin(); it2 != itEnd2; ++it2){
-			addStateValue[ (*it2)->stateValue->theStateVariable->variableId ] = (*it2)->stateValue->valueId;
+			if ((*it2)->stateValue != NULL){
+				addStateValue[ (*it2)->stateValue->theStateVariable->variableId ] = (*it2)->stateValue->valueId;
+			}
 		}
 		int nStateVariables = stateVariables.size();
 		for (int j = 0; j < nStateVariables; j++){
@@ -147,6 +178,13 @@ void MyProblem::initializing(){
 		}
 	}
 
+	updateInitialValues();
+
+	readingSASPlusFile();
+	buildingDTG();
+
+
+
 	//Preparing actions
 	int nAction = instantiatedOp::howMany();
 	actions.resize(nAction);
@@ -154,14 +192,12 @@ void MyProblem::initializing(){
 		actions[i].initialize(instantiatedOp::getInstOp(i));
 	}
 
+	filterVariables();
+
 	for (int i = 0; i < nAction; i++){
 		actions[i].computeStaticMutex();
 	}
 
-	updateInitialValues();
-
-	readingSASPlusFile();
-	buildingDTG();
 }
 
 void MyProblem::print(){
@@ -170,8 +206,25 @@ void MyProblem::print(){
 	for (unsigned int i = 0; i < propositions.size(); i++){
 		cout << i << ' ' << propositions[i].originalLiteral->getStateID() << ' ';
 		propositions[i].originalLiteral->write(cout);
+//		cout << "---> " << propositions[i].stateValue->theStateVariable->variableId << ", " << propositions[i].stateValue->valueId;
 		cout << endl;
 	}
+
+	cout << "State variables: " << stateVariables.size() << endl;
+	for (unsigned int i = 0; i < stateVariables.size(); i++){
+		cout << i << ' ' << stateVariables[i].domain.size() << endl;
+		for (unsigned int j = 0; j < stateVariables[i].domain.size(); j++){
+			cout << "   " << j << ": ";
+			if (stateVariables[i].domain[j].theProposition != NULL){
+				stateVariables[i].domain[j].theProposition->originalLiteral->write(cout);
+			}else{
+				cout << "<none of those>" << endl;
+			}
+			cout << endl;
+		}
+		cout << endl;
+	}
+
 	cout << "Variables: " << instantiatedOp::howManyNonStaticPNEs() << endl;
 	for (unsigned int i = 0; i < variables.size(); i++){
 		cout << i << ' ' << variables[i].originalPNE->getStateID() << ' ';
