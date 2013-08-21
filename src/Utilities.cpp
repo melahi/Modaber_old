@@ -12,7 +12,7 @@ using namespace std;
  * if "numberOfSelected" be greater than ("to" - "from") then we decrease "numberOfSelected" to
  * the value of ("to" - "from").
  */
-vector <int> selectRandom (int from, int to, int numberOfSelected){
+inline vector <int> selectRandomly (int from, int to, int numberOfSelected){
 	vector <int> ret;
 	vector <bool> markedNumber(to - from, false);
 	numberOfSelected = min (numberOfSelected, (to - from));
@@ -39,10 +39,42 @@ vector <int> selectRandom (int from, int to, int numberOfSelected){
 	return ret;
 }
 
+inline int selectRandomly (const vector <double> &probabilityDistribution){
+	double myRand = drand48();
+	int j = 0;
+	while (myRand - probabilityDistribution[j] > EPSILON){
+		myRand -= probabilityDistribution[j];
+		j++;
+	}
+	return j;
+}
+
+
+inline void normolizing (vector <double> &myVector){
+	normolizing(myVector, vectorSum(myVector));
+}
+
+inline void normolizing (vector <double> &myVector, double sumOfMyVector){
+	int lng = myVector.size();
+	for (int i = 0; i < lng; i++){
+		myVector[i] /= sumOfMyVector;
+	}
+}
+
+
+//calculate sum of myVector's elements
+inline double vectorSum (const vector <double> &myVector){
+	int lng = myVector.size();
+	double sum = 0;
+	for (int i = 0; i < lng; i++){
+		sum += myVector[i];
+	}
+	return sum;
+}
 
 int testSelectRandom(){
 	for (int i = 0; i < 1000; i++){
-		vector <int> myRandom = selectRandom(2, 12, 5);
+		vector <int> myRandom = selectRandomly(2, 12, 5);
 		vector <bool> marked (10, false);
 		for (unsigned int j = 0; j < myRandom.size(); j++){
 			if (myRandom[j] < 2 || myRandom[j] >= 12){

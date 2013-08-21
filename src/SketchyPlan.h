@@ -4,12 +4,15 @@
 
 
 #include "VALfiles/parsing/ptree.h"
+#include "MyStateVariable.h"
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
 using namespace VAL;
 using namespace std;
 using namespace boost;
+
+using namespace mdbr;
 
 
 class SketchyPlan {
@@ -18,23 +21,33 @@ class SketchyPlan {
 	 * and every element of intermediateGoals vector is equivalent to a Gene in EA
 	 */
 private:
-	double propositionSelectionRatio;
 	int length;
+
 public:
 
 	double fitness;
 
-	vector < vector < shared_ptr <goal> > > milestones;
+
+	vector < vector < shared_ptr <goal> > > milestones;  //The first index determine state-variable and second index determine layer number
+	vector < vector < MyStateValue *> > stateValues;   //The first index determine state-variable and second index determine layer number
+	int nStateVariables;
 
 
 
 	SketchyPlan(int length);
 
-	void createRandomIntermediateGoalLayer (int layerNumber);
-
 	void createRandomSketchyPlan(int length);
 
-	void increaseOneLayer ();
+	//In the buildingWalk function, a walk from Domain Transition Graph of a state variable is built
+	void buildingWalk (int variableId);
+
+
+	void createStateValuesForLastLayer();
+	void createStateValuesForLastLayer(goal *the_goal, FastEnvironment *env);
+
+
+	//In the following function milestones vector are built
+	void convertStateValuesToMilestones();
 
 	SketchyPlan crossover(SketchyPlan *mother);
 

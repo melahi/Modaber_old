@@ -2,7 +2,6 @@
 
 #include "SketchyPlan.h"
 #include "Utilities.h"
-#include "NumericRPG.h"
 #include "VALfiles/instantiation.h"
 #include "VALfiles/parsing/ptree.h"
 #include <vector>
@@ -14,60 +13,114 @@ using namespace std;
 using namespace VAL;
 using namespace Inst;
 
-SketchyPlan::SketchyPlan(NumericRPG *numericRPG, int length): numericRPG(numericRPG), length (length) {
-	propositionSelectionRatio = 1.0 / 10.0;
+SketchyPlan::SketchyPlan(int length): length (length) {
 	fitness = -1;
 	createRandomSketchyPlan(length);
 }
 
-void SketchyPlan::createRandomIntermediateGoalLayer(int layerNumber){
-
-	milestones[layerNumber].clear();
-
-	LiteralStore::iterator it, itEnd;
-	itEnd = instantiatedOp::literalsEnd();
-	it = instantiatedOp::literalsBegin();
-
-
-	for (;it != itEnd; it++){
-		if ((*it)->getStateID() != -1 && numericRPG->firstVisitedProposition[(*it)->getStateID()] <= layerNumber){
-			if (drand48() <= propositionSelectionRatio){
-
-				//Creating a goal from selected proposition
-				parameter_symbol_list * pl = new VAL::parameter_symbol_list;
-				for(VAL::parameter_symbol_list::iterator it2 = (*it)->toProposition()->args->begin();it2 != (*it)->toProposition()->args->end();++it2)
-				{
-					pl->push_back(*it2);
-				}
-				proposition *prop = new VAL::proposition((*it)->toProposition()->head,pl);
-				shared_ptr <goal> simpleGoal (new simple_goal(prop, E_POS));
-
-
-				milestones[layerNumber].push_back(simpleGoal);
-			}
-		}
-	}
-
-
-}
 
 void SketchyPlan::createRandomSketchyPlan(int length) {
 	if (length < 3)
 		return;
-	milestones.resize(length);
 
+	this->length = length;
+	nStateVariables = myProblem.stateVariables.size();
 
-	for (int i = 1; i < length - 1; i += 2){
-		createRandomIntermediateGoalLayer(i);
+	stateValues = vector <vector <MyStateValue*> > (nStateVariables, vector <MyStateValue*> (length, NULL) );
+
+	createStateValuesForLastLayer();
+
+	for (int i = 0; i < nStateVariables; i++){
+		buildingWalk(i);
 	}
 }
 
-void SketchyPlan::increaseOneLayer(){
-	length++;
-	milestones.resize(length);
+void SketchyPlan::buildingWalk(int variableId) {
+	myProblem.environment.prepare(length);
 
-	//Perhaps its not bad to do something after resizing the milestones!!!
+	for (int layerNumber = length - 2; layerNumber >= 0; layerNumber--){
+		MyStateValue *nextStateValue = stateValues[variableId][layerNumber + 1];
+		int j = selectRandomly(myProblem.environment.probability[layerNumber][variableId][nextStateValue->valueId]);
+		stateValues[variableId][layerNumber] = &(myProblem.stateVariables[variableId].domain[j]);
+	}
+}
 
+void SketchyPlan::createStateValuesForLastLayer(){
+
+	FastEnvironment env(0);
+	createStateValuesForLastLayer(current_analysis->the_problem->the_goal, &env);
+
+	for (int i = 0; i < nStateVariables; i++){
+		if (stateValues[length - 1][i] == NULL){
+			int domainSize = myProblem.stateVariables[i].domain.size();
+			vector <double> temp(domainSize, 0);
+			double sum = 0;
+			for (int j = 0; j < domainSize; j++){
+				if (myProblem.stateVariables[i].domain[j].theProposition->firstVisitedLayer <= length - 1){
+					sum += 1;
+					temp[j] = 1;
+				}
+			}
+			normolizing(temp, sum);
+			int selectedStateValueIndex = selectRandomly(temp);
+			stateValues[length - 1][i] = myProblem.stateVariables[i].domain[selectedStateValueIndex];
+		}
+	}
+}
+
+void SketchyPlan::createStateValuesForLastLayer(goal *the_goal, FastEnvironment *env){
+	const simple_goal *simple = dynamic_cast<const simple_goal *>(the_goal);
+	if (simple){
+
+		Literal lit (simple->getProp(), env);
+		Literal *lit2 = instantiatedOp::findLiteral(&lit);
+
+		if (!lit2){
+			CANT_HANDLE("Warning: can't find some literal in creating state values!!!");
+			lit2->write(cerr);
+			return;
+		}
+
+		if (lit2->getStateID() == -1){
+			return;
+		}
+
+		MyStateValue *stateValue = myProblem.propositions[lit2->getStateID()].stateValue;
+		stateValues[length - 1][stateValue->theStateVariable->variableId] = stateValue;
+		return;
+	}
+	const conj_goal *conjunctive = dynamic_cast<const conj_goal *>(the_goal);
+	if (conjunctive){
+		const goal_list *goalList = conjunctive->getGoals();
+		goal_list::const_iterator it = goalList->begin();
+		goal_list::const_iterator itEnd = goalList->end();
+		for (; it != itEnd; it++){
+			createStateValuesForLastLayer(*it, env);
+		}
+		return;
+	}
+	CANT_HANDLE("Can't create some state value from some goals!!!");
+}
+
+
+void SketchyPlan::convertStateValuesToMilestones(){
+	milestones = vector <vector < shared_ptr <goal> > > (length, vector < shared_ptr<goal> > (nStateVariables, shared_ptr<goal> (NULL)) );
+
+	for (int layerNumber = 0; layerNumber < length; ++layerNumber){
+		for (int stateValueId = 0; stateValueId < nStateVariables; ++stateValueId){
+
+			//Creating a goal from selected proposition
+			const proposition *originalProposition = stateValues[layerNumber][stateValueId]->theProposition->originalLiteral->toProposition();
+			parameter_symbol_list * pl = new parameter_symbol_list;
+			for(VAL::parameter_symbol_list::iterator it2 = originalProposition->args->begin();it2 != originalProposition->args->end(); ++it2)
+			{
+				pl->push_back(*it2);
+			}
+			proposition *prop = new proposition(originalProposition->head,pl);
+
+			milestones[layerNumber][stateValueId] = shared_ptr <goal> (new simple_goal(prop, E_POS));
+		}
+	}
 }
 
 SketchyPlan SketchyPlan::crossover(SketchyPlan *mother) {

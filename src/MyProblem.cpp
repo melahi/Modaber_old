@@ -146,7 +146,7 @@ void MyProblem::updateInitialValues(){
 		if (pne2 && numExpr && (*it)->getOp() == E_ASSIGN){
 			initialValue[pne2->getGlobalID()] = numExpr->double_value();
 		}else{
-			CANT_HANDLE("Can't find Some Initial Value ")
+			CANT_HANDLE("Can't find Some Initial Value ");
 		}
 	}
 
@@ -178,11 +178,11 @@ void MyProblem::initializing(){
 		}
 	}
 
-	updateInitialValues();
 
 	readingSASPlusFile();
 	buildingDTG();
 
+	updateInitialValues();
 
 
 	//Preparing actions

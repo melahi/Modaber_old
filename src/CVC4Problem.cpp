@@ -136,6 +136,13 @@ void CVC4Problem::endClause(){
 void CVC4Problem::addLiteral ( polarity plrty, const proposition *prop, FastEnvironment *env, int significantTimePoint){
 	Literal lit (prop, env);
 	Literal *lit2 = instantiatedOp::findLiteral(&lit);
+
+	if (!lit2){
+		CANT_HANDLE("Warning: can't find some literal!!!");
+		lit2->write(cerr);
+		ignoreCluase = true;
+		return;
+	}
 	if (lit2->getStateID() == -1){
 		ignoreCluase = true;
 		return;

@@ -11,6 +11,7 @@
 #include "MyAction.h"
 #include "MyAtom.h"
 #include "MyStateVariable.h"
+#include "MyEnvironment.h"
 
 #include <vector>
 
@@ -32,6 +33,8 @@ public:
 	vector <MyProposition> propositions;
 	vector <MyVariable> variables;
 	vector <MyStateVariable> stateVariables;
+
+	MyEnvironment environment;
 
 	vector <double> initialValue;  //The initial value for each variable
 
