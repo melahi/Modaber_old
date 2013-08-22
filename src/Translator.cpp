@@ -224,9 +224,9 @@ void Translator::addSkechyPlan(SketchyPlan *sketchyPlan){
 	sketchyPlan->convertStateValuesToMilestones(milestones);
 	int nStateVariables= milestones.size();
 	FastEnvironment env(0);
-	for (int i = 0; i < nStateVariables; i++){
+	for (int i = 1; i < nStateVariables; i++){
 		int length = milestones[i].size();
-		for (int j = 0; j < length; j++){
+		for (int j = 1; j < length; j++){
 			addGoal(milestones[i][j].get(), &env, j);
 		}
 	}
@@ -299,7 +299,7 @@ void Translator::addGoal (const goal *gl, FastEnvironment *env, int significantT
 		}
 		return;
 	}
-	CANT_HANDLE("translating some GOAL");
+	CANT_HANDLE("can't translate some GOAL");
 }
 
 //bool firstTime = true;

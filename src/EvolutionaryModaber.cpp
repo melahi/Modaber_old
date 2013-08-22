@@ -61,7 +61,6 @@ void EvolutionaryModaber::increasingLength(vector <SketchyPlan> &population){
 	int selectedPopulation = (selectRatioFromLastGeneration * population.size()) ;
 
 	lengthOfChromosomes++;
-	myTranslator->prepare(lengthOfChromosomes);
 	if (usingPlanningGraph){
 		nPG->constructingGraph(lengthOfChromosomes);
 	}
