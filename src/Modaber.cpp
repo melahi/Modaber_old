@@ -69,7 +69,7 @@ void Modaber::extractSolution(ostream &oss, CVC4Problem *smtProblem){
 	int nAction = instantiatedOp::howMany();
 	for (unsigned int i = 0; i < maximumSignificantTimePoint - 1; i++){
 		for (int j = 0; j < nAction; j++){
-			if (smtProblem->isActionUsed(j, i)){
+			if (isVisited(myProblem.actions[j].firstVisitedLayer, (int) i) && smtProblem->isActionUsed(j, i)){
 				instantiatedOp *action = instantiatedOp::getInstOp(j);
 				action->write(oss);
 				oss << endl;

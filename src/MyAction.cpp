@@ -91,6 +91,7 @@ bool MyGroundedAction::isPreconditionSatisfied(goal *precondition, FastEnvironme
 		if (simple->getPolarity() == E_NEG){
 			return true;
 		}
+
 		Literal lit(simple->getProp(), env);
 		Literal *lit2 = instantiatedOp::getLiteral(&lit);
 
@@ -98,7 +99,7 @@ bool MyGroundedAction::isPreconditionSatisfied(goal *precondition, FastEnvironme
 			return true;
 		}
 
-		if ( isVisited(myProblem.propositions[lit2->getStateID()].firstVisitedLayer, layerNumber)){
+		if ( isVisited(myProblem.propositions[lit2->getStateID()].firstVisitedLayer, layerNumber) ){
 			return true;
 		}
 		return false;
@@ -577,20 +578,6 @@ bool MyAction::computeGroundedAction(int layerNumber){
 	it3 = variableNeeded.begin();
 	itEnd3 = variableNeeded.end();
 
-
-
-/*  DEBUGGING: finding variable domains!
-if (variableNeeded.size() > 0){
-	write(cout);
-	cout << ", meeding variables: " << endl;
-	set <MyVariable *>::iterator it33;
-	it33 = variableNeeded.begin();
-	for(; it33 != itEnd3; ++it33){
-		(*it33)->write(cout);
-		cout << endl;
-	}
-}
-*/
 
 	for (; it3 != itEnd3; ++it3){
 		(*it3)->restart();

@@ -107,9 +107,9 @@ private:
 	SmtEngine smt;
 
 
-	static vector <Expr> variableExpr;
-	static vector <Expr> propositionExpr;
-	static vector <Expr> actionExpr;
+	static vector <Expr *> variableExpr;
+	static vector <Expr *> propositionExpr;
+	static vector <Expr *> actionExpr;
 	static unsigned int maximumSignificantTimePoint;
 
 
@@ -190,7 +190,7 @@ private:
 					return cvc4Problem->em.mkConst(Rational(nominator, denominator));
 				}
 				int index = cvc4Problem->getVariableIndex(pne2->getStateID(), significantTimepoint);
-				return cvc4Problem->variableExpr[index];
+				return *(cvc4Problem->variableExpr[index]);
 			}
 			CANT_HANDLE("can't handle One expression in converting to CVC4EXPR");
 			return Expr();

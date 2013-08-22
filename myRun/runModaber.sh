@@ -3,8 +3,8 @@
 #In the name of God
 
 
-Algorithm="Simple"
 Algorithm="Evolutionary"
+Algorithm="Simple"
 NPG="1"
 
 
