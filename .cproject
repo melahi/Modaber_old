@@ -30,8 +30,8 @@
 								<option id="gnu.cpp.compiler.option.optimization.level.1624239687" name="Optimization Level" superClass="gnu.cpp.compiler.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.debugging.level.1189239309" name="Debug Level" superClass="gnu.cpp.compiler.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.1217677842" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Modaber}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Modaber/VALfiles/parsing}&quot;"/>
+									<listOptionValue builtIn="false" value="../VALfiles/parsing"/>
+									<listOptionValue builtIn="false" value=".././"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.621605567" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>

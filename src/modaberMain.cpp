@@ -18,7 +18,6 @@ int main (int argc, char * argv[]){
 	}else{
 		cout << argc << ' ' << argv[argc - 1] << endl;
 	}
-
 //	SimpleModaber simpleModaber (argv[1], argv[2], usingPlanningGraph);
 
 	EvolutionaryModaber evolutionaryModaber(argv[1], argv[2], usingPlanningGraph);
