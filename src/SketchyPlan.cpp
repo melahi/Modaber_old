@@ -134,7 +134,7 @@ void SketchyPlan::convertStateValuesToMilestones(vector < vector < shared_ptr <g
 
 			if (stateValues[stateVariableId][layerNumber]->theProposition != NULL){
 				goal *theGoal = convertPropositionToGoal(stateValues[stateVariableId][layerNumber]->theProposition->originalLiteral->toProposition(), E_POS);
-				milestones[stateVariableId][layerNumber] = shared_ptr <goal> (theGoal);
+//				milestones[stateVariableId][layerNumber] = shared_ptr <goal> (theGoal);
 			}else{
 				MyStateVariable *theStateVariable = stateValues[stateVariableId][layerNumber]->theStateVariable;
 				int theValueId = stateValues[stateVariableId][layerNumber]->valueId;
@@ -146,7 +146,7 @@ void SketchyPlan::convertStateValuesToMilestones(vector < vector < shared_ptr <g
 						myGoalList->push_back(theGoal);
 					}
 				}
-				milestones[stateVariableId][layerNumber] = shared_ptr <goal> (new conj_goal(myGoalList));
+//				milestones[stateVariableId][layerNumber] = shared_ptr <goal> (new conj_goal(myGoalList));
 			}
 		}
 	}

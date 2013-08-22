@@ -52,7 +52,7 @@ void Modaber::instantiation(char *domainFile, char *problemFile){
 
 void Modaber::initialization(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph, bool usingSASPlus){
 	instantiation(domainFilePath, problemFilePath);
-	myProblem.initializing(usingPlanningGraph);
+	myProblem.initializing(usingSASPlus);
 	nPG = new NumericalPlanningGraph();
 	this->usingPlanningGraph = usingPlanningGraph;
 	if (!usingPlanningGraph){
