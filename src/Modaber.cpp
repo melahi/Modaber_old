@@ -50,14 +50,17 @@ void Modaber::instantiation(char *domainFile, char *problemFile){
 //	myPrinter.printProblem();
 }
 
-void Modaber::initialization(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph){
+void Modaber::initialization(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph, bool usingSASPlus){
 	instantiation(domainFilePath, problemFilePath);
-	myProblem.initializing();
+	myProblem.initializing(usingPlanningGraph);
 	nPG = new NumericalPlanningGraph();
 	this->usingPlanningGraph = usingPlanningGraph;
 	if (!usingPlanningGraph){
 		nPG->ignoreGraph();
 	}
+
+	smtProblem = new CVC4Problem(instantiatedOp::howManyNonStaticPNEs(), instantiatedOp::howManyNonStaticLiterals(), instantiatedOp::howMany());
+	myTranslator = new Translator(smtProblem);
 }
 
 void Modaber::extractSolution(ostream &oss, CVC4Problem *smtProblem){

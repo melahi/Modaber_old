@@ -21,13 +21,15 @@ using namespace CVC4;
 
 
 
-void EvolutionaryModaber::initialization(char *domainFilePath, char *problemFilePath){
-	Modaber::initialization(domainFilePath, problemFilePath);
-	smtProblem = new CVC4Problem(instantiatedOp::howManyNonStaticPNEs(), instantiatedOp::howManyNonStaticLiterals(), instantiatedOp::howMany());
-	myTranslator = new Translator(smtProblem, myAnalyzer, numericRPG);
+void EvolutionaryModaber::initialization(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph){
+	Modaber::initialization(domainFilePath, problemFilePath, usingPlanningGraph, true);
 
 	//Genetic Algorithm parameters
-	lengthOfChromosomes = numericRPG->minimumPlanLength;
+	lengthOfChromosomes = 10;
+	if (usingPlanningGraph){
+		nPG->constructingGraph(lengthOfChromosomes);
+	}
+	myTranslator->prepare(lengthOfChromosomes);
 
 	maximumNumberOfNonImprovingGeneration = 20;
 	improvementThreshold = 5;
@@ -60,14 +62,17 @@ void EvolutionaryModaber::increasingLength(vector <SketchyPlan> &population){
 
 	lengthOfChromosomes++;
 	myTranslator->prepare(lengthOfChromosomes);
+	if (usingPlanningGraph){
+		nPG->constructingGraph(lengthOfChromosomes);
+	}
+	myTranslator->prepare(lengthOfChromosomes);
 
 	for (int i = 0; i < selectedPopulation; i++){
 		population[i].increaseOneLayer();
-		calculateFitness(&population[i]);
 	}
 
 	for (int i = selectedPopulation; i < populationSize; i++){
-		population[i] = SketchyPlan(numericRPG, lengthOfChromosomes);
+		population[i] = SketchyPlan(lengthOfChromosomes);
 	}
 
 	calculateFitness(population);
@@ -140,7 +145,7 @@ vector <SketchyPlan> EvolutionaryModaber::selectNextGeneration (vector <SketchyP
 	}
 
 	//At next select lucky chromosome
-	vector <int> luckyChromosomeIndex = selectRandom(selectedChromosome, population.size(), populationSize - selectedChromosome);
+	vector <int> luckyChromosomeIndex = selectRandomly(selectedChromosome, population.size(), populationSize - selectedChromosome);
 	for (unsigned int i = 0; i < luckyChromosomeIndex.size(); i++){
 		nextGeneration.push_back(population[luckyChromosomeIndex[i]]);
 	}
@@ -157,9 +162,8 @@ bool EvolutionaryModaber::tryToSolve(){
 	numberOfNonImprovingGeneration = 0;
 
 	//Create random population for first generation
-	population.clear();
 	for (int i = 0; i < populationSize; i++){
-		population.push_back(SketchyPlan(numericRPG, lengthOfChromosomes));
+		population.push_back(SketchyPlan(lengthOfChromosomes));
 	}
 
 	calculateFitness(population);
@@ -205,8 +209,8 @@ bool EvolutionaryModaber::tryToSolve(){
 
 void EvolutionaryModaber::testSketchyPlan (){
 	vector <SketchyPlan> parents;
-	parents.push_back(SketchyPlan (numericRPG, 20));
-	parents.push_back(SketchyPlan (numericRPG, 20));
+	parents.push_back(SketchyPlan (20));
+	parents.push_back(SketchyPlan (20));
 	parents[0].print();
 	cout << "*************************" << endl;
 	parents[1].print();
@@ -217,10 +221,9 @@ void EvolutionaryModaber::testSketchyPlan (){
 	cout << "*************************" << endl;
 }
 
-EvolutionaryModaber::EvolutionaryModaber(char *domainFilePath, char *problemFilePath) {
-	initialization(domainFilePath, problemFilePath);
+EvolutionaryModaber::EvolutionaryModaber(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph) {
+	initialization(domainFilePath, problemFilePath, usingPlanningGraph);
 
-	return;
 
 	bool foundSolution;
 	foundSolution = tryToSolve();

@@ -6,6 +6,7 @@
 
 #include "CVC4Problem.h"
 #include "NumericalPlanningGraph.h"
+#include "Translator.h"
 #include <ostream>
 
 using namespace std;
@@ -15,13 +16,17 @@ namespace mdbr{
 class Modaber {
 protected:
 
+	Translator *myTranslator;
+
+	CVC4Problem *smtProblem;
+
 	NumericalPlanningGraph *nPG;
 
 	bool usingPlanningGraph;
 
 	void instantiation(char *domainFile, char *problemFile);
 
-	virtual void initialization(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph);
+	virtual void initialization(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph, bool usingSASPlus);
 
 	virtual bool tryToSolve() = 0;
 

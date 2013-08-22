@@ -19,10 +19,6 @@ private:
 
 	int nSignificantTimePoint;
 
-	Translator *myTranslator;
-
-	CVC4Problem *smtProblem;
-
 protected:
 
 	virtual void initialization(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph);

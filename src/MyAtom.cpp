@@ -89,6 +89,13 @@ MyAtom::MyAtom() {
 	firstVisitedLayer = -1;
 }
 
+void MyProposition::write(ostream &sout){
+	originalLiteral->write(sout);
+	if (stateValue){
+		sout << ", state-variable: " << stateValue->theStateVariable->variableId << ", value: " << stateValue->valueId;
+	}
+}
+
 MyAtom::~MyAtom() {
 	// TODO Auto-generated destructor stub
 }

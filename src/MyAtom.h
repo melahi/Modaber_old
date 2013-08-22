@@ -74,9 +74,7 @@ public:
 	MyProposition(Literal *originalLiteral):MyAtom(), originalLiteral(originalLiteral), stateValue(0){}
 	MyProposition():MyAtom(), originalLiteral(0), stateValue(0) {}
 
-	virtual void write (ostream &sout){
-		originalLiteral->write(sout);
-	}
+	virtual void write (ostream &sout);
 
 	virtual ~MyProposition(){}
 };

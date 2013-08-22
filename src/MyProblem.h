@@ -27,7 +27,10 @@ private:
 
 
 	void filterVariables();
+
 public:
+
+	bool usingSASPlus;
 
 	vector <MyAction> actions;
 	vector <MyProposition> propositions;
@@ -41,7 +44,7 @@ public:
 
 	void updateInitialValues ();
 
-	void initializing();
+	void initializing(bool usingSASPlus);
 
 	void print();
 

@@ -29,7 +29,11 @@ public:
 	vector <MyStateValue> domain;
 
 	MyStateVariable();
+
+	void write (ostream &sout);
+
 	virtual ~MyStateVariable();
+
 };
 
 class MyStateValue{
@@ -37,12 +41,17 @@ public:
 
 	int valueId;
 
+	int firstVisitedLayer;
+
+
 	MyProposition *theProposition;
 	MyStateVariable *theStateVariable;
 	vector < list<MyAction*> > providers; // providers[i] determines actions which transform theStateVariable from i to valueId;
 
-	MyStateValue(int valueId, MyProposition *theProposition, MyStateVariable *theStateVariable);
 	MyStateValue();
+	void initialize(int valueId, MyProposition *theProposition, MyStateVariable *theStateVariable);
+
+	void write (ostream &sout);
 
 };
 

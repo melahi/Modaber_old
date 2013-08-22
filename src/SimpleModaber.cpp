@@ -24,9 +24,7 @@ using namespace Inst;
 using namespace mdbr;
 
 void SimpleModaber::initialization(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph){
-	Modaber::initialization(domainFilePath, problemFilePath, usingPlanningGraph);
-	smtProblem = new CVC4Problem(instantiatedOp::howManyNonStaticPNEs(), instantiatedOp::howManyNonStaticLiterals(), instantiatedOp::howMany());
-	myTranslator = new Translator(smtProblem);
+	Modaber::initialization(domainFilePath, problemFilePath, usingPlanningGraph, false);
 	nSignificantTimePoint = 1;
 	if (usingPlanningGraph){
 		nPG->constructingGraph(nSignificantTimePoint);

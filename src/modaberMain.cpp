@@ -19,9 +19,9 @@ int main (int argc, char * argv[]){
 		cout << argc << ' ' << argv[argc - 1] << endl;
 	}
 
-	SimpleModaber simpleModaber (argv[1], argv[2], usingPlanningGraph);
+//	SimpleModaber simpleModaber (argv[1], argv[2], usingPlanningGraph);
 
-//	EvolutionaryModaber evolutionaryModaber(argv[1], argv[2]);
+	EvolutionaryModaber evolutionaryModaber(argv[1], argv[2], usingPlanningGraph);
 
 	return 0;
 }

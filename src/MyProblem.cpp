@@ -76,11 +76,20 @@ void MyProblem::buildingDTG(){
 			if (deleteStateValue[j] != -1){
 				if (addStateValue[j] != -1){
 					stateVariables[j].domain[addStateValue[j]].providers[deleteStateValue[j]].push_back(&actions[i]);
+					if (!isVisited(stateVariables[j].domain[addStateValue[j]].firstVisitedLayer, actions[i].firstVisitedLayer + 1)){
+						stateVariables[j].domain[addStateValue[j]].firstVisitedLayer = actions[i].firstVisitedLayer + 1;
+					}
 				}else { /* if addStateValue[j] == -1 means the action change the corresponding state value to the "<none of those>" state value */
 					stateVariables[j].domain[stateVariables[j].domain.size() - 1].providers[deleteStateValue[j]].push_back(&actions[i]);
+					if (!isVisited(stateVariables[j].domain[stateVariables[j].domain.size() - 1].firstVisitedLayer, actions[i].firstVisitedLayer + 1)){
+						stateVariables[j].domain[addStateValue[j]].firstVisitedLayer = actions[i].firstVisitedLayer + 1;
+					}
 				}
 			}else if (addStateValue[j] != 1){
 				stateVariables[j].domain[addStateValue[j]].providers[stateVariables[j].domain.size() - 1].push_back(&actions[i]);
+				if (!isVisited(stateVariables[j].domain[addStateValue[j]].firstVisitedLayer, actions[i].firstVisitedLayer + 1)){
+					stateVariables[j].domain[addStateValue[j]].firstVisitedLayer = actions[i].firstVisitedLayer + 1;
+				}
 			}
 		}
 	}
@@ -119,11 +128,11 @@ void MyProblem::readingSASPlusFile(){
 			if (index != string::npos){
 				index += 5;   /* strlen("Atom "); */
 				string theName = line.substr(index);
-				stateVariables[i].domain[j] = MyStateValue (j, propositionName[theName], &(stateVariables[i]));
+				stateVariables[i].domain[j].initialize(j, propositionName[theName], &(stateVariables[i]));
 			}else{
 				index = line.find ("<none of those>");
 				if (index != string::npos){
-					stateVariables[i].domain[j] = MyStateValue (j, NULL, &(stateVariables[i]));
+					stateVariables[i].domain[j].initialize(j, NULL, &(stateVariables[i]));
 				}else{
 					CANT_HANDLE("can't handle some state value!!!!");
 				}
@@ -152,7 +161,7 @@ void MyProblem::updateInitialValues(){
 
 }
 
-void MyProblem::initializing(){
+void MyProblem::initializing(bool usingSASPlus){
 
 	//Preparing propositions
 	int nPropositions = instantiatedOp::howManyNonStaticLiterals();
@@ -178,9 +187,11 @@ void MyProblem::initializing(){
 		}
 	}
 
-
-	readingSASPlusFile();
-	buildingDTG();
+	this->usingSASPlus = usingSASPlus;
+	if (usingSASPlus){
+		readingSASPlusFile();
+		buildingDTG();
+	}
 
 	updateInitialValues();
 
@@ -204,24 +215,13 @@ void MyProblem::print(){
 
 	cout << "Propositions: " << instantiatedOp::howManyNonStaticLiterals() << endl;
 	for (unsigned int i = 0; i < propositions.size(); i++){
-		cout << i << ' ' << propositions[i].originalLiteral->getStateID() << ' ';
-		propositions[i].originalLiteral->write(cout);
-//		cout << "---> " << propositions[i].stateValue->theStateVariable->variableId << ", " << propositions[i].stateValue->valueId;
+		propositions[i].write(cout);
 		cout << endl;
 	}
 
 	cout << "State variables: " << stateVariables.size() << endl;
 	for (unsigned int i = 0; i < stateVariables.size(); i++){
-		cout << i << ' ' << stateVariables[i].domain.size() << endl;
-		for (unsigned int j = 0; j < stateVariables[i].domain.size(); j++){
-			cout << "   " << j << ": ";
-			if (stateVariables[i].domain[j].theProposition != NULL){
-				stateVariables[i].domain[j].theProposition->originalLiteral->write(cout);
-			}else{
-				cout << "<none of those>" << endl;
-			}
-			cout << endl;
-		}
+		stateVariables[i].write(cout);
 		cout << endl;
 	}
 

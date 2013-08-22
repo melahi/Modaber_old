@@ -19,7 +19,7 @@ void MyEnvironment::prepareProbabilityMatrixOfStateVariable (int layerNumber, in
 		double sum = 0;
 		for (int j = 0; j < domainSize; ++j){
 			if (j == k){
-				if (myProblem.stateVariables[variableId].domain[j].theProposition->firstVisitedLayer <= layerNumber){
+				if (myProblem.stateVariables[variableId].domain[j].firstVisitedLayer <= layerNumber){
 					probability[layerNumber][variableId][k][j] = 1;
 					sum += 1;
 				}

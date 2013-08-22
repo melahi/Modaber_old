@@ -20,13 +20,12 @@ src/Modaber.d: ../src/Modaber.cpp ../src/Modaber.h ../src/CVC4Problem.h \
  /home/sadra/masterThesis/Modaber/VALfiles/parsing/ptree.h \
  ../src/MyProblem.h ../src/MyAction.h ../src/MyAtom.h \
  ../src/MyStateVariable.h ../src/MyEnvironment.h \
- ../src/NumericalPlanningGraph.h \
+ ../src/NumericalPlanningGraph.h ../src/Translator.h ../src/SketchyPlan.h \
  /home/sadra/masterThesis/Modaber/VALfiles/TIM.h \
  /home/sadra/masterThesis/Modaber/VALfiles/TimSupport.h \
  /home/sadra/masterThesis/Modaber/VALfiles/TIMUtilities.h \
  ../src/ProblemPrinter.h \
- /home/sadra/masterThesis/Modaber/VALfiles/SimpleEval.h \
- ../src/Translator.h ../src/SketchyPlan.h
+ /home/sadra/masterThesis/Modaber/VALfiles/SimpleEval.h
 
 ../src/Modaber.h:
 
@@ -84,6 +83,10 @@ src/Modaber.d: ../src/Modaber.cpp ../src/Modaber.h ../src/CVC4Problem.h \
 
 ../src/NumericalPlanningGraph.h:
 
+../src/Translator.h:
+
+../src/SketchyPlan.h:
+
 /home/sadra/masterThesis/Modaber/VALfiles/TIM.h:
 
 /home/sadra/masterThesis/Modaber/VALfiles/TimSupport.h:
@@ -93,7 +96,3 @@ src/Modaber.d: ../src/Modaber.cpp ../src/Modaber.h ../src/CVC4Problem.h \
 ../src/ProblemPrinter.h:
 
 /home/sadra/masterThesis/Modaber/VALfiles/SimpleEval.h:
-
-../src/Translator.h:
-
-../src/SketchyPlan.h:

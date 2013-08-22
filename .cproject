@@ -55,7 +55,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="test.cpp|src/Deprecated|src/NumericRPG.cpp|src/EvolutionaryModaber.cpp|src/Translation|VALfiles/parsing/lex.yy.cc" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="test.cpp|src/Deprecated|src/NumericRPG.cpp|src/Translation|VALfiles/parsing/lex.yy.cc" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -103,7 +103,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="test.cpp|src/Deprecated|src/NumericRPG.cpp|src/EvolutionaryModaber.cpp|VALfiles/parsing/lex.yy.cc" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="test.cpp|src/Deprecated|src/NumericRPG.cpp|VALfiles/parsing/lex.yy.cc" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

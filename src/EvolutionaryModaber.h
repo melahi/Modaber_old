@@ -20,8 +20,6 @@ using namespace std;
 class EvolutionaryModaber : public Modaber {
 private:
 
-	CVC4Problem * smtProblem;
-	Translator *myTranslator;
 	int populationSize;
 	double improvementThreshold;
 	double lastConsideredFitness;
@@ -48,13 +46,13 @@ private:
 
 protected:
 
-	virtual void initialization(char *domainFilePath, char *problemFilePath);
+	virtual void initialization(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph);
 
 	virtual bool tryToSolve();
 
 public:
 
-	EvolutionaryModaber(char *domainFilePath, char *problemFilePath);
+	EvolutionaryModaber(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph);
 
 	virtual ~EvolutionaryModaber();
 };

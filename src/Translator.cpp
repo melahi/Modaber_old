@@ -220,12 +220,14 @@ void Translator::addAtomMutex(int significantTimePoint){
 
 //Insert the sketchy plan to the SMT problem
 void Translator::addSkechyPlan(SketchyPlan *sketchyPlan){
-	int length = sketchyPlan->milestones.size();
+	vector < vector < shared_ptr <goal> > > milestones;
+	sketchyPlan->convertStateValuesToMilestones(milestones);
+	int nStateVariables= milestones.size();
 	FastEnvironment env(0);
-	for (int i = 0; i < length; i++){
-		int mySize = sketchyPlan->milestones[i].size();
-		for (int j = 0; j < mySize; j++){
-			addGoal(sketchyPlan->milestones[i][j].get(), &env, i);
+	for (int i = 0; i < nStateVariables; i++){
+		int length = milestones[i].size();
+		for (int j = 0; j < length; j++){
+			addGoal(milestones[i][j].get(), &env, j);
 		}
 	}
 }

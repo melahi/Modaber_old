@@ -5,6 +5,7 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../src/CVC4Problem.cpp \
+../src/EvolutionaryModaber.cpp \
 ../src/Modaber.cpp \
 ../src/MyAction.cpp \
 ../src/MyAtom.cpp \
@@ -22,6 +23,7 @@ CPP_SRCS += \
 
 OBJS += \
 ./src/CVC4Problem.o \
+./src/EvolutionaryModaber.o \
 ./src/Modaber.o \
 ./src/MyAction.o \
 ./src/MyAtom.o \
@@ -39,6 +41,7 @@ OBJS += \
 
 CPP_DEPS += \
 ./src/CVC4Problem.d \
+./src/EvolutionaryModaber.d \
 ./src/Modaber.d \
 ./src/MyAction.d \
 ./src/MyAtom.d \
