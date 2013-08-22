@@ -49,7 +49,7 @@ public:
 	//In the following function founded state values are converted to goals
 	void convertStateValuesToMilestones(vector < vector < shared_ptr <goal> > > &milestones);
 
-	shared_ptr <simple_goal> convertPropositionToGoal (MyProposition *proposition, polarity plrty);
+	shared_ptr <goal> convertPropositionToGoal (proposition *originalProposition, polarity plrty);
 
 	SketchyPlan crossover(SketchyPlan *mother);
 
