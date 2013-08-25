@@ -2,10 +2,19 @@
 
 #In the name of God
 
+
+
+
 Planner="SimpleModaber"
 
 Domain=( 'Depots' 'ZenoTravel' 'DriverLog');
 DomainFile=( 'DepotsNum.pddl' 'zenonumeric.pddl' 'driverlogNumeric.pddl');
+
+
+
+#Set maximum memory limit
+MaximumMemoryLimit=$((3 * 1024 * 1024))
+ulimit -v $MaximumMemoryLimit
 
 for (( j = 0; j < ${#Domain[*]} ; j++)) {
 	mkdir -p "${Planner}Results/${Domain[$j]}"
