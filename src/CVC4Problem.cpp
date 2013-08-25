@@ -33,59 +33,6 @@ void CVC4Problem::guaranteeSize (unsigned int nSignificantTimePoint){
 		actionExpr.resize((nSignificantTimePoint - 1) * nAction);
 		maximumSignificantTimePoint = nSignificantTimePoint;
 	}
-
-//	while (maximumSignificantTimePoint < nSignificantTimePoint){
-//		int size;
-//
-//		//Creating variable expressions
-//		Type real = em.realType();
-//		size = variableExpr.size();
-//		for (int i = 0; i < nVariables; i++){
-////			ostringstream oss;
-////			oss << "[";
-////			myProblem.variables[i].write(oss);
-////			oss << ", " << (size + i) / nVariables << "]";
-////			variableExpr.push_back(em.mkVar(oss.str(),real));
-//			variableExpr.push_back(em.mkVar(real));
-//		}
-//
-//
-//		//Creating boolean expressions
-//
-//		//For proposition
-//		Type boolean = em.booleanType();
-//		size = propositionExpr.size();
-//		for (int i = 0; i < nProposition; i++){
-////			ostringstream oss;
-////			oss << "[";
-////			myProblem.propositions[i].write(oss);
-////			oss << ", " << (size + i) / nProposition << "]";
-////			propositionExpr.push_back(em.mkVar(oss.str(), boolean));
-//			propositionExpr.push_back(em.mkVar(boolean));
-//		}
-//
-//
-//		//For action
-//
-//		if (size){
-//
-////			@TODO: for now we doesn't target temporal problems, perhaps for future it will be not bad to handle temporal problems!
-////			size = nSignificantTimePoint * nAction * 3;
-//
-//			size = actionExpr.size();
-//			for (int i = 0; i < nAction; i++){
-////				ostringstream oss;
-////				oss << "[";
-////				myProblem.actions[i].write(oss);
-////				oss << ", " << (size + i) / nAction << "]";
-////				actionExpr.push_back(em.mkVar (oss.str(), boolean));
-//				actionExpr.push_back(em.mkVar (boolean));
-//
-//			}
-//
-//		}
-//		maximumSignificantTimePoint++;
-//	}
 }
 
 void CVC4Problem::initialization(){
@@ -94,9 +41,10 @@ void CVC4Problem::initialization(){
 	smt.setOption("check-models", SExpr("false"));		//In the case of debugging we can turn it to "true"
 	smt.setOption("interactive-mode", SExpr("true"));		//In the case of debugging we can turn it to "true"
 	smt.setOption("produce-assignments", SExpr("true"));
-//	smt.setOption("verbosity", SExpr("1073741823"));
-	smt.setOption("verbosity", SExpr("0"));
+	smt.setOption("verbosity", SExpr("1073741823"));
+//	smt.setOption("verbosity", SExpr("0"));
 	smt.setOption("incremental", SExpr("true"));
+	smt.setLogic("QF_LIRA");
 
 	maximumSignificantTimePoint = 0;
 
