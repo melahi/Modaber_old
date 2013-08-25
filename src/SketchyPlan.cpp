@@ -115,28 +115,38 @@ void SketchyPlan::increaseOneLayer(){
 	}
 }
 
-shared_ptr <goal> SketchyPlan::convertPropositionToGoal(proposition *originalProposition, polarity plrty){
+goal* SketchyPlan::convertPropositionToGoal(const proposition *originalProposition, polarity plrty){
 
 	parameter_symbol_list * pl = new parameter_symbol_list;
 	for(VAL::parameter_symbol_list::iterator it2 = originalProposition->args->begin();it2 != originalProposition->args->end(); ++it2)
 	{
 		pl->push_back(*it2);
 	}
-	proposition *prop = new proposition(originalProposition->head,pl);
-	return shared_ptr <goal> (new simple_goal(prop, plrty));
+	proposition *prop = new proposition(originalProposition->head, pl);
+	return new simple_goal(prop, plrty);
 }
 
 void SketchyPlan::convertStateValuesToMilestones(vector < vector < shared_ptr <goal> > > &milestones){
 	milestones = vector <vector < shared_ptr <goal> > > (nStateVariables, vector < shared_ptr<goal> > (length) );
 
-	for (int stateValueId = 0; stateValueId < nStateVariables; ++stateValueId){
+	for (int stateVariableId = 0; stateVariableId < nStateVariables; ++stateVariableId){
 		for (int layerNumber = 1; layerNumber < length; ++layerNumber){
 
-			if (stateValues[stateValueId][layerNumber]->theProposition != NULL){
-
-				//milestones[stateValueId][layerNumber] = shared_ptr <goal> (new simple_goal(prop, E_POS));
+			if (stateValues[stateVariableId][layerNumber]->theProposition != NULL){
+				goal *theGoal = convertPropositionToGoal(stateValues[stateVariableId][layerNumber]->theProposition->originalLiteral->toProposition(), E_POS);
+//				milestones[stateVariableId][layerNumber] = shared_ptr <goal> (theGoal);
 			}else{
-
+				MyStateVariable *theStateVariable = stateValues[stateVariableId][layerNumber]->theStateVariable;
+				int theValueId = stateValues[stateVariableId][layerNumber]->valueId;
+				int domainSize = theStateVariable->domain.size();
+				goal_list *myGoalList = new goal_list();
+				for (int i = 0; i < domainSize; i++){
+					if (i != theValueId){
+						goal * theGoal = convertPropositionToGoal(theStateVariable->domain[i].theProposition->originalLiteral->toProposition(), E_NEG);
+						myGoalList->push_back(theGoal);
+					}
+				}
+//				milestones[stateVariableId][layerNumber] = shared_ptr <goal> (new conj_goal(myGoalList));
 			}
 		}
 	}

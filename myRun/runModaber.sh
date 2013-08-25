@@ -4,6 +4,7 @@
 
 
 Algorithm="Simple"
+Algorithm="Evolutionary"
 NPG="1"
 
 

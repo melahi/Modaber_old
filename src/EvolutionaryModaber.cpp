@@ -25,7 +25,7 @@ void EvolutionaryModaber::initialization(char *domainFilePath, char *problemFile
 	Modaber::initialization(domainFilePath, problemFilePath, usingPlanningGraph, true);
 
 	//Genetic Algorithm parameters
-	lengthOfChromosomes = 10;
+	lengthOfChromosomes = 16;
 	if (usingPlanningGraph){
 		nPG->constructingGraph(lengthOfChromosomes);
 	}
@@ -33,7 +33,7 @@ void EvolutionaryModaber::initialization(char *domainFilePath, char *problemFile
 
 	maximumNumberOfNonImprovingGeneration = 20;
 	improvementThreshold = 5;
-	populationSize = 400;
+	populationSize = 1;
 }
 
 void EvolutionaryModaber::calculateFitness(SketchyPlan *sketchyPlan){
@@ -61,7 +61,6 @@ void EvolutionaryModaber::increasingLength(vector <SketchyPlan> &population){
 	int selectedPopulation = (selectRatioFromLastGeneration * population.size()) ;
 
 	lengthOfChromosomes++;
-	myTranslator->prepare(lengthOfChromosomes);
 	if (usingPlanningGraph){
 		nPG->constructingGraph(lengthOfChromosomes);
 	}

@@ -17,7 +17,7 @@ int main (int argc, char * argv[]){
 	bool usingPlanningGraph = true;
 	int domainFileIndex = -1;
 	int problemFileIndex = -1;
-	algorithm alg = EvolutionaryAlgorithm;
+	algorithm alg = SimpleAlgorithm;
 
 
 	//Parsing arguments

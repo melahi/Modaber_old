@@ -147,6 +147,10 @@ void CVC4Problem::addLiteral ( polarity plrty, const proposition *prop, FastEnvi
 		ignoreCluase = true;
 		return;
 	}
+	if (myProblem.usingSASPlus && myProblem.propositions[lit2->getStateID()].stateValue == NULL){
+		ignoreCluase = true;
+		return;
+	}
 	addConditionToCluase(lit2->getStateID(), significantTimePoint, (plrty == E_POS));
 }
 
