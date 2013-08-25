@@ -14,9 +14,9 @@ using namespace std;
 
 //Declaration for static variables
 ExprManager CVC4Problem::em;
-vector <Expr *> CVC4Problem::variableExpr;
-vector <Expr *> CVC4Problem::propositionExpr;
-vector <Expr *> CVC4Problem::actionExpr;
+vector <Expr> CVC4Problem::variableExpr;
+vector <Expr> CVC4Problem::propositionExpr;
+vector <Expr> CVC4Problem::actionExpr;
 unsigned int CVC4Problem::maximumSignificantTimePoint;
 
 
@@ -110,9 +110,9 @@ void CVC4Problem::addLiteral ( polarity plrty, const proposition *prop, FastEnvi
 void CVC4Problem::addConditionToCluase(int propostion, int significantTimePoint, bool polarity){
 	int index = getPropositionIndex(propostion, significantTimePoint);
 	if (polarity){
-		buildingClause.push_back(*propositionExpr[index]);
+		buildingClause.push_back(propositionExpr[index]);
 	}else{
-		buildingClause.push_back(em.mkExpr(kind::NOT, *propositionExpr[index]));
+		buildingClause.push_back(em.mkExpr(kind::NOT, propositionExpr[index]));
 	}
 }
 
@@ -124,9 +124,9 @@ void CVC4Problem::AddConditionToCluase(const MyAtom *atom, int significantTimePo
 	if (myProposition){
 		int index = getPropositionIndex(myProposition->originalLiteral->getStateID(), significantTimePoint);
 		if (polarity){
-			buildingClause.push_back(*propositionExpr[index]);
+			buildingClause.push_back(propositionExpr[index]);
 		}else{
-			buildingClause.push_back(em.mkExpr(kind::NOT, *propositionExpr[index]));
+			buildingClause.push_back(em.mkExpr(kind::NOT, propositionExpr[index]));
 		}
 	}else{
 		AddEqualityCondition(myValue->variable->originalPNE->getStateID(), significantTimePoint, myValue->value, polarity);
@@ -139,9 +139,9 @@ void CVC4Problem::AddConditionToCluase(const MyAtom *atom, int significantTimePo
 void CVC4Problem::addActionToClause (int actionId, int significantTimePoint, bool polarity){
 	int index = getActionIndex(actionId, significantTimePoint);
 	if (polarity){
-		buildingClause.push_back(*actionExpr[index]);
+		buildingClause.push_back(actionExpr[index]);
 	}else{
-		buildingClause.push_back(em.mkExpr(kind::NOT, *actionExpr[index]));
+		buildingClause.push_back(em.mkExpr(kind::NOT, actionExpr[index]));
 	}
 }
 
@@ -228,7 +228,7 @@ void CVC4Problem::AddEqualityCondition (int variableId1, int significantTimePoin
 	}else{
 		myKind = kind::DISTINCT;
 	}
-	Expr myCondition = em.mkExpr(myKind, *variableExpr[variableIndex1], *variableExpr[variableIndex2]);
+	Expr myCondition = em.mkExpr(myKind, variableExpr[variableIndex1], variableExpr[variableIndex2]);
 	buildingClause.push_back(myCondition);
 }
 
@@ -244,7 +244,7 @@ void CVC4Problem::AddEqualityCondition (int variableId1, int significantTimePoin
 	}else{
 		myKind = kind::DISTINCT;
 	}
-	Expr myCondtion = em.mkExpr(myKind, *variableExpr[variableIndex1], valExpr);
+	Expr myCondtion = em.mkExpr(myKind, variableExpr[variableIndex1], valExpr);
 	buildingClause.push_back(myCondtion);
 }
 
@@ -314,7 +314,7 @@ void CVC4Problem::print(vector <Expr> &expression){
 
 bool CVC4Problem::isActionUsed (int actionId, int significantTimePoint){
 	int actionIndex = getActionIndex(actionId, significantTimePoint);
-	bool isUsed = smt.getValue(*actionExpr[actionIndex]).getConst<bool>();
+	bool isUsed = smt.getValue(actionExpr[actionIndex]).getConst<bool>();
 	return isUsed;
 }
 
@@ -358,29 +358,20 @@ void CVC4Problem::clearAssertionList(){
 }
 
 CVC4Problem::~CVC4Problem(){
-	for (unsigned int i = 0; i < variableExpr.size(); i++){
-		delete( variableExpr[i] );
-	}
-	for (unsigned int i = 0; i < propositionExpr.size(); i++){
-		delete( propositionExpr[i] );
-	}
-	for (unsigned int i = 0; i < actionExpr.size(); i++){
-		delete( actionExpr[i] );
-	}
 }
 
 
 //find and return the index of corresponding PVariableExpression in the variableExpr array
 int CVC4Problem::getVariableIndex (int variableStateId, int significantTimePoint){
 	int ret = significantTimePoint * nVariables + variableStateId;
-	if (variableExpr[ret] == NULL){
+	if (variableExpr[ret].isNull()){
 		Type real = em.realType();
 //		ostringstream oss;
 //		oss << "[";
 //		myProblem.variables[i].write(oss);
 //		oss << ", " << (size + i) / nVariables << "]";
 //		variableExpr.push_back(em.mkVar(oss.str(),real));
-		variableExpr[ret] = new Expr(em.mkVar(real));
+		variableExpr[ret] = Expr(em.mkVar(real));
 	}
 	return ret;
 }
@@ -388,14 +379,14 @@ int CVC4Problem::getVariableIndex (int variableStateId, int significantTimePoint
 //find and return the index of corresponding proposition in the propositionExpr array
 inline int CVC4Problem::getPropositionIndex (int proposition, int significantTimePoint){
 	int ret = significantTimePoint * nProposition + proposition;
-	if (propositionExpr[ret] == NULL){
+	if (propositionExpr[ret].isNull()){
 		Type boolean = em.booleanType();
 //		ostringstream oss;
 //		oss << "[";
 //		myProblem.propositions[i].write(oss);
 //		oss << ", " << (size + i) / nProposition << "]";
 //		propositionExpr.push_back(em.mkVar(oss.str(), boolean));
-		propositionExpr[ret] = new Expr(em.mkVar(boolean));
+		propositionExpr[ret] = Expr(em.mkVar(boolean));
 	}
 	return ret;
 }
@@ -403,14 +394,14 @@ inline int CVC4Problem::getPropositionIndex (int proposition, int significantTim
 //find and return the index of corresponding action in the actionExpr array
 inline int CVC4Problem::getActionIndex (int action, int significantTimePoint){
 	int ret = significantTimePoint * nAction + action;
-	if (actionExpr[ret] == NULL){
+	if (actionExpr[ret].isNull()){
 		Type boolean = em.booleanType();
 //		ostringstream oss;
 //		oss << "[";
 //		myProblem.actions[i].write(oss);
 //		oss << ", " << (size + i) / nAction << "]";
 //		actionExpr.push_back(em.mkVar (oss.str(), boolean));
-		actionExpr[ret] = new Expr(em.mkVar (boolean));
+		actionExpr[ret] = Expr (em.mkVar (boolean));
 	}
 	return ret;
 }
