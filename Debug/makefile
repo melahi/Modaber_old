@@ -11,6 +11,7 @@ RM := rm -rf
 -include src/subdir.mk
 -include VALfiles/parsing/subdir.mk
 -include VALfiles/subdir.mk
+-include Lingeling/subdir.mk
 -include subdir.mk
 -include objects.mk
 

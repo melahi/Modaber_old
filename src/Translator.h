@@ -45,7 +45,7 @@ public:
 	}
 	void prepare (int length);
 
-	double solve (SketchyPlan *sketchyPlan);
+	int solve (SketchyPlan *sketchyPlan);
 
 	bool solve ();
 

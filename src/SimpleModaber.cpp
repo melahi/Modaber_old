@@ -25,6 +25,10 @@ using namespace mdbr;
 
 void SimpleModaber::initialization(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph){
 	Modaber::initialization(domainFilePath, problemFilePath, usingPlanningGraph, false);
+
+	smtProblem = new CVC4Problem(instantiatedOp::howManyNonStaticPNEs(), instantiatedOp::howManyNonStaticLiterals(), instantiatedOp::howMany());
+	myTranslator = new Translator(smtProblem);
+
 	nSignificantTimePoint = 1;
 	if (usingPlanningGraph){
 		nPG->constructingGraph(nSignificantTimePoint);
@@ -53,6 +57,20 @@ bool SimpleModaber::tryToSolve(){
 }
 
 
+void SimpleModaber::extractSolution(ostream &oss, CVC4Problem *smtProblem){
+	//Generating output
+	unsigned int maximumSignificantTimePoint = smtProblem->getMaximumSignificantTimePoint();
+	int nAction = instantiatedOp::howMany();
+	for (unsigned int i = 0; i < maximumSignificantTimePoint - 1; i++){
+		for (int j = 0; j < nAction; j++){
+			if (isVisited(myProblem.actions[j].firstVisitedLayer, (int) i) && smtProblem->isActionUsed(j, i)){
+				instantiatedOp *action = instantiatedOp::getInstOp(j);
+				action->write(oss);
+				oss << endl;
+			}
+		}
+	}
+}
 
 SimpleModaber::SimpleModaber(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph) {
 	initialization(domainFilePath, problemFilePath, usingPlanningGraph);

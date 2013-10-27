@@ -249,13 +249,12 @@ void CVC4Problem::AddEqualityCondition (int variableId1, int significantTimePoin
 }
 
 
-double CVC4Problem::solve(const Expr &assertExpr){
+int CVC4Problem::solve(const Expr &assertExpr){
 
 	// TODO: For now, we don't considered processing time, we should consider it ASAP
 	// TODO: We need statistical information
 
 //	cout << "Start to try solving the problem" << endl;
-//	smt.setResourceLimit(resourceLimit);
 	Result result = smt.checkSat(assertExpr);
 
 
@@ -271,7 +270,7 @@ double CVC4Problem::solve(const Expr &assertExpr){
 	switch (result.isSat()){
 	case Result::SAT:
 		cout << "OH yeay!, the problem is solved" << endl;
-		return numeric_limits <double>::max();
+		return numeric_limits <int>::max();
 		break;
 	case Result::UNSAT:
 //		cout << "The problem is not satisfiable!!!" << endl;
@@ -280,15 +279,11 @@ double CVC4Problem::solve(const Expr &assertExpr){
 //		cout << "The result is neither \"SAT\" nor \"UNSAT\"!!" << endl;
 		break;
 	}
-//	cout << "Number of conflicts: " << smt.getStatistic("sat::conflicts").getValue() << endl;
-//	cout << "Number of decision: " << smt.getStatistic("sat::decisions").getValue() << endl;
-//	istringstream sin (smt.getStatistic("sat::decisions").getValue());
-//	double ret;
-//	unsigned long int newNumberOfDecision;
-//	sin >> newNumberOfDecision;
-//	ret = newNumberOfDecision - lastNumberOfDecision;
-//	lastNumberOfDecision = newNumberOfDecision;
-	return 0;
+//	cout << "Maximum level: " << smt.getStatistic("sat::sadra_maximum_level").getValue() << endl;
+	istringstream sin (smt.getStatistic("sat::sadra_maximum_level").getValue());
+	int ret;
+	sin >> ret;
+	return ret;
 }
 
 void CVC4Problem::print(){

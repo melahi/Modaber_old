@@ -6,6 +6,9 @@
 #include <cmath>
 #include <ptree.h>
 #include <algorithm>
+#include <map>
+#include <vector>
+
 #include "VALfiles/SimpleEval.h"
 #include "VALfiles/instantiation.h"
 
@@ -28,80 +31,11 @@ protected:
 public:
 	MyPrint(FastEnvironment *env):env(env) {};
 
-	void myDisplayLiteral (const polarity plrty, const proposition *prop){
-		Literal lit = Literal(prop, env);
-		Literal *lit2 = instantiatedOp::findLiteral(&lit);
-		cout << '\t';
-		if (plrty == E_NEG){
-			cout << "NOT ";
-		}
-		lit2->write(cout);
-		cout << " , StateID: " << lit2->getStateID() << ", GlobalID: " << lit2->getGlobalID();
-		cout << endl;
-	}
+	void myDisplayLiteral (const polarity plrty, const proposition *prop);
 
-	string convertExpressionToString (const expression *expr){
-		string ret;
-		char exprOperator;
-		const binary_expression* binary = dynamic_cast <const binary_expression *> (expr);
-		if (binary){
-			if (dynamic_cast <const plus_expression* > (expr)){
-				exprOperator = '+';
-			}else if (dynamic_cast<const minus_expression *> (expr)){
-				exprOperator = '-';
-			}else if (dynamic_cast<const mul_expression *> (expr)) {
-				exprOperator = '*';
-			}else if (dynamic_cast<const div_expression *> (expr)){
-				exprOperator = '/';
-			}else{
-				CANT_HANDLE("binary_expression");
-			}
-			ret = convertExpressionToString(binary->getLHS());
-			ret += exprOperator;
-			ret += convertExpressionToString(binary->getRHS());
-			return ret;
-		}
-		const uminus_expression* uMinus = dynamic_cast<const uminus_expression *> (expr);
-		if (uMinus){
-			ret = "- " + convertExpressionToString(uMinus->getExpr());
-			return ret;
-		}
-		const num_expression* numExpr = dynamic_cast<const num_expression *> (expr);
-		if (numExpr){
-			long double myDouble = numExpr->double_value();
-			int nominator, denominator;
-			simpleConvertToRational(myDouble, nominator, denominator);
-			ostringstream oss;
-			oss << nominator << " / " << denominator;
-			return oss.str();
-		}
-		const func_term* functionTerm = dynamic_cast<const func_term *> (expr);
-		if (functionTerm){
-			PNE pne = PNE(functionTerm, env);
-			PNE *pne2 = instantiatedOp::findPNE(&pne);
-			ostringstream oss;
-			oss << "[ ";
-			pne2->write(oss);
-			oss << ", StateID: " << pne2->getStateID() << ", GlobalID: " << pne2->getGlobalID() << " ]";
-			return oss.str();
-		}
-		CANT_HANDLE("Expression");
-		return ret;
-	}
-	void simpleConvertToRational (double input, int &nominator, int &denominator){
-		nominator = (int) input;
-		denominator = 1;
-		double inputFloor = (double) nominator;
-		double epsilon = 1e-9;
-		int MAX_INT = (1 << 30) / 10;
-		while (fabs(input - inputFloor) > epsilon && abs(nominator) < MAX_INT && abs(denominator) < MAX_INT ){
-			denominator *= 10;
-			input *= 10;
-			nominator = (int) input;
-			inputFloor = (double) nominator;
-		}
-		return;
-	}
+	string convertExpressionToString (const expression *expr);
+
+	void simpleConvertToRational (double input, int &nominator, int &denominator);
 };
 
 class MyGoalPrint : public MyPrint{
@@ -221,51 +155,20 @@ class ProblemPrinter {
 
 private:
 
-	void myActionsPrint(){
-		OpStore::iterator iter, itEnd;
-		iter = instantiatedOp::opsBegin();
-		itEnd = instantiatedOp::opsEnd();
-		for (;iter != itEnd; iter++){
-			cout << "Action " << (*iter)->getID() << ", "; (*iter)->write(cout); cout << endl;
-			const operator_ *oper = (*iter)->forOp();
-			FastEnvironment *env = (*iter)->getEnv();
-			cout << "----------  Precondition --------------" << endl;
-			MyGoalPrint myGoalPrint (env);
-			myGoalPrint(oper->precondition);
-			cout << "----------    Effects    --------------" << endl;
-			MyEffectPrint myEffectPrint (env);
-			myEffectPrint (oper->effects);
-			cout << endl << endl;
-		}
-		cout << "END" << endl;
-	}
+	void myActionsPrint();
 
+	void myInitialStatePrint();
 
-	void myInitialStatePrint(){
-		FastEnvironment env(0);
-		MyEffectPrint myEffectPrint (&env);
-		myEffectPrint(current_analysis->the_problem->initial_state);
-	}
+	void myGoalStatePrint();
 
-	void myGoalStatePrint(){
-		FastEnvironment env(0);
-		MyGoalPrint myGoalPrint(&env);
-		myGoalPrint (current_analysis->the_problem->the_goal);
-	}
+	void myTypesAndObjectsPrint();
 
 
 public:
 
 	ProblemPrinter(){}
 
-	void printProblem(){
-		cout << "###########  INITIAL STATE  ####################" << endl;
-	 	myInitialStatePrint();
-		cout << "##############  ACTIONS  #######################" << endl;
-		myActionsPrint();
-	 	cout << "###############  GOALS  ########################" << endl;
-	 	myGoalStatePrint();
-	}
+	void printProblem();
 
 	virtual ~ProblemPrinter(){}
 };

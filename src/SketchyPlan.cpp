@@ -14,9 +14,11 @@ using namespace std;
 using namespace VAL;
 using namespace Inst;
 
-SketchyPlan::SketchyPlan(int length): length (length) {
-	fitness = -1;
+SketchyPlan::SketchyPlan(int length): length (length), fitness(-1) {
 	createRandomSketchyPlan(length);
+}
+
+SketchyPlan::SketchyPlan(): length(0), fitness(-1){
 }
 
 
@@ -32,16 +34,35 @@ void SketchyPlan::createRandomSketchyPlan(int length) {
 
 	myProblem.environment.prepare(length);
 
-	createStateValuesForLastLayer();
-
 	for (int i = 0; i < nStateVariables; i++){
-		buildingWalk(i, length - 2);
+		buildingWalk(i, length - 1);
 	}
 }
 
 void SketchyPlan::buildingWalk(int variableId, int layerNumber) {
 	if (layerNumber < 1)
 		return;
+
+	if (layerNumber == length - 1){
+		if (myProblem.goalValue[variableId] != NULL){
+			stateValues[variableId][layerNumber] = myProblem.goalValue[variableId];
+		}else{
+			int domainSize = myProblem.stateVariables[variableId].domain.size();
+			vector <double> temp(domainSize, 0);
+			double sum = 0;
+			for (int j = 0; j < domainSize; j++){
+				if (myProblem.stateVariables[variableId].domain[j].firstVisitedLayer <= layerNumber){
+					sum += 1;
+					temp[j] = 1;
+				}
+			}
+			normolizing(temp, sum);
+			int selectedStateValueIndex = selectRandomly(temp);
+			stateValues[variableId][layerNumber] = &(myProblem.stateVariables[variableId].domain[selectedStateValueIndex]);
+		}
+		buildingWalk(variableId, layerNumber -1);
+		return;
+	}
 
 	MyStateValue *nextStateValue = stateValues[variableId][layerNumber + 1];
 	int j = selectRandomly(myProblem.environment.probability[layerNumber][variableId][nextStateValue->valueId]);
@@ -50,65 +71,13 @@ void SketchyPlan::buildingWalk(int variableId, int layerNumber) {
 
 }
 
-void SketchyPlan::createStateValuesForLastLayer(){
-
-	FastEnvironment env(0);
-	createStateValuesForLastLayer(current_analysis->the_problem->the_goal, &env);
-
-	for (int i = 0; i < nStateVariables; i++){
-		if (stateValues[i][length - 1] == NULL){
-			int domainSize = myProblem.stateVariables[i].domain.size();
-			vector <double> temp(domainSize, 0);
-			double sum = 0;
-			for (int j = 0; j < domainSize; j++){
-				if (myProblem.stateVariables[i].domain[j].firstVisitedLayer <= length - 1){
-					sum += 1;
-					temp[j] = 1;
-				}
-			}
-			normolizing(temp, sum);
-			int selectedStateValueIndex = selectRandomly(temp);
-			stateValues[i][length - 1] = &(myProblem.stateVariables[i].domain[selectedStateValueIndex]);
-		}
-	}
-}
-
-void SketchyPlan::createStateValuesForLastLayer(goal *the_goal, FastEnvironment *env){
-	const simple_goal *simple = dynamic_cast<const simple_goal *>(the_goal);
-	if (simple){
-
-		Literal lit (simple->getProp(), env);
-		Literal *lit2 = instantiatedOp::findLiteral(&lit);
-
-		if (!lit2){
-			CANT_HANDLE("Warning: can't find some literal in creating state values!!!");
-			lit2->write(cerr);
-			return;
-		}
-
-		if (lit2->getStateID() == -1){
-			return;
-		}
-
-		MyStateValue *stateValue = myProblem.propositions[lit2->getStateID()].stateValue;
-		stateValues[stateValue->theStateVariable->variableId][length - 1] = stateValue;
-		return;
-	}
-	const conj_goal *conjunctive = dynamic_cast<const conj_goal *>(the_goal);
-	if (conjunctive){
-		const goal_list *goalList = conjunctive->getGoals();
-		goal_list::const_iterator it = goalList->begin();
-		goal_list::const_iterator itEnd = goalList->end();
-		for (; it != itEnd; it++){
-			createStateValuesForLastLayer(*it, env);
-		}
-		return;
-	}
-	CANT_HANDLE("Can't create some state value from some goals!!!");
-}
 
 void SketchyPlan::increaseOneLayer(){
 	length++;
+	if (length <= 2){
+		createRandomSketchyPlan(length);
+		return;
+	}
 	fitness--;
 	for (int i = 0; i < nStateVariables; i++){
 		stateValues[i].push_back(stateValues[i][length - 2]);
@@ -134,7 +103,7 @@ void SketchyPlan::convertStateValuesToMilestones(vector < vector < shared_ptr <g
 
 			if (stateValues[stateVariableId][layerNumber]->theProposition != NULL){
 				goal *theGoal = convertPropositionToGoal(stateValues[stateVariableId][layerNumber]->theProposition->originalLiteral->toProposition(), E_POS);
-//				milestones[stateVariableId][layerNumber] = shared_ptr <goal> (theGoal);
+				milestones[stateVariableId][layerNumber] = shared_ptr <goal> (theGoal);
 			}else{
 				MyStateVariable *theStateVariable = stateValues[stateVariableId][layerNumber]->theStateVariable;
 				int theValueId = stateValues[stateVariableId][layerNumber]->valueId;
@@ -146,13 +115,13 @@ void SketchyPlan::convertStateValuesToMilestones(vector < vector < shared_ptr <g
 						myGoalList->push_back(theGoal);
 					}
 				}
-//				milestones[stateVariableId][layerNumber] = shared_ptr <goal> (new conj_goal(myGoalList));
+				milestones[stateVariableId][layerNumber] = shared_ptr <goal> (new conj_goal(myGoalList));
 			}
 		}
 	}
 }
 
-SketchyPlan SketchyPlan::crossover(SketchyPlan *mother) {
+SketchyPlan SketchyPlan::crossover(const SketchyPlan *mother) const{
 
 	SketchyPlan child(*this);
 
@@ -167,36 +136,27 @@ SketchyPlan SketchyPlan::crossover(SketchyPlan *mother) {
 	return child;
 }
 
-SketchyPlan SketchyPlan::mutate() {
+SketchyPlan SketchyPlan::mutate() const{
 	SketchyPlan child(*this);
-	int layerNumber = drand48() * (length - 1);
+	int layerNumber = drand48() * (length);
 	int stateVariableId = drand48() * (nStateVariables);
 	child.buildingWalk(stateVariableId, layerNumber);
 	return child;
 }
 
-void SketchyPlan::print(){
-/*
-	int length = milestones.size();
-	cout << "Printing milestones with the length of: " << length << endl;
-	for (int i = 0; i < length; i++){
-		cout << "Layer: " << i << " ==> ";
-		int mySize = milestones[i].size();
-		for (int j = 0; j < mySize; j++){
-			simple_goal *simpleGoal = dynamic_cast <simple_goal *> (milestones[i][j].get());
-			if (simpleGoal){
-				FastEnvironment env(0);
-				Literal lit (simpleGoal->getProp(), &env);
-				Literal *lit2 = instantiatedOp::getLiteral(&lit);
-				lit2->write(cout);
-			}else{
-				milestones[i][j]->write(cout);
+void SketchyPlan::write(ostream &sout){
+	sout << "Printing milestones with the length of: " << length << endl;
+	for (int j = 0; j < nStateVariables; ++j){
+		sout << "{ ";
+		for (int i = 1; i < length; i++){
+			if (i != 1){
+				sout << ", ";
 			}
-			cout << ", ";
+			sout << "[ " << j << ", " << i << " ==> " << stateValues[j][i]->valueId << "]";
 		}
-		cout << endl;
+		sout << " }" << endl;
 	}
-*/
+	sout << "Fitness: " << fitness << endl;
 }
 
 

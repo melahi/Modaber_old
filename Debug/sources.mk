@@ -26,4 +26,5 @@ SUBDIRS := \
 src \
 VALfiles \
 VALfiles/parsing \
+Lingeling \
 

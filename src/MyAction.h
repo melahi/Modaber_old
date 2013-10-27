@@ -81,7 +81,7 @@ public:
 	int firstVisitedLayer;
 
 	map <MyGroundedAction*, int > lastLayerMutexivity;
-	map < MyAtom *, int > lastLayerAtomMutexivity;
+	map <MyAtom*, int > lastLayerAtomMutexivity;
 
 	MyAction *parentAction;
 	map < int, MyValue *> variablePrecondition;  //it's a map from variable id (or PNE id) to an atom (or MyValue *)

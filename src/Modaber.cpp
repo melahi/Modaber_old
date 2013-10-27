@@ -58,28 +58,7 @@ void Modaber::initialization(char *domainFilePath, char *problemFilePath, bool u
 	if (!usingPlanningGraph){
 		nPG->ignoreGraph();
 	}
-
-	smtProblem = new CVC4Problem(instantiatedOp::howManyNonStaticPNEs(), instantiatedOp::howManyNonStaticLiterals(), instantiatedOp::howMany());
-	myTranslator = new Translator(smtProblem);
 }
-
-void Modaber::extractSolution(ostream &oss, CVC4Problem *smtProblem){
-	//Generating output
-	unsigned int maximumSignificantTimePoint = smtProblem->getMaximumSignificantTimePoint();
-	int nAction = instantiatedOp::howMany();
-	for (unsigned int i = 0; i < maximumSignificantTimePoint - 1; i++){
-		for (int j = 0; j < nAction; j++){
-			if (isVisited(myProblem.actions[j].firstVisitedLayer, (int) i) && smtProblem->isActionUsed(j, i)){
-				instantiatedOp *action = instantiatedOp::getInstOp(j);
-				action->write(oss);
-				oss << endl;
-			}
-		}
-	}
-}
-
-
-
 
 
 Modaber::Modaber(){}

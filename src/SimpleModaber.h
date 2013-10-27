@@ -17,6 +17,11 @@ namespace mdbr {
 class SimpleModaber: public Modaber {
 private:
 
+	Translator *myTranslator;
+
+	CVC4Problem *smtProblem;
+
+
 	int nSignificantTimePoint;
 
 protected:
@@ -25,8 +30,14 @@ protected:
 
 	virtual bool tryToSolve();
 
+	void extractSolution(ostream &oss, CVC4Problem *smtProblem);
+
+
 public:
 	SimpleModaber(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph);
+
+
+
 	virtual ~SimpleModaber();
 };
 

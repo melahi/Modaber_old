@@ -6,6 +6,9 @@
 
 using namespace std;
 
+const double undefinedValue = numeric_limits <double>::min();
+
+
 
 int testSelectRandom(){
 	for (int i = 0; i < 1000; i++){

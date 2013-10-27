@@ -5,6 +5,7 @@
 #include <vector>
 #include <cmath>
 #include <cstdlib>
+#include <limits>
 #include "MyTimer.h"
 
 
@@ -17,6 +18,7 @@ using namespace std;
 
 #define isVisited(firstVisitedLayer, layerNumber) (firstVisitedLayer != -1 && firstVisitedLayer <= layerNumber)
 
+extern const double undefinedValue;
 
 
 /*

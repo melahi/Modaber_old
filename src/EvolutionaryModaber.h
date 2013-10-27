@@ -20,12 +20,28 @@ using namespace std;
 class EvolutionaryModaber : public Modaber {
 private:
 
+	Translator *myTranslator;
+
+	CVC4Problem *smtProblem;
+
+
+
 	int populationSize;
+	int successfulChromosome;
+
+	int nParents;
+
+	double mutationRatio;
+
+
+	int lengthOfChromosomes;
+
+
 	double improvementThreshold;
 	double lastConsideredFitness;
 	int numberOfNonImprovingGeneration;
-	int lengthOfChromosomes;
 	int maximumNumberOfNonImprovingGeneration;
+
 
 
 	void calculateFitness (SketchyPlan *sketchyPlan);
@@ -34,13 +50,13 @@ private:
 
 	void increasingLength(vector <SketchyPlan> &population);
 
-	vector <SketchyPlan> crossover (vector <SketchyPlan> &population);
+	void crossover (vector <SketchyPlan> &population, vector <SketchyPlan> &children);
 
-	vector <SketchyPlan> mutation (vector <SketchyPlan> &population);
+	void mutation (vector <SketchyPlan> &population, vector <SketchyPlan> &children, double mutationRatio);
 
-	vector <SketchyPlan> selectNextGeneration(vector <SketchyPlan> &populations);
+	void selectNextGeneration(vector <SketchyPlan> &populations, vector <SketchyPlan> &nextGeneration);
 
-	int nextParent (int currentParent, vector <SketchyPlan> &population);
+	void selectParents (vector <SketchyPlan> &population, vector <const SketchyPlan*> &parents, int nParents);
 
 	void testSketchyPlan ();
 
@@ -49,6 +65,9 @@ protected:
 	virtual void initialization(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph);
 
 	virtual bool tryToSolve();
+
+	void extractSolution(ostream &oss, CVC4Problem *smtProblem);
+
 
 public:
 

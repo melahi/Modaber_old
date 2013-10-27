@@ -1,9 +1,3 @@
-/*
- * MyProblem.cpp
- *
- *  Created on: Aug 6, 2013
- *      Author: sadra
- */
 
 #include "MyProblem.h"
 #include "Utilities.h"
@@ -30,14 +24,10 @@ void MyProblem::filterVariables(){
 
 	for (int i = 0; i < nVariables; i++){
 
-		//For eliminating variables from Numerical Planning Graph
-		//The following line should be eliminated as soon as possible
-		variables[i].visitInPrecondition = false;
-
-
 		if (variables[i].visitInPrecondition == true){
 			continue;
 		}
+
 		list <MyAction *>::iterator it, itEnd;
 		it = variables[i].userActions.begin();
 		itEnd = variables[i].userActions.end();
@@ -85,7 +75,7 @@ void MyProblem::buildingDTG(){
 						stateVariables[j].domain[addStateValue[j]].firstVisitedLayer = actions[i].firstVisitedLayer + 1;
 					}
 				}
-			}else if (addStateValue[j] != 1){
+			}else if (addStateValue[j] != -1){
 				stateVariables[j].domain[addStateValue[j]].providers[stateVariables[j].domain.size() - 1].push_back(&actions[i]);
 				if (!isVisited(stateVariables[j].domain[addStateValue[j]].firstVisitedLayer, actions[i].firstVisitedLayer + 1)){
 					stateVariables[j].domain[addStateValue[j]].firstVisitedLayer = actions[i].firstVisitedLayer + 1;
@@ -141,12 +131,68 @@ void MyProblem::readingSASPlusFile(){
 	}
 }
 
+void MyProblem::updateGoalValues (){
 
-void MyProblem::updateInitialValues(){
+	goalValue.resize(stateVariables.size(), NULL);
+
+	FastEnvironment env(0);
+	updateGoalValues(current_analysis->the_problem->the_goal, &env);
+
+}
+void MyProblem::updateGoalValues (goal *the_goal, FastEnvironment *env){
+	const simple_goal *simple = dynamic_cast<const simple_goal *>(the_goal);
+	if (simple){
+
+		Literal lit (simple->getProp(), env);
+		Literal *lit2 = instantiatedOp::findLiteral(&lit);
+
+		if (!lit2){
+			CANT_HANDLE("Warning: can't find some literal in creating state values!!!");
+			lit2->write(cerr);
+			return;
+		}
+
+		if (lit2->getStateID() == -1){
+			return;
+		}
+
+		MyStateValue *stateValue = myProblem.propositions[lit2->getStateID()].stateValue;
+		goalValue[stateValue->theStateVariable->variableId] = stateValue;
+		return;
+	}
+	const conj_goal *conjunctive = dynamic_cast<const conj_goal *>(the_goal);
+	if (conjunctive){
+		const goal_list *goalList = conjunctive->getGoals();
+		goal_list::const_iterator it = goalList->begin();
+		goal_list::const_iterator itEnd = goalList->end();
+		for (; it != itEnd; it++){
+			updateGoalValues(*it, env);
+		}
+		return;
+	}
+	CANT_HANDLE("Can't create some state value from some goals!!!");
+}
+
+void MyProblem::updateInitialValuesForLiftedProposition(){
+	//Find initial value for
+	pc_list<simple_effect*>::const_iterator it1 = current_analysis->the_problem->initial_state->add_effects.begin();
+	pc_list<simple_effect*>::const_iterator it1End = current_analysis->the_problem->initial_state->add_effects.end();
+	FastEnvironment env(0);
+
+	for (; it1 != it1End; it1++){
+		Literal lit ((*it1)->prop, &env);
+		Literal *lit2 = instantiatedOp::findLiteral(&lit);
+		liftedPropositions[lit2].initialValue = true;
+	}
+}
+
+void MyProblem::updateInitialValuesForVariables(){
+	//Find initial value for variables
 	pc_list<assignment*>::const_iterator it = current_analysis->the_problem->initial_state->assign_effects.begin();
 	pc_list<assignment*>::const_iterator itEnd = current_analysis->the_problem->initial_state->assign_effects.end();
 	initialValue.resize(current_analysis->the_problem->initial_state->assign_effects.size());    //we assume in the initial state the value of every function (variable) has been declared
 	FastEnvironment env(0);
+
 
 	for (; it != itEnd; ++it){
 		PNE pne ((*it)->getFTerm(), &env);
@@ -187,14 +233,7 @@ void MyProblem::initializing(bool usingSASPlus){
 		}
 	}
 
-	this->usingSASPlus = usingSASPlus;
-	if (usingSASPlus){
-		readingSASPlusFile();
-		buildingDTG();
-	}
-
-	updateInitialValues();
-
+	updateInitialValuesForVariables();
 
 	//Preparing actions
 	int nAction = instantiatedOp::howMany();
@@ -209,43 +248,293 @@ void MyProblem::initializing(bool usingSASPlus){
 		actions[i].computeStaticMutex();
 	}
 
+	this->usingSASPlus = usingSASPlus;
+	if (usingSASPlus){
+		readingSASPlusFile();
+		buildingDTG();
+		updateGoalValues();
+	}
+
+//	write(cout);
 }
 
-void MyProblem::print(){
+void MyProblem::liftedInitializing(){
+	//Preparing types;
+	types.clear();
+	typed_symbol_list<VAL::pddl_type>::iterator typeIt, typeItEnd;
+	typeIt = current_analysis->the_domain->types->begin();
+	typeItEnd = current_analysis->the_domain->types->end();
+	for (; typeIt != typeItEnd; ++typeIt){
+		types[(*typeIt)].originalType = (*typeIt);
+		if ((*typeIt)->type){
+			types[(*typeIt)->type].originalType = (*typeIt)->type;
+			types[(*typeIt)->type].children.push_back(&types[(*typeIt)]);
+		}
+		if ((*typeIt)->either_types){
+			CANT_HANDLE("I don't know what does either types means in type class!!!");
+		}
+	}
 
-	cout << "Propositions: " << instantiatedOp::howManyNonStaticLiterals() << endl;
+
+	//Preparing object
+	const_symbol_list::iterator objIt, objItEnd;
+	objIt = current_analysis->the_problem->objects->begin();
+	objItEnd = current_analysis->the_problem->objects->end();
+
+	for (; objIt != objItEnd; ++objIt){
+		objects[(*objIt)].originalObject = (*objIt);
+		MyObject *myObject = (&objects[(*objIt)]);
+		if ((*objIt)->type){
+			types[(*objIt)->type].objects.push_back(myObject);
+			myObject->type = &types[(*objIt)->type];
+		}else {
+			CANT_HANDLE("We don't support for No Type or Either Type!!!");
+		}
+	}
+
+
+	//completing objects of each type;
+	map<VAL::pddl_type *, MyType>::iterator myTypeIt, myTypeItEnd;
+	myTypeIt = types.begin();
+	myTypeItEnd = types.end();
+
+	for (; myTypeIt != myTypeItEnd; ++myTypeIt){
+		myTypeIt->second.completingChildren();
+	}
+
+
+	//preparing operators
+	operator_list::iterator opIt, opItEnd;
+	opIt = current_analysis->the_domain->ops->begin();
+	opItEnd = current_analysis->the_domain->ops->end();
+	operators.resize(current_analysis->the_domain->ops->size());
+	nUnification = 0;
+	for (int i = 0; opIt != opItEnd; ++opIt, ++i){
+		operators[i] = new MyOperator();
+		operators[i]->prepare(*opIt, i);
+		for (unsigned int j = 0; j < operators[i]->offset.size(); ++j){
+			operators[i]->offset[j] = nUnification;
+			nUnification += operators[i]->argument[j]->objects.size();
+		}
+	}
+
+	assignIdToValues();
+	list <MyAssignment>::iterator asgnIt, asgnItEnd;
+	asgnIt = assignments.begin();
+	asgnItEnd = assignments.end();
+	for (; asgnIt != asgnItEnd; ++asgnIt){
+		asgnIt->findAllMutexes();
+	}
+
+	updateInitialValuesForLiftedProposition();
+}
+
+
+void MyProblem::assignIdToLiftedPropositions(){
+	map <Literal *, MyLiftedProposition>::iterator it, itEnd;
+	it = liftedPropositions.begin();
+	itEnd = liftedPropositions.end();
+	nPropositionVariables = instantiatedOp::howManyLiteralsOfAnySort();
+
+	int nOperators = operators.size();
+	for (; it != itEnd; ++it){
+		if (it->first == NULL){
+			liftedPropositions.erase(it);
+			continue;
+		}
+
+		vector <bool> possibleModificationByOperator (nOperators, false);
+
+		//find which operator affect on this proposition
+		list <MyPartialAction *>::iterator paIt, paItEnd;
+
+		paIt = it->second.adder.begin();
+		paItEnd = it->second.adder.end();
+		for (; paIt != paItEnd; ++paIt){
+			possibleModificationByOperator[(*paIt)->op->id] = true;
+		}
+
+		paIt = it->second.deleter.begin();
+		paItEnd = it->second.deleter.end();
+		for (; paIt != paItEnd; ++paIt){
+			possibleModificationByOperator[(*paIt)->op->id] = true;
+		}
+
+
+
+		//assigning id
+		it->second.ids.resize(nOperators);
+		int lastModifierOperator;
+		for (lastModifierOperator = nOperators - 1; lastModifierOperator >= 0; --lastModifierOperator){
+			if (possibleModificationByOperator[lastModifierOperator]){
+				break;
+			}
+		}
+		if (lastModifierOperator == -1){
+			it->second[0] = -1;
+		}else{
+			it->second.ids[0] = it->first->getGlobalID();
+		}
+		for (int i = 1; i < nOperators; ++i){
+			if (i > lastModifierOperator){
+				it->second.ids[i] = -1;
+				continue;
+			}
+			if (possibleModificationByOperator[i - 1]){
+				it->second.ids[i] = nPropositionVariables;
+				nPropositionVariables++;
+				continue;
+			}
+			it->second.ids[i] = it->second.ids[i - 1];
+		}
+	}
+}
+
+void MyProblem::assignIdToValues(){
+	int nVariables = variables.size();
+	int nOperators = operators.size();
+	nValues = 0;
+	for (int i = 0; i < nVariables; ++i){
+		vector <bool> possibleModificationByOperator (nOperators, false);
+
+		//find which operator affect on this proposition
+		list <MyAssignment *>::iterator asgnIt, asgnItEnd;
+
+		asgnIt = variables[i].assigner.begin();
+		asgnIt = variables[i].assigner.end();
+		for (; asgnIt != asgnItEnd; ++asgnIt){
+			possibleModificationByOperator[(*asgnIt)->op->id] = true;
+		}
+
+		//assigning id
+		int lastModifierOperator;
+		for (lastModifierOperator = nOperators - 1; lastModifierOperator >= 0; --lastModifierOperator){
+			if (possibleModificationByOperator[lastModifierOperator]){
+				break;
+			}
+		}
+		if (lastModifierOperator == -1){
+			CANT_HANDLE("SOME THING STRANGE HAS HAPPENED (I THOUGH THIS VARIABLE IS NOT STATIC BUT NO ACTION AFFECT ON IT)");
+		}
+
+		map <double, MyValue>::iterator valueIt, valueItEnd;
+		valueIt = variables[i].domain.begin();
+		valueItEnd = variables[i].domain.end();
+		for (; valueIt != valueItEnd; ++valueIt){
+			valueIt->second.ids.resize(nOperators);
+			valueIt->second.ids[0] = nValues;
+			nValues++;
+			for (int i = 1; i < nOperators; ++i){
+				if (i > lastModifierOperator){
+					valueIt->second.ids[i] = -1;
+					continue;
+				}
+				if (possibleModificationByOperator[i - 1]){
+					valueIt->second.ids[i] = nValues;
+					nValues++;
+					continue;
+				}
+				valueIt->second.ids[i] = valueIt->second.ids[i - 1];
+			}
+		}
+	}
+}
+
+void MyProblem::write(ostream &sout){
+
+	sout << "Propositions: " << instantiatedOp::howManyNonStaticLiterals() << endl;
 	for (unsigned int i = 0; i < propositions.size(); i++){
-		propositions[i].write(cout);
-		cout << endl;
+		propositions[i].write(sout);
+		sout << endl;
 	}
 
-	cout << "State variables: " << stateVariables.size() << endl;
+	sout << "State variables: " << stateVariables.size() << endl;
 	for (unsigned int i = 0; i < stateVariables.size(); i++){
-		stateVariables[i].write(cout);
-		cout << endl;
+		stateVariables[i].write(sout);
+		sout << endl;
 	}
 
-	cout << "Variables: " << instantiatedOp::howManyNonStaticPNEs() << endl;
+	sout << "Variables: " << instantiatedOp::howManyNonStaticPNEs() << endl;
 	for (unsigned int i = 0; i < variables.size(); i++){
-		cout << i << ' ' << variables[i].originalPNE->getStateID() << ' ';
-		variables[i].originalPNE->write(cout);
-		cout << endl;
+		sout << i << ' ' << variables[i].originalPNE->getStateID() << ' ';
+		variables[i].originalPNE->write(sout);
+		sout << endl;
 	}
-	cout << "Actions: " << instantiatedOp::howMany() << endl;
+	sout << "Actions: " << instantiatedOp::howMany() << endl;
 	for (unsigned int i = 0; i < actions.size(); i++){
-		cout << i << ' ' << actions[i].valAction->getID() << ' ';
-		actions[i].valAction->write(cout);
-		cout << endl;
+		sout << i << ' ' << actions[i].valAction->getID() << ' ';
+		actions[i].valAction->write(sout);
+		sout << endl;
 	}
+
+
+	//Printing Types
+	map <VAL::pddl_type *, MyType>::iterator typeIt, typeItEnd;
+	typeIt = types.begin();
+	typeItEnd = types.end();
+	for (; typeIt != typeItEnd; ++typeIt){
+		writeType(sout, &(typeIt->second), 0);
+	}
+}
+
+void MyProblem::writeType (ostream &sout, MyType *type, int indent){
+	string myIndent = "";
+	for (int i = 0; i < indent; i++){
+		myIndent += '\t';
+	}
+
+	sout << myIndent << type->originalType->getName() << ": " << endl;
+	vector <MyObject *>::iterator objIt, objItEnd;
+	objIt = type->objects.begin();
+	objItEnd = type->objects.end();
+	for (; objIt != objItEnd; ++objIt){
+		sout << myIndent << "---" << (*objIt)->originalObject->getName() << endl;
+	}
+
+	list <MyType *>::iterator typeIt, typeItEnd;
+	typeIt = type->children.begin();
+	typeItEnd = type->children.end();
+
+	for (; typeIt != typeItEnd; ++typeIt){
+		writeType(sout, *typeIt, indent+1);
+	}
+}
+
+void MyProblem::writeDTG(ostream &sout){
+	int nStateVariables = stateVariables.size();
+	for (int i = 0; i < nStateVariables; ++i){
+		int domainSize = stateVariables[i].domain.size();
+		sout << "Variable: " << i << endl;
+		for (int j = 0; j < domainSize; ++j){
+			for (int k = 0; k < domainSize; ++k){
+				sout << "(" << j << ',' << k << ")  ==>  ";
+				list <MyAction*>::iterator it, itEnd;
+				it = stateVariables[i].domain[j].providers[k].begin();
+				itEnd = stateVariables[i].domain[j].providers[k].end();
+				for (; it != itEnd; ++it){
+					(*it)->write(sout);
+				}
+				sout << endl;
+			}
+		}
+		sout << "--------------------------------------------------------" << endl;
+	}
+}
+
+void MyProblem::writeAllLiftedPropositional(){
+	map<Literal *, MyLiftedProposition>::iterator it, itEnd;
+	it = liftedPropositions.begin();
+	itEnd = liftedPropositions.end();
+
+	for (; it != itEnd; ++it){
+		it->second.write(cout);
+	}
+
 }
 
 MyProblem::MyProblem() {
 	// TODO Auto-generated constructor stub
 
-}
-
-MyProblem::~MyProblem() {
-	// TODO Auto-generated destructor stub
 }
 
 } /* namespace mdbr */

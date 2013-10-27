@@ -1,0 +1,18 @@
+Building file: ../src/Agent.cpp
+Invoking: Cross G++ Compiler
+g++ -I../VALfiles/parsing -I.././ -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"src/Agent.d" -MT"src/Agent.d" -o "src/Agent.o" "../src/Agent.cpp"
+Finished building: ../src/Agent.cpp
+ 
+Building file: ../src/CVC4Problem.cpp
+Invoking: Cross G++ Compiler
+g++ -I../VALfiles/parsing -I.././ -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"src/CVC4Problem.d" -MT"src/CVC4Problem.d" -o "src/CVC4Problem.o" "../src/CVC4Problem.cpp"
+Finished building: ../src/CVC4Problem.cpp
+ 
+Building file: ../src/EvolutionaryModaber.cpp
+Invoking: Cross G++ Compiler
+g++ -I../VALfiles/parsing -I.././ -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"src/EvolutionaryModaber.d" -MT"src/EvolutionaryModaber.d" -o "src/EvolutionaryModaber.o" "../src/EvolutionaryModaber.cpp"
+Finished building: ../src/EvolutionaryModaber.cpp
+ 
+Building file: ../src/LiftedTranslator.cpp
+Invoking: Cross G++ Compiler
+g++ -I../VALfiles/parsing -I.././ -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"src/LiftedTranslator.d" -MT"src/LiftedTranslator.d" -o "src/LiftedTranslator.o" "../src/LiftedTranslator.cpp"

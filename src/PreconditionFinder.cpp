@@ -31,13 +31,13 @@ void PreconditionFinder::simpleGoalAnalyzer(const proposition *prop){
 void PreconditionFinder::expressionAnalyzer (const expression *expr, bool isPrecondition){
 	const binary_expression* binary = dynamic_cast <const binary_expression *> (expr);
 	if (binary){
-		expressionAnalyzer(binary->getLHS(), true);
-		expressionAnalyzer(binary->getRHS(), true);
+		expressionAnalyzer(binary->getLHS(), isPrecondition);
+		expressionAnalyzer(binary->getRHS(), isPrecondition);
 		return;
 	}
 	const uminus_expression* uMinus = dynamic_cast<const uminus_expression *> (expr);
 	if (uMinus){
-		expressionAnalyzer(uMinus->getExpr(), true);
+		expressionAnalyzer(uMinus->getExpr(), isPrecondition);
 		return;
 	}
 	const num_expression* numExpr = dynamic_cast<const num_expression *> (expr);

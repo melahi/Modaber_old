@@ -108,7 +108,8 @@ bool MyGroundedAction::isPreconditionSatisfied(goal *precondition, FastEnvironme
 	const comparison *comp = dynamic_cast<const comparison*> (precondition);
 	if (comp){
 
-		//FIXME the following line is just for eliminating variables from Numerical Planning Graph;
+		//FIXME	We want to ignore variables from planning graph so we add the following line
+		//		If you want to consider variable you should delete the following line
 		return true;
 
 		double left = evaluateExpression(comp->getLHS(), env);
@@ -180,7 +181,10 @@ void MyGroundedAction::applyAction(int layerNumber) {
 	instantiatedOp *op = parentAction->valAction;
 	FastEnvironment *env = op->getEnv();
 	addSimpleEffectList(op->forOp()->effects->add_effects, env, layerNumber + 1);
-	addAssignmentList(op->forOp()->effects->assign_effects, env, layerNumber + 1);
+
+	//FIXME	We want to ignore variables from planning graph so we comment the following line
+	//		If you want to consider variable you should uncomment the following line
+//	addAssignmentList(op->forOp()->effects->assign_effects, env, layerNumber + 1);
 }
 
 void MyGroundedAction::addSimpleEffectList (const pc_list <simple_effect*> &simpleEffectList, FastEnvironment *env, int layerNumber){
@@ -237,7 +241,7 @@ void MyGroundedAction::addAssignmentList (const pc_list <assignment *> &assignme
 			cerr << "I think the program should never reach at this line, BTW we just was applying a numerical effect!" << endl;
 			exit (1);
 		}
-		myProblem.variables[pne2->getStateID()].findValue(value, layerNumber, this);
+		myProblem.variables[pne2->getStateID()].valueIsFound(value, layerNumber, this);
 	}
 }
 
@@ -574,10 +578,19 @@ bool MyAction::computeGroundedAction(int layerNumber){
 		}
 	}
 
+								map <int, MyValue *> dummyMap;
+								MyGroundedAction newGroundedAction (this, dummyMap);
+								if (groundedActions.find(newGroundedAction) == groundedActions.end()){
+									if (newGroundedAction.isApplicable(layerNumber)){
+										visitNewGroundedAction(layerNumber, newGroundedAction);
+										return true;
+									}
+}
+
+
 	set <MyVariable *>::iterator it3, itEnd3;
 	it3 = variableNeeded.begin();
 	itEnd3 = variableNeeded.end();
-
 
 	for (; it3 != itEnd3; ++it3){
 		(*it3)->restart();

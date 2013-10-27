@@ -65,7 +65,7 @@ public:
 
 
 
-	double solve(const Expr &assertExpr);
+	int solve(const Expr &assertExpr);
 
 	void print();
 

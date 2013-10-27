@@ -63,16 +63,19 @@ void NumericalPlanningGraph::createInitialLayer(){
 
 
 
-	pc_list<assignment*>::const_iterator it2 = current_analysis->the_problem->initial_state->assign_effects.begin();
-	pc_list<assignment*>::const_iterator itEnd2 = current_analysis->the_problem->initial_state->assign_effects.end();
 
-	for (; it2 != itEnd2; ++it2){
-		PNE pne ((*it2)->getFTerm(), &env);
-		PNE *pne2 = instantiatedOp::findPNE(&pne);
-		if (pne2->getStateID() != -1){
-			myProblem.variables[pne2->getStateID()].findValue(myProblem.initialValue[pne2->getGlobalID()], 0, NULL);
-		}
-	}
+
+	//FIXME	We want to ignore variables from planning graph so we comment the following 7 line
+	//		If you want to consider variable you should uncomment the following 7 line
+//	pc_list<assignment*>::const_iterator it2 = current_analysis->the_problem->initial_state->assign_effects.begin();
+//	pc_list<assignment*>::const_iterator itEnd2 = current_analysis->the_problem->initial_state->assign_effects.end();
+//	for (; it2 != itEnd2; ++it2){
+//		PNE pne ((*it2)->getFTerm(), &env);
+//		PNE *pne2 = instantiatedOp::findPNE(&pne);
+//		if (pne2->getStateID() != -1){
+//			myProblem.variables[pne2->getStateID()].valueIsFound(myProblem.initialValue[pne2->getGlobalID()], 0, NULL);
+//		}
+//	}
 
 
 
@@ -104,10 +107,8 @@ bool NumericalPlanningGraph::extendOneLayer(){
 			it = myProblem.actions[i].groundedActions.begin();
 			itEnd = myProblem.actions[i].groundedActions.end();
 			for (; it != itEnd; ++it){
-				if (it->firstVisitedLayer == -1){
-					MyGroundedAction *newFounded = const_cast <MyGroundedAction *> (&(*it));
-					newFounded->applyAction(numberOfLayers - 1);
-				}
+				MyGroundedAction *newFounded = const_cast <MyGroundedAction *> (&(*it));
+				newFounded->applyAction(numberOfLayers - 1);
 			}
 		}
 		canContinue |= foundNewGroundedAction;
@@ -160,6 +161,10 @@ bool NumericalPlanningGraph::extendOneLayer(){
 cout << "New Actions: " << newFoundedGroundedActions.size() << endl;
 cout << "Old Actions: " << oldFoundedGroundedActions.size() << endl;
 cout << "Atoms: " << allFoundedAtoms.size() << endl;
+for (unsigned int i = 0; i < myProblem.variables.size(); ++i){
+	myProblem.variables[i].write(cout);
+	cout << endl << myProblem.variables[i].domain.size() << endl;
+}
 
 	/*************** Finding mutex relation between no-op and other actions ***************/
 

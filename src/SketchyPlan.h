@@ -34,15 +34,12 @@ public:
 
 	SketchyPlan(int length);
 
+	SketchyPlan();
+
 	void createRandomSketchyPlan(int length);
 
 	//In the buildingWalk function, a walk from Domain Transition Graph of a state variable is built
 	void buildingWalk (int variableId, int layerNumber);
-
-
-	void createStateValuesForLastLayer();
-	void createStateValuesForLastLayer(goal *the_goal, FastEnvironment *env);
-
 
 	void increaseOneLayer();
 
@@ -52,11 +49,11 @@ public:
 	//The return pointer of following function should be deleted
 	goal* convertPropositionToGoal (const proposition *originalProposition, polarity plrty);
 
-	SketchyPlan crossover(SketchyPlan *mother);
+	SketchyPlan crossover(const SketchyPlan *mother) const;
 
-	SketchyPlan mutate();
+	SketchyPlan mutate() const;
 
-	void print();
+	void write(ostream &sout);
 
 	virtual ~SketchyPlan();
 

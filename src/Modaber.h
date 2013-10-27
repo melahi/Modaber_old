@@ -16,10 +16,6 @@ namespace mdbr{
 class Modaber {
 protected:
 
-	Translator *myTranslator;
-
-	CVC4Problem *smtProblem;
-
 	NumericalPlanningGraph *nPG;
 
 	bool usingPlanningGraph;
@@ -29,8 +25,6 @@ protected:
 	virtual void initialization(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph, bool usingSASPlus);
 
 	virtual bool tryToSolve() = 0;
-
-	void extractSolution(ostream &oss, CVC4Problem *smtProblem);
 
 
 public:

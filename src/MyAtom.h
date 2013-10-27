@@ -18,6 +18,7 @@
 #include "VALfiles/instantiation.h"
 
 
+
 using namespace std;
 using namespace Inst;
 
@@ -34,6 +35,8 @@ class   MyGroundedAction;
 
 class MyStateVariable;
 class MyStateValue;
+
+class MyAssignment;
 
 class MyAtom {
 public:
@@ -84,6 +87,10 @@ public:
 	MyVariable *variable;
 	double value;
 
+//	int globalValueId;
+
+	vector <int> ids;
+
 	MyValue(MyVariable *variable, double value): MyAtom(), variable(variable), value(value){}
 	MyValue(): MyAtom(){}
 
@@ -106,23 +113,25 @@ public:
 	list <MyAction *> modifierActions;
 	list <MyAction *> userActions;
 
+	list <MyAssignment *> assigner;
 
-	/* FIXME: for now we assume that every variable which appears in some precondition is
+
+	/* FIXME: for now we assume that every variable which appears in so me precondition is
 	 * important; but it is not completely true, perhaps a variable is appeared in an
 	 * assignment and the assignee be an important one, then the variable is also should
 	 * count as important variable!
 	 */
 	bool visitInPrecondition;
 
-
+	MyValue *initialValue;
 
 	map <double, MyValue> domain;
 
-	MyVariable (PNE *originalPNE): originalPNE(originalPNE), visitInPrecondition(false){}
-	MyVariable (): originalPNE(0), visitInPrecondition(false){}
+	MyVariable (PNE *originalPNE): originalPNE(originalPNE), visitInPrecondition(false), initialValue(NULL){}
+	MyVariable (): originalPNE(0), visitInPrecondition(false), initialValue(NULL){}
 
 
-	void findValue (double value, int layerNumber, MyGroundedAction *action){
+	void valueIsFound (double value, int layerNumber, MyGroundedAction *action){
 		if (domain.find(value) == domain.end()){
 			domain[value] = MyValue (this, value);
 		}

@@ -304,7 +304,7 @@ void Translator::addGoal (const goal *gl, FastEnvironment *env, int significantT
 
 //bool firstTime = true;
 
-double Translator::solve(SketchyPlan *sketchyPlan){
+int Translator::solve(SketchyPlan *sketchyPlan){
 
 	//create assertions for intermediate and final goals
 
@@ -322,7 +322,7 @@ double Translator::solve(SketchyPlan *sketchyPlan){
 
 bool Translator::solve(){
 	double ret = solve(NULL);
-	if (ret == numeric_limits <double>::max()) {
+	if (ret == numeric_limits <int>::max()) {
 		return true;
 	}
 	return false;

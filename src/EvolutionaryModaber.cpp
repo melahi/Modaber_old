@@ -24,16 +24,27 @@ using namespace CVC4;
 void EvolutionaryModaber::initialization(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph){
 	Modaber::initialization(domainFilePath, problemFilePath, usingPlanningGraph, true);
 
-	//Genetic Algorithm parameters
+	smtProblem = new CVC4Problem(instantiatedOp::howManyNonStaticPNEs(), instantiatedOp::howManyNonStaticLiterals(), instantiatedOp::howMany());
+	myTranslator = new Translator(smtProblem);
+
+
 	lengthOfChromosomes = 1;
 	if (usingPlanningGraph){
 		nPG->constructingGraph(lengthOfChromosomes);
 	}
 	myTranslator->prepare(lengthOfChromosomes);
+	myProblem.environment.prepare(lengthOfChromosomes);
 
-	maximumNumberOfNonImprovingGeneration = 20;
-	improvementThreshold = 5;
+
+	//Genetic Algorithm parameters
+	maximumNumberOfNonImprovingGeneration = 100;
+	improvementThreshold = 1;
 	populationSize = 200;
+	successfulChromosome = populationSize * 0.2;
+	mutationRatio = 0.2;
+
+
+
 }
 
 void EvolutionaryModaber::calculateFitness(SketchyPlan *sketchyPlan){
@@ -65,6 +76,7 @@ void EvolutionaryModaber::increasingLength(vector <SketchyPlan> &population){
 		nPG->constructingGraph(lengthOfChromosomes);
 	}
 	myTranslator->prepare(lengthOfChromosomes);
+	myProblem.environment.prepare(lengthOfChromosomes);
 
 	for (int i = 0; i < selectedPopulation; i++){
 		population[i].increaseOneLayer();
@@ -77,79 +89,70 @@ void EvolutionaryModaber::increasingLength(vector <SketchyPlan> &population){
 	calculateFitness(population);
 }
 
-int EvolutionaryModaber::nextParent (int currentParent, vector <SketchyPlan> &population){
-	double maximumParentSelectionProbability = 2 ; //This is the probability of choosing best chromosome as a parent
-	int last = population.size();
+void EvolutionaryModaber::selectParents (vector <SketchyPlan> &population, vector <const SketchyPlan*> &parents, int nParents){
+	//This selection is based on roulette wheel method
 
-	for (++currentParent; currentParent < last; ++currentParent){
-		if (drand48() <= (maximumParentSelectionProbability * population[currentParent].fitness / population[0].fitness)){
-			return currentParent;
-		}
+	parents.resize(nParents, NULL);
+	int populationSize = population.size();
+
+	//Find probability distribution for selecting each individual as a parent
+	vector <double> probabilityDistribution (populationSize, 0);
+	double sum = 0;
+	for (int i = 0; i < populationSize; i++) {
+		probabilityDistribution[i] = population[i].fitness;
+		sum += probabilityDistribution[i];
 	}
-	return currentParent;
+	normolizing(probabilityDistribution, sum);
+
+
+	//Selecting Parents
+	for (int i = 0; i < nParents; i++){
+		int selected = selectRandomly(probabilityDistribution);
+		parents[i] = &(population[selected]);
+	}
 }
 
-vector <SketchyPlan> EvolutionaryModaber::crossover (vector  <SketchyPlan> &population){
-	vector <SketchyPlan> crossoverChilds;
-	int lastIndex = population.size();
-	int motherIndex, fatherIndex;
-	motherIndex = fatherIndex = -1;
+void EvolutionaryModaber::crossover (vector  <SketchyPlan> &population, vector <SketchyPlan> &children){
+	vector <const SketchyPlan *> parents;
+	selectParents(population, parents, nParents);
 
-	//Find first father and mother
-	fatherIndex = nextParent(fatherIndex, population);
-	motherIndex = nextParent(motherIndex, population);
-	if (motherIndex == fatherIndex){
-		motherIndex = nextParent(motherIndex, population);
+	children.resize(nParents / 2);
+	for (int i = 0; i + 1 < nParents; i += 2){
+		children[i / 2] = parents[i]->crossover(parents[i+1]);
 	}
-
-	while (motherIndex < lastIndex && fatherIndex < lastIndex){
-		crossoverChilds.push_back(population[fatherIndex].crossover(&population[motherIndex]));
-
-		//Find next father and mother
-		fatherIndex = nextParent(fatherIndex, population);
-		motherIndex = nextParent(motherIndex, population);
-		if (motherIndex == fatherIndex){
-			motherIndex = nextParent(motherIndex, population);
-		}
-	}
-	return crossoverChilds;
 }
 
-vector <SketchyPlan> EvolutionaryModaber::mutation (vector <SketchyPlan> &population){
-	double mutationRatio = 0.2;
-	vector <SketchyPlan> mutationChilds;
+void EvolutionaryModaber::mutation (vector <SketchyPlan> &population, vector <SketchyPlan> &children, double mutationRatio){
+
 	int last = population.size();
 
 	for (int i = 0; i < last; i++){
 		if (drand48() <= mutationRatio){
-			mutationChilds.push_back(population[i].mutate());
+			children.push_back(population[i].mutate());
 		}
 	}
-
-	return mutationChilds;
 }
 
-vector <SketchyPlan> EvolutionaryModaber::selectNextGeneration (vector <SketchyPlan> &population){
-	int successfulChromosome = populationSize * 0.4;
+void EvolutionaryModaber::selectNextGeneration (vector <SketchyPlan> &population, vector <SketchyPlan> &nextGeneration){
 	int selectedChromosome = 0;
 
-	vector <SketchyPlan> nextGeneration;
+	nextGeneration.resize(populationSize);
 
 	sort (population.begin(), population.end());
 
 	//First select successful chromosome
 	while (selectedChromosome < successfulChromosome){
-		nextGeneration.push_back (population[selectedChromosome]);
+		nextGeneration[selectedChromosome]  = population[selectedChromosome];
+
 		++selectedChromosome;
 	}
 
 	//At next select lucky chromosome
 	vector <int> luckyChromosomeIndex = selectRandomly(selectedChromosome, population.size(), populationSize - selectedChromosome);
-	for (unsigned int i = 0; i < luckyChromosomeIndex.size(); i++){
-		nextGeneration.push_back(population[luckyChromosomeIndex[i]]);
+	for (unsigned int i = 0; i < luckyChromosomeIndex.size(); ++i, ++selectedChromosome){
+		nextGeneration[selectedChromosome] = population[luckyChromosomeIndex[i]];
 	}
 
-	return nextGeneration;
 }
 
 
@@ -173,15 +176,17 @@ bool EvolutionaryModaber::tryToSolve(){
 
 		sort(population.begin(), population.end());
 		cout << "Best fitness: " << population[0].fitness << endl;
-		if (population[0].fitness == numeric_limits <double>::max()){
-			population[0].print();
+		if (population[0].fitness == numeric_limits <int>::max()){
+			population[0].write(cout);
 			foundSolution = true;
 			return true;
 		}
 		if (population[0].fitness - lastConsideredFitness >= improvementThreshold){
 			lastConsideredFitness = population[0].fitness;
 			numberOfNonImprovingGeneration = 0;
+			mutationRatio = 0.2;
 		}else{
+			mutationRatio = 1;
 			numberOfNonImprovingGeneration++;
 		}
 
@@ -190,39 +195,60 @@ bool EvolutionaryModaber::tryToSolve(){
 			numberOfNonImprovingGeneration = 0;
 		}
 
-		vector <SketchyPlan> crossoverChilds = crossover (population);
-		calculateFitness(crossoverChilds);
+		vector <SketchyPlan> crossoverChildren;
+		crossover (population, crossoverChildren);
+		calculateFitness(crossoverChildren);
 
-		vector <SketchyPlan> mutationChilds = mutation (population);
-		calculateFitness(mutationChilds);
+		vector <SketchyPlan> mutationChildren;
+		mutation (population, mutationChildren, mutationRatio);
+		calculateFitness(mutationChildren);
 
-		population.insert(population.end(), crossoverChilds.begin(), crossoverChilds.end());
-		population.insert(population.end(), mutationChilds.begin(), mutationChilds.end());
+		population.insert(population.end(), crossoverChildren.begin(), crossoverChildren.end());
+		population.insert(population.end(), mutationChildren.begin(), mutationChildren.end());
 
-		population = selectNextGeneration(population);
+
+		vector <SketchyPlan> nextGeneration;
+		selectNextGeneration(population, nextGeneration);
+		population = nextGeneration;
 		generationNumber++;
 	}
 
 	return false;
 }
 
+
+
+void EvolutionaryModaber::extractSolution(ostream &oss, CVC4Problem *smtProblem){
+	//Generating output
+	unsigned int maximumSignificantTimePoint = smtProblem->getMaximumSignificantTimePoint();
+	int nAction = instantiatedOp::howMany();
+	for (unsigned int i = 0; i < maximumSignificantTimePoint - 1; i++){
+		for (int j = 0; j < nAction; j++){
+			if (isVisited(myProblem.actions[j].firstVisitedLayer, (int) i) && smtProblem->isActionUsed(j, i)){
+				instantiatedOp *action = instantiatedOp::getInstOp(j);
+				action->write(oss);
+				oss << endl;
+			}
+		}
+	}
+}
+
 void EvolutionaryModaber::testSketchyPlan (){
 	vector <SketchyPlan> parents;
-	parents.push_back(SketchyPlan (20));
-	parents.push_back(SketchyPlan (20));
-	parents[0].print();
+	parents.push_back(SketchyPlan (8));
+	parents.push_back(SketchyPlan (8));
+	parents[0].write(cout);
 	cout << "*************************" << endl;
-	parents[1].print();
+	parents[1].write(cout);
 	cout << "*************************" << endl;
-	parents[0].crossover(&parents[1]).print();
+	parents[0].crossover(&parents[1]).write(cout);
 	cout << "*************************" << endl;
-	parents[0].mutate().print();
+	parents[0].mutate().write(cout);
 	cout << "*************************" << endl;
 }
 
 EvolutionaryModaber::EvolutionaryModaber(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph) {
 	initialization(domainFilePath, problemFilePath, usingPlanningGraph);
-
 
 	bool foundSolution;
 	foundSolution = tryToSolve();
