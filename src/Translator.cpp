@@ -141,7 +141,7 @@ void Translator::addExplanatoryAxioms (int significantTimePoint){
 	int nVariable = instantiatedOp::howManyNonStaticPNEs();
 	for (int i = 0; i < nVariable; i++){
 		smtProblem->startNewClause();
-		smtProblem->AddEqualityCondition(i, significantTimePoint, i, significantTimePoint - 1);
+		smtProblem->AddEqualityCondition(i, significantTimePoint, i, significantTimePoint - 1, true);
 		actionIt = myProblem.variables[i].modifierActions.begin();
 		actionItEnd = myProblem.variables[i].modifierActions.end();
 		for (; actionIt != actionItEnd; ++actionIt){

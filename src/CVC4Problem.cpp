@@ -363,9 +363,9 @@ int CVC4Problem::getVariableIndex (int variableStateId, int significantTimePoint
 		Type real = em.realType();
 //		ostringstream oss;
 //		oss << "[";
-//		myProblem.variables[i].write(oss);
-//		oss << ", " << (size + i) / nVariables << "]";
-//		variableExpr.push_back(em.mkVar(oss.str(),real));
+//		myProblem.variables[variableStateId].write(oss);
+//		oss << ", " << significantTimePoint << "]";
+//		variableExpr[ret] = Expr(em.mkVar(oss.str(),real));
 		variableExpr[ret] = Expr(em.mkVar(real));
 	}
 	return ret;
@@ -378,9 +378,9 @@ inline int CVC4Problem::getPropositionIndex (int proposition, int significantTim
 		Type boolean = em.booleanType();
 //		ostringstream oss;
 //		oss << "[";
-//		myProblem.propositions[i].write(oss);
-//		oss << ", " << (size + i) / nProposition << "]";
-//		propositionExpr.push_back(em.mkVar(oss.str(), boolean));
+//		myProblem.propositions[proposition].write(oss);
+//		oss << ", " << significantTimePoint << "]";
+//		propositionExpr[ret] = Expr(em.mkVar(oss.str(), boolean));
 		propositionExpr[ret] = Expr(em.mkVar(boolean));
 	}
 	return ret;
@@ -393,9 +393,9 @@ inline int CVC4Problem::getActionIndex (int action, int significantTimePoint){
 		Type boolean = em.booleanType();
 //		ostringstream oss;
 //		oss << "[";
-//		myProblem.actions[i].write(oss);
-//		oss << ", " << (size + i) / nAction << "]";
-//		actionExpr.push_back(em.mkVar (oss.str(), boolean));
+//		myProblem.actions[action].write(oss);
+//		oss << ", " << significantTimePoint << "]";
+//		actionExpr[ret] = Expr (em.mkVar (oss.str(), boolean));
 		actionExpr[ret] = Expr (em.mkVar (boolean));
 	}
 	return ret;
