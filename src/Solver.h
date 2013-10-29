@@ -4,6 +4,8 @@
 #define SOLVER_H_
 
 
+#include "Utilities.h"
+
 extern "C" {
 	#include "Lingeling/lglib.h"
 }
@@ -125,12 +127,14 @@ public:
 	}
 
 	void addProposition ( polarity plrty, int propositionId, int significantTimePoint){
-//		if (propositionId < 0){
-//			if (propositionId == -2){
-//				addLiteral(plrty, falseValueId);
-//				return;
-//			}
-//		}
+		if (propositionId < 0){
+			if (propositionId == -2){
+				addLiteral(plrty, falseValueId);
+				return;
+			}else{
+				CANT_HANDLE("THERE IS SOME UNMEANING PROPOSITION ID: " << propositionId);
+			}
+		}
 		addLiteral(plrty, getIdOfProposition(propositionId, significantTimePoint));
 	}
 

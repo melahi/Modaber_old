@@ -265,7 +265,7 @@ double MyComparison::evalute (const expression *exp){
 
 void MyComparison::write(ostream &sout){
 	cout << "=======================" << endl;
-	cout << comparisonId << endl;
+	cout << comparisonId << ": " << op->originalOperator->name->getName()<< endl;
 	map <string, MyObject *>::iterator objIt, objItEnd;
 	objIt = selectedObject.begin();
 	objItEnd = selectedObject.end();

@@ -79,6 +79,7 @@ MyLiftedProposition::MyLiftedProposition(const proposition *valProposition, vect
 	FastEnvironment env(0);
 	Literal lit(&prop, &env);
 	originalLiteral = instantiatedOp::findLiteral(&lit);
+	ids.resize(myProblem.operators.size(), -2);
 }
 
 MyLiftedProposition *MyLiftedProposition::find(){

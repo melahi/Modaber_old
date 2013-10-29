@@ -77,7 +77,11 @@ void MyPartialAction::write(ostream &sout, bool isEndl /* = true */){
 		sout << " " << this->liftedPartialAction->placement[i] << ":" << this->liftedPartialAction->argument[i]->objects[this->objectId[i]]->originalObject->getName();
 	}
 	sout <<") ==> ";
-	this->proposition->originalLiteral->write(sout);
+	if (this->proposition->originalLiteral){
+		this->proposition->originalLiteral->write(sout);
+	}else{
+		cout << "FALSE!!!";
+	}
 	sout << "]";
 	if (isEndl){
 		sout << endl;

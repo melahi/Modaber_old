@@ -65,10 +65,15 @@ void LiftedTranslator::addInitialState(){
 	}
 }
 
-void LiftedTranslator::findIdOfProposition (MyLiftedProposition &theProposition, int operatorIndex, int &id, int &significantTimePoint){
+void LiftedTranslator::findIdOfProposition (MyLiftedProposition &theProposition,unsigned int operatorIndex, int &id, int &significantTimePoint){
 	if (operatorIndex == myProblem.operators.size()){
 		operatorIndex = 0;
 		significantTimePoint++;
+	}
+	if (theProposition.originalLiteral == NULL){
+		id = -2;
+		significantTimePoint = 0;
+		return;
 	}
 	if (theProposition.ids[operatorIndex] == -1){
 		if (theProposition.ids[0] == -1){
@@ -84,7 +89,7 @@ void LiftedTranslator::findIdOfProposition (MyLiftedProposition &theProposition,
 	return;
 }
 
-void LiftedTranslator::findIdOfValue (MyValue &theValue, int operatorIndex, int &id, int &significantTimePoint){
+void LiftedTranslator::findIdOfValue (MyValue &theValue,unsigned int operatorIndex, int &id, int &significantTimePoint){
 	if (operatorIndex == myProblem.operators.size()){
 		operatorIndex = 0;
 		significantTimePoint++;
@@ -125,7 +130,7 @@ void LiftedTranslator::addGoal (const goal *gl, int operatorIndex, int significa
 	exit(1);
 }
 
-void LiftedTranslator::addGoals(int significantTimePoint){
+void LiftedTranslator::addGoals (int significantTimePoint){
 	addGoal (current_analysis->the_problem->the_goal, 0, significantTimePoint);
 }
 
@@ -154,6 +159,15 @@ void LiftedTranslator::addOperators(int significantTimePoint){
 					}
 				}
 			}
+		}
+
+		if (significantTimePoint > 0){
+			//If no operators are used in last layer then we don't need to use this operator
+			for (int j = 0; j < nOperators; ++j){
+				solver.addOperators(VAL::E_POS, j, significantTimePoint - 1);
+			}
+			solver.addOperators(VAL::E_NEG, i, significantTimePoint);
+			solver.endClause();
 		}
 	}
 }
@@ -213,7 +227,7 @@ void LiftedTranslator::addComparisons(int significantTimePoint){
 
 	for (; it != itEnd; ++it){
 		//If a comparison should hold then all of possible values that contradict with the comparison should not hold
-
+//			it->write(cout);
 		list < pair < list < MyValue* >, bool> >::iterator it1, it1End;
 		it1 = it->possibleValues.begin();
 		it1End = it->possibleValues.end();
@@ -225,6 +239,8 @@ void LiftedTranslator::addComparisons(int significantTimePoint){
 				it2 = it1->first.begin();
 				it2End = it1->first.end();
 				for (; it2 != it2End; ++it2){
+//					(*it2)->write(cout);
+//					cout << endl;
 					int id, stp;
 					stp = significantTimePoint;
 					findIdOfValue(**it2, it->op->id, id, stp);
@@ -266,8 +282,11 @@ void LiftedTranslator::addAssignments(int significantTimePoint){
 	it = myProblem.assignments.begin();
 	itEnd = myProblem.assignments.end();
 
+
 	for (; it != itEnd; ++it){
-		//If an assignment should hold then for each possible values of variables we insert a clause to produce the correct value for the assignee variable
+		//If an assignment should true then for each possible values of variables we insert a clause to produce the correct value for the assignee variable
+
+//		it->write(cout);
 
 		list < pair < list < MyValue* >, MyValue*> >::iterator it1, it1End;
 		it1 = it->possibleValues.begin();
@@ -319,9 +338,6 @@ void LiftedTranslator::addAssignments(int significantTimePoint){
 
 
 void LiftedTranslator::addExplanatoryAxioms(int significantTimePoint){
-	if (significantTimePoint < 1){
-		return;
-	}
 	map <Inst::Literal *, MyLiftedProposition>::iterator it, itEnd;
 	it = myProblem.liftedPropositions.begin();
 	itEnd = myProblem.liftedPropositions.end();
@@ -341,72 +357,105 @@ void LiftedTranslator::addExplanatoryAxioms(int significantTimePoint){
 		for (; it1 != it1End; ++it1){
 			adder[(*it1)->op->id].push_back(*it1);
 		}
-
 		for (int i = 0; i < nOperator; ++i){
-
-			if (adder[i].size()){
-
+			int idBefore, idAfter, stpBefore, stpAfter;
+			stpBefore  = stpAfter = significantTimePoint;
+			findIdOfProposition(it->second, i, idBefore, stpBefore);
+			findIdOfProposition(it->second, i + 1, idAfter, stpAfter);
+			if (idBefore == idAfter && stpBefore == stpAfter){
+				continue;
 			}
+			solver.addProposition(E_POS, idBefore, stpBefore);
+			solver.addProposition(E_NEG, idAfter, stpAfter);
+			it1 = adder[i].begin();
+			it1End = adder[i].end();
+			for (; it1 != it1End; ++it1){
+				solver.addPartialAction(E_POS, (*it1)->id, significantTimePoint);
+			}
+			solver.endClause();
 		}
 
-
-		solver.endClause();
-	}
-
-
-	it = myProblem.liftedPropositions.begin();
-
-	for (; it != itEnd; ++it){
-		//If a proposition be false in a layer then there should some reason for it
-		list <MyPartialAction *>::iterator it1, it1End;
+		//If a proposition be FALSE then there should some reason for it
+		deleter.resize(nOperator);
 		it1 = it->second.deleter.begin();
 		it1End = it->second.deleter.end();
 
-		solver.addProposition(E_POS, it->second.id, significantTimePoint);
-		solver.addProposition(E_NEG, it->second.id, significantTimePoint - 1);
-
 		for (; it1 != it1End; ++it1){
-			solver.addPartialAction(E_POS, (*it1)->id, significantTimePoint - 1);
+			deleter[(*it1)->op->id].push_back(*it1);
 		}
 
-		solver.endClause();
+		for (int i = 0; i < nOperator; ++i){
+			int idBefore, idAfter, stpBefore, stpAfter;
+			stpBefore  = stpAfter = significantTimePoint;
+			findIdOfProposition(it->second, i, idBefore, stpBefore);
+			findIdOfProposition(it->second, i + 1, idAfter, stpAfter);
+			if (idBefore == idAfter && stpBefore == stpAfter){
+				continue;
+			}
+			solver.addProposition(E_NEG, idBefore, stpBefore);
+			solver.addProposition(E_POS, idAfter, stpAfter);
+			it1 = deleter[i].begin();
+			it1End = deleter[i].end();
+			for (; it1 != it1End; ++it1){
+				solver.addPartialAction(E_POS, (*it1)->id, significantTimePoint);
+			}
+			solver.endClause();
+		}
+
 	}
+
+
 
 	int nVariables = myProblem.variables.size();
 	for (int i = 0; i < nVariables; ++i){
-		map <double, MyValue>::iterator valueIt, valueItEnd;
-		valueIt = myProblem.variables[i].domain.begin();
-		valueItEnd = myProblem.variables[i].domain.end();
-		for (; valueIt != valueItEnd; ++valueIt){
+		if (myProblem.variables[i].domain.size() == 0){
+			continue;
+		}
+		list <MyAssignment *>::iterator assignerIt, assignerItEnd;
 
-
-
-			//If a value become true in a layer then it should have some reason!
-			solver.addValue(E_POS, valueIt->second.globalValueId, significantTimePoint - 1);
-			solver.addValue(E_NEG, valueIt->second.globalValueId, significantTimePoint);
-			list <MyAssignment *>::iterator assignerIt, assignerItEnd;
-			assignerIt = myProblem.variables[i].assigner.begin();
-			assignerItEnd = myProblem.variables[i].assigner.end();
-			for (; assignerIt != assignerItEnd; ++assignerIt){
-				solver.addAssignment(E_POS, (*assignerIt)->assignmentId, significantTimePoint - 1);
-			}
-			solver.endClause();
-
-
-
-			//If a value become false in a layer then it should have some reason!
-			solver.addValue(E_NEG, valueIt->second.globalValueId, significantTimePoint - 1);
-			solver.addValue(E_POS, valueIt->second.globalValueId, significantTimePoint);
-			assignerIt = myProblem.variables[i].assigner.begin();
-			for (; assignerIt != assignerItEnd; ++assignerIt){
-				solver.addAssignment(E_POS, (*assignerIt)->assignmentId, significantTimePoint - 1);
-			}
-			solver.endClause();
-
+		vector < list<MyAssignment *> > assigners;
+		assigners.resize (nOperator);
+		assignerIt = myProblem.variables[i].assigner.begin();
+		assignerItEnd = myProblem.variables[i].assigner.end();
+		for (; assignerIt != assignerItEnd; ++assignerIt){
+			assigners[(*assignerIt)->op->id].push_back(*assignerIt);
 		}
 
+		map <double, MyValue>::iterator valueIt, valueItEnd;
+		valueItEnd = myProblem.variables[i].domain.end();
+		for (int j = 0; j < nOperator; ++j){
+			if (assigners[j].size() == 0){
+				continue;
+			}
+			for (valueIt = myProblem.variables[i].domain.begin(); valueIt != valueItEnd; ++valueIt){
+				int idBefore, idAfter, stpBefore, stpAfter;
+				stpBefore = stpAfter = significantTimePoint;
+				findIdOfValue(valueIt->second, j, idBefore, stpBefore);
+				findIdOfValue(valueIt->second, j + 1, idAfter, stpAfter);
+
+				//IF a value became TRUE then some assignment should have been applied
+				solver.addValue(E_POS, idBefore, stpBefore);
+				solver.addValue(E_NEG, idAfter, stpAfter);
+				assignerIt = assigners[j].begin();
+				assignerItEnd = assigners[j].end();
+				for (; assignerIt != assignerItEnd; ++assignerIt){
+					solver.addAssignment(E_POS, (*assignerIt)->assignmentId, significantTimePoint);
+				}
+				solver.endClause();
+
+				//IF a value became FALSE then some assignment should have been applied
+				solver.addValue(E_NEG, idBefore, stpBefore);
+				solver.addValue(E_POS, idAfter, stpAfter);
+				assignerIt = assigners[j].begin();
+				assignerItEnd = assigners[j].end();
+				for (; assignerIt != assignerItEnd; ++assignerIt){
+					solver.addAssignment(E_POS, (*assignerIt)->assignmentId, significantTimePoint);
+				}
+				solver.endClause();
+
+			}
+		}
 	}
-	*/
 }
 
 void LiftedTranslator::addAtomMutex(int significantTimePoint){
@@ -416,11 +465,12 @@ void LiftedTranslator::addAtomMutex(int significantTimePoint){
 	int nPropositions = myProblem.propositions.size();
 
 	for (int i = 0; i < nPropositions; ++i){
-		for (int j = 0; j < i; ++i){
+		for (int j = 0; j < i; ++j){
 			if (myProblem.propositions[i].isMutex(significantTimePoint, &(myProblem.propositions[j]))){
 				int lastId1, lastId2, id1, id2, stp1, stp2, lastStp1, lastStp2;
 				lastStp1 = lastId1 = -1;
 				for (int k = 0; k < nOperators; ++k){
+					stp1 = stp2 = significantTimePoint;
 					findIdOfProposition(myProblem.liftedPropositions[myProblem.propositions[i].originalLiteral], k, id1, stp1);
 					findIdOfProposition(myProblem.liftedPropositions[myProblem.propositions[j].originalLiteral], k, id2, stp2);
 					if (id1 == lastId1 && stp1 == lastStp1 && id2 == lastId2 && stp2 == lastStp2){
@@ -458,6 +508,8 @@ void LiftedTranslator::addAtomMutex(int significantTimePoint){
 					solver.addValue(E_NEG, id2, stp);
 					solver.endClause();
 				}
+				lastId1 = id1;
+				lastStp = stp;
 			}
 		}
 	}
@@ -476,7 +528,7 @@ void LiftedTranslator::buildFormula(int nSignificantTimePoints){
 	}
 	for (; nCompletedSignificantTimePoint < nSignificantTimePoints; nCompletedSignificantTimePoint++){
 		addAtomMutex(nCompletedSignificantTimePoint);
-		addExplanatoryAxioms(nCompletedSignificantTimePoint);
+		addExplanatoryAxioms(nCompletedSignificantTimePoint - 1);
 		addOperators(nCompletedSignificantTimePoint - 1);
 		addPartialActions(nCompletedSignificantTimePoint - 1);
 		addComparisons(nCompletedSignificantTimePoint - 1);
@@ -489,7 +541,7 @@ bool LiftedTranslator::solve (int nSignificantTimePoints){
 	solver.refreshLGL();
 	buildFormula(nSignificantTimePoints);
 
-	addGoals(nSignificantTimePoints - 1);
+		addGoals(nSignificantTimePoints - 1);
 
 
 	return solver.solving();
@@ -531,8 +583,6 @@ void LiftedTranslator::getSolution(vector <pair <operator_ *, FastEnvironment> >
 			if (solver.isTrueOperator((*opIt)->id, i)){
 				int nArguments = (*opIt)->argument.size();
 				pair <operator_ *, FastEnvironment> action ( (*opIt)->originalOperator, FastEnvironment(nArguments));
-//				action.first = (*opIt)->originalOperator;
-//				action.second = FastEnvironment(nArguments);
 				var_symbol_list::iterator paramaterIt;
 				paramaterIt = action.first->parameters->begin();
 				for (int j = 0; j < nArguments; ++j, ++paramaterIt){
@@ -573,19 +623,35 @@ void LiftedTranslator::writeSATProposition(ostream &sout){
 		pAIt = myProblem.partialAction.begin();
 		pAItEnd = myProblem.partialAction.end();
 		for (; pAIt != pAItEnd; ++pAIt){
-			cout << counter++ << ":" << solver.getIdOfPartialAction(pAIt->id, ll) << ':';
-			pAIt->write(cout);
+			sout << counter++ << ":" << solver.getIdOfPartialAction(pAIt->id, ll) << ':';
+			pAIt->write(sout);
 		}
 
-		//I think we don't need to it anymore; If you are not agree with me, then you should change a little it
-//		map <Literal*, MyLiftedProposition>::iterator  lAIt, lAItEnd;
-//		lAIt = myProblem.liftedPropositions.begin();
-//		lAItEnd = myProblem.liftedPropositions.end();
-//		for (; lAIt != lAItEnd; ++lAIt){
-//			if (lAIt->second.id >= 0){
-//				cout << counter++ << ":" << solver.getIdOfProposition(lAIt->second.id, ll) << ':'; lAIt->first->write(cout); cout << endl;
-//			}
-//		}
+		map <Literal*, MyLiftedProposition>::iterator  lAIt, lAItEnd;
+		lAIt = myProblem.liftedPropositions.begin();
+		lAItEnd = myProblem.liftedPropositions.end();
+		for (; lAIt != lAItEnd; ++lAIt){
+			if (lAIt->first == NULL){
+				continue;
+			}
+			if (lAIt->second.ids[0] == -1){
+				int id, stp;
+				stp = ll;
+				findIdOfProposition(lAIt->second, 0, id, stp);
+				sout << counter++ << ": (Static proposition) " << solver.getIdOfProposition(id, stp) << ":";
+				lAIt->second.originalLiteral->write(sout);
+				sout << endl;
+			}
+			lAIt->first->write(sout);
+			sout << ":";
+			for (int i = 0; i <= nOperators; ++i){
+				int id, stp;
+				stp = ll;
+				findIdOfProposition(lAIt->second, i, id, stp);
+				sout << " " << solver.getIdOfProposition(id, stp);
+			}
+			sout << endl;
+		}
 	}
 }
 

@@ -319,6 +319,7 @@ void MyProblem::liftedInitializing(){
 	}
 
 	assignIdToValues();
+	assignIdToLiftedPropositions();
 	list <MyAssignment>::iterator asgnIt, asgnItEnd;
 	asgnIt = assignments.begin();
 	asgnItEnd = assignments.end();
@@ -337,9 +338,10 @@ void MyProblem::assignIdToLiftedPropositions(){
 	nPropositionVariables = instantiatedOp::howManyLiteralsOfAnySort();
 
 	int nOperators = operators.size();
+
+	it = liftedPropositions.begin();
 	for (; it != itEnd; ++it){
 		if (it->first == NULL){
-			liftedPropositions.erase(it);
 			continue;
 		}
 
@@ -371,7 +373,7 @@ void MyProblem::assignIdToLiftedPropositions(){
 			}
 		}
 		if (lastModifierOperator == -1){
-			it->second[0] = -1;
+			it->second.ids[0] = -1;
 		}else{
 			it->second.ids[0] = it->first->getGlobalID();
 		}
@@ -395,13 +397,15 @@ void MyProblem::assignIdToValues(){
 	int nOperators = operators.size();
 	nValues = 0;
 	for (int i = 0; i < nVariables; ++i){
+		if (variables[i].domain.size() == 0){
+			continue;
+		}
 		vector <bool> possibleModificationByOperator (nOperators, false);
 
 		//find which operator affect on this proposition
 		list <MyAssignment *>::iterator asgnIt, asgnItEnd;
-
 		asgnIt = variables[i].assigner.begin();
-		asgnIt = variables[i].assigner.end();
+		asgnItEnd = variables[i].assigner.end();
 		for (; asgnIt != asgnItEnd; ++asgnIt){
 			possibleModificationByOperator[(*asgnIt)->op->id] = true;
 		}
@@ -423,18 +427,20 @@ void MyProblem::assignIdToValues(){
 		for (; valueIt != valueItEnd; ++valueIt){
 			valueIt->second.ids.resize(nOperators);
 			valueIt->second.ids[0] = nValues;
+//			valueIt->second.write(cout); cout << "Operator: " << 0 << " ==> id: " << nValues << endl;
 			nValues++;
-			for (int i = 1; i < nOperators; ++i){
-				if (i > lastModifierOperator){
-					valueIt->second.ids[i] = -1;
+			for (int j = 1; j < nOperators; ++j){
+				if (j > lastModifierOperator){
+					valueIt->second.ids[j] = -1;
 					continue;
 				}
-				if (possibleModificationByOperator[i - 1]){
-					valueIt->second.ids[i] = nValues;
+				if (possibleModificationByOperator[j - 1]){
+					valueIt->second.ids[j] = nValues;
+//					valueIt->second.write(cout); cout << "Operator: " << j << " ==> id: " << nValues << endl;
 					nValues++;
 					continue;
 				}
-				valueIt->second.ids[i] = valueIt->second.ids[i - 1];
+				valueIt->second.ids[j] = valueIt->second.ids[j - 1];
 			}
 		}
 	}

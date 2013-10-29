@@ -33,8 +33,9 @@ private:
 
 	void addGoal (const goal *gl, int operatorIndex, int significantTimePoint);
 
-	void findIdOfProposition (MyLiftedProposition &theProposition, int operatorIndex, int &id, int &significantTimePoint);
-	void findIdOfValue (MyValue &theValue, int operatorIndex, int &id, int &significantTimePoint);
+	void findIdOfProposition (MyLiftedProposition &theProposition, unsigned int operatorIndex, int &id, int &significantTimePoint);
+	void findIdOfValue (MyValue &theValue, unsigned int operatorIndex, int &id, int &significantTimePoint);
+
 
 public:
 	LiftedTranslator();

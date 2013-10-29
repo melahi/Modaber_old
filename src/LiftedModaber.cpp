@@ -24,13 +24,11 @@ using namespace Inst;
 using namespace mdbr;
 
 void LiftedModaber::initialization (char *domainFilePath, char *problemFilePath, bool usingPlanningGraph){
-	if (!usingPlanningGraph){
-		cerr << " LIFTED ALGORITHM SHOULD USE PLANNING GRAPH!!!" << endl;
-		exit(0);
-	}
 	Modaber::initialization(domainFilePath, problemFilePath, usingPlanningGraph, false);
 
-	nPG->constructingGraph();
+	if (usingPlanningGraph){
+		nPG->constructingGraph();
+	}
 	myProblem.liftedInitializing();
 
 	nSignificantTimePoints = 1;
@@ -43,11 +41,11 @@ bool LiftedModaber::tryToSolve(){
 	while (!foundSolution){
 		cout  << "nSignificantTimePoint: " << nSignificantTimePoints << endl;
 		cout << "solving ..." << endl;
-		translator.prepare(myProblem.operators.size(), myProblem.liftedPropositions.size(), myProblem.nUnification, myProblem.partialAction.size(), myProblem.assignments.size(), myProblem.comparisons.size(), myProblem.nValues);
+		translator.prepare(myProblem.operators.size(), myProblem.nPropositionVariables, myProblem.nUnification, myProblem.partialAction.size(), myProblem.assignments.size(), myProblem.comparisons.size(), myProblem.nValues);
 		foundSolution = translator.solve(nSignificantTimePoints);
 		cout << "end solving" << endl;
 		if (!foundSolution){
-			nSignificantTimePoints += 15;
+			nSignificantTimePoints += 5;
 		}else{
 			vector <pair <operator_ *, FastEnvironment> > solution;
 			translator.getSolution(solution);
@@ -56,7 +54,7 @@ bool LiftedModaber::tryToSolve(){
 			if (!foundSolution){
 				translator.printSolution(cout);
 				cout << endl << endl << "------------------" << endl << "A plan has been found but is not valid!!!" << endl << endl;
-				myProblem.assignGlobalIdToValues();
+				myProblem.assignIdToValues();
 
 				list <MyComparison>::iterator cmpIt, cmpItEnd;
 				cmpIt = myProblem.comparisons.begin();
@@ -64,7 +62,7 @@ bool LiftedModaber::tryToSolve(){
 
 				for (; cmpIt != cmpItEnd; ++cmpIt){
 					cmpIt->findPossibleValues();
-					cmpIt->write(cout);
+//					cmpIt->write(cout);
 
 				}
 
@@ -73,9 +71,8 @@ bool LiftedModaber::tryToSolve(){
 				asgnItEnd = myProblem.assignments.end();
 
 				for (; asgnIt != asgnItEnd; ++asgnIt){
-					cout << "***" << asgnIt->possibleValues.size();
 					asgnIt->findPossibleValues();
-					cout << "---" << asgnIt->possibleValues.size() << endl;
+//					asgnIt->write(cout);
 				}
 			}
 		}

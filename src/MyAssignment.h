@@ -97,6 +97,8 @@ public:
 
 	void findAllMutexes();
 
+	void write (ostream &sout);
+
 	virtual ~MyAssignment(){
 		list <MyVariable *>::iterator it, itEnd;
 		it = myCreatedVariables.begin();

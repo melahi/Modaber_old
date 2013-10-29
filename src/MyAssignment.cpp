@@ -262,6 +262,9 @@ void MyAssignment::findPossibleValues (map <const func_term *, MyVariable *>::it
 }
 
 MyValue *MyAssignment::evalute (){
+
+	MyVariable *returnValue = variables[liftedAssignment->originalAssignment->getFTerm()];
+
 	double rightHand, finalValue;
 	rightHand = evalute (liftedAssignment->originalAssignment->getExpr());
 	finalValue = evalute(liftedAssignment->originalAssignment->getFTerm());
@@ -279,11 +282,15 @@ MyValue *MyAssignment::evalute (){
 		}else{
 			CANT_HANDLE ("SOME PROBLEM IN EVALUATION!!!");
 		}
+
+		if (returnValue->domain.find(finalValue) == returnValue->domain.end()){
+			finalValue = undefinedValue;
+		}
+
 	}else{
 		finalValue = undefinedValue;
 	}
 
-	MyVariable *returnValue = variables[liftedAssignment->originalAssignment->getFTerm()];
 	if (returnValue->domain.find(finalValue) != returnValue->domain.end()){
 		return &(returnValue->domain[finalValue]);
 	}
@@ -360,5 +367,34 @@ void MyAssignment::findAllMutexes(){
 	}
 }
 
+
+void MyAssignment::write(ostream &sout){
+	cout << "***********************" << endl;
+	cout << assignmentId << ": " << op->originalOperator->name->getName()<< endl;
+	map <string, MyObject *>::iterator objIt, objItEnd;
+	objIt = selectedObject.begin();
+	objItEnd = selectedObject.end();
+	cout << "OBJECTS: ";
+	for (; objIt != objItEnd; ++objIt){
+		cout << objIt->second->originalObject->getName() << ' ';
+	}
+	cout << endl;
+
+	sout << possibleValues.size() << endl;
+	list<pair<list <MyValue*>, MyValue*> >::iterator it, itEnd;
+	it = possibleValues.begin();
+	itEnd = possibleValues.end();
+	for (; it != itEnd; ++it){
+		list <MyValue*>::iterator valueIt, valueItEnd;
+		valueIt = it->first.begin();
+		valueItEnd = it->first.end();
+		for (; valueIt != valueItEnd; ++valueIt){
+			sout << "-----";
+			(*valueIt)->write(sout);
+		}
+		sout << "******"; it->second->write(sout); cout << endl;
+	}
+
+}
 
 } /* namespace mdbr */
