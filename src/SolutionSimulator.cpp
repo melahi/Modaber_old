@@ -232,7 +232,7 @@ int SolutionSimulator::countValues (){
 bool SolutionSimulator::isValid (vector <pair <operator_ *, FastEnvironment> >  &solution){
 	State state;
 	bool planIsValid = true;
-	int nValueBeforeSimulation  = countValues();
+//	int nValueBeforeSimulation  = countValues();
 	prepareInitialState(state);
 	int planLength = solution.size();
 	for (int i = 0; i < planLength; ++i){
@@ -249,23 +249,23 @@ bool SolutionSimulator::isValid (vector <pair <operator_ *, FastEnvironment> >  
 	if (planIsValid && !isApplicable(current_analysis->the_problem->the_goal, &env, state)){
 		planIsValid = false;
 	}
-	int nValuesAfterSimulation = countValues();
-	if (nValueBeforeSimulation != nValuesAfterSimulation){
-		//Insert undefined values to each variable's domain
-		int nVariables = myProblem.variables.size();
-		for (int i = 0; i < nVariables; ++i){
-			if (myProblem.variables[i].visitInPrecondition){
-				myProblem.variables[i].domain[undefinedValue].value = undefinedValue;
-				myProblem.variables[i].domain[undefinedValue].variable = &(myProblem.variables[i]);
-			}
-		}
-	}else{
-		//Delete undefined values from each variable's domain
-		int nVariables = myProblem.variables.size();
-		for (int i = 0; i < nVariables; ++i){
-			myProblem.variables[i].domain.erase(undefinedValue);
-		}
-	}
+//	int nValuesAfterSimulation = countValues();
+//	if (nValueBeforeSimulation != nValuesAfterSimulation){
+//		//Insert undefined values to each variable's domain
+//		int nVariables = myProblem.variables.size();
+//		for (int i = 0; i < nVariables; ++i){
+//			if (myProblem.variables[i].visitInPrecondition){
+//				myProblem.variables[i].domain[undefinedValue].value = undefinedValue;
+//				myProblem.variables[i].domain[undefinedValue].variable = &(myProblem.variables[i]);
+//			}
+//		}
+//	}else{
+//		//Delete undefined values from each variable's domain
+//		int nVariables = myProblem.variables.size();
+//		for (int i = 0; i < nVariables; ++i){
+//			myProblem.variables[i].domain.erase(undefinedValue);
+//		}
+//	}
 	return planIsValid;
 }
 
@@ -276,7 +276,7 @@ void SolutionSimulator::prepareInitialState(State &state){
 	FastEnvironment env(0);
 	applyAddEffect(&(current_analysis->the_problem->initial_state->add_effects), &env, state);
 	applyAssignmentList(&(current_analysis->the_problem->initial_state->assign_effects), &env, state);
-	//Inserting undefined value to domain of each variable
+
 	int nVariables = myProblem.variables.size();
 	for (int i = 0; i < nVariables; ++i){
 		if (myProblem.variables[i].visitInPrecondition == false){
@@ -286,6 +286,24 @@ void SolutionSimulator::prepareInitialState(State &state){
 	}
 }
 
+void SolutionSimulator::addUndefinedValues(){
+	//Insert undefined values to each variable's domain
+	int nVariables = myProblem.variables.size();
+	for (int i = 0; i < nVariables; ++i){
+		if (myProblem.variables[i].visitInPrecondition){
+			myProblem.variables[i].domain[undefinedValue].value = undefinedValue;
+			myProblem.variables[i].domain[undefinedValue].variable = &(myProblem.variables[i]);
+		}
+	}
+}
+
+void SolutionSimulator::removeUndefinedValues(){
+	//Delete undefined values from each variable's domain
+	int nVariables = myProblem.variables.size();
+	for (int i = 0; i < nVariables; ++i){
+		myProblem.variables[i].domain.erase(undefinedValue);
+	}
+}
 
 SolutionSimulator::SolutionSimulator() {
 }

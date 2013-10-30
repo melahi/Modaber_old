@@ -304,8 +304,13 @@ void LiftedTranslator::addAssignments(int significantTimePoint){
 				solver.addValue(VAL::E_NEG, id, stp);
 			}
 			stp = significantTimePoint;
-			findIdOfValue(*(it1->second), it->op->id + 1, id, stp);
-			solver.addValue(VAL::E_POS, id, stp);
+			if ((it1->second)){
+				findIdOfValue(*(it1->second), it->op->id + 1, id, stp);
+				solver.addValue(VAL::E_POS, id, stp);
+			}else{
+				//The value is not exist in the domain so we should add FALSE to the clause
+				solver.addLiteral(VAL::E_NEG, 1);
+			}
 			solver.endClause();
 		}
 

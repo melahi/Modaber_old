@@ -36,11 +36,15 @@ private:
 	void applyDeleteEffect (pc_list<simple_effect*> *deleteList, FastEnvironment *env, State &state);
 	void applyAssignmentList (const pc_list <assignment *> *assignmentEffects, FastEnvironment *env, State &state);
 
-	int countValues();
 
 
 
 public:
+	int countValues();
+
+	void addUndefinedValues();
+	void removeUndefinedValues();
+
 	SolutionSimulator();
 	virtual ~SolutionSimulator();
 

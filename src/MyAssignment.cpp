@@ -239,9 +239,7 @@ void MyAssignment::findPossibleValues (map <const func_term *, MyVariable *>::it
 			result.first.push_back(it->second);
 		}
 		result.second = evalute();
-		if (result.second != NULL){
-			possibleValues.push_back(result);
-		}
+		possibleValues.push_back(result);
 		return;
 	}
 	map <const func_term *, MyVariable *>::iterator next = it;
