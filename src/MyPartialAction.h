@@ -10,40 +10,60 @@
 
 #include "MyLiftedProposition.h"
 #include "MyOperator.h"
+#include "VALfiles/parsing/ptree.h"
 
 #include <vector>
-
-
+#include <string>
 using namespace std;
+
 
 
 namespace mdbr {
 
-
 class MyLiftedProposition;
 
-class MyLiftedPartialAction{
+class MyPartialOperator{
 private:
-	bool grounded;
-	vector <MyObject *> selectedObject;  //A temporary vector used in grounding
-	vector <int> IdOfSelectedObject;  //A temporary vector used in grounding
+	map <string, MyObject*> selectedObject;  //A temporary vector used in grounding
+	map <string, int> IdOfUnification;  //A temporary vector used in grounding
+
+	void findTypes(const VAL::expression *exp);
 
 public:
 
-	const proposition *originalPredicate;
-
-	int nArguments;
-	vector <MyType *> argument;
-
-	vector <int> placement;   //placement[i] determine the place i'th object in operator argument. (e.g.    move (x, y, z): pre(...) && add(on(x, z), ...) && del(...)   ==> for predicate "add(on(x, z))": placement[1] = 3
-
-	propositionKind pKind;
 	MyOperator *op;
+	map <string, MyType *> argument;
+	map <string, int> placement;
 
-	MyLiftedPartialAction (): grounded(false) {}
-	void prepare (MyOperator *op, propositionKind pKind, const proposition *prop);
+
+
+	list <const proposition *> precondition;
+	list <const proposition *> addEffect;
+	list <const proposition *> deleteEffect;
+	list <const assignment *> assignmentEffect;
+	list <const comparison *> comparisonPrecondition;
+
+
+
+	MyPartialOperator() {}
+	void prepare (MyOperator *op, const proposition *prop);
+	void prepare (MyOperator *op, const assignment *asgn);
+	void prepare (MyOperator *op, const comparison *cmp);
 	void grounding();
-	void grounding (unsigned int argumentIndex);
+	void grounding (map <string, MyType *>::iterator it);
+
+	bool operator == (const MyPartialOperator &a) const{
+		if (op != a.op) return false;
+		if (argument.size() != a.argument.size()) return false;
+		map <int, MyType *>::iterator it1, itEnd, it2;
+		it1 = argument.begin();
+		it2 = a.argument.begin();
+		itEnd = argument.end();
+		for (; it1 != itEnd; ++it1, ++it2){
+			if (it1->second != it2->second) return false;
+		}
+		return true;
+	}
 
 };
 
@@ -52,29 +72,34 @@ public:
 class MyPartialAction {
 public:
 
+	bool isValid;
+
 	int id;
 
-	MyLiftedProposition *proposition;
+	enum propositionKind { E_PRECONDITION, E_ADD_EFFECT, E_DELETE_EFFECT};
+	list <MyLiftedProposition *> precondition;
+	list <MyLiftedProposition *> addEffect;
+	list <MyLiftedProposition *> deleteEffect;
 
-	MyLiftedPartialAction *liftedPartialAction;
+	map <func_term *, PNE *> variables;
+
+
+	MyPartialOperator *partialOperator;
 
 	MyOperator *op;
 
-	propositionKind pKind;
+	map <string, MyObject *> objects;
+	map <string, int> unificationId;
 
-	vector <int> objectId;
-
-//	MyPartialAction(propositionKind pKind, MyOperator *op, MyLiftedPartialAction *predicate, vector <MyObject*> &argument, vector <int> &objectId, int id);
 	MyPartialAction() {}
 
-	void prepare (propositionKind pKind, MyOperator *op, MyLiftedPartialAction *predicate, vector <MyObject*> &argument, vector <int> &objectId, int id);
-
-	bool isForSameAction (MyPartialAction *other);
-
-	void write (ostream &sout, bool isEndl = true);
+	void prepare (MyOperator *op, MyPartialOperator *partialOperator, map <string, MyObject*> &objects, map <string, int> &unificationId, int id);
+	void preparePropositionList (list <const proposition *> &liftedList, list <MyLiftedProposition *> &instantiatedList, propositionKind kind);
+	void findVariables(const expression *exp);
 
 	virtual ~MyPartialAction();
 };
 
 } /* namespace mdbr */
 #endif /* MYPARTIALACTION_H_ */
+

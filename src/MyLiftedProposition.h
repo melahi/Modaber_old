@@ -34,26 +34,14 @@ public:
 
 	vector <int> ids;  //id [i] means the id of proposition before execution of operator i
 
-//	int id;
-
 	bool initialValue;
-
-	Literal *originalLiteral;
-
-	vector <MyObject *> arguments;
 
 	list <MyPartialAction *> adder;
 	list <MyPartialAction *> deleter;
-	list <MyPartialAction *> needer;
+//	list <MyPartialAction *> needer;
 
 
-	MyLiftedProposition(): initialValue(false) {};
-	MyLiftedProposition(const proposition *valProposition, vector <MyObject *> &arguments);
-
-	//The following function find a MyLiftedProposition object from myProblem.liftedProposition which
-	//is the same as the calling object (this). if there be no object, then at first the calling
-	//object (this) insert it-self to the myProblem.liftedProposition and then return its pointer.
-	MyLiftedProposition *find();
+	MyLiftedProposition(): ids(myProblem.operators.size(), -2), initialValue(false) {};
 
 	void write (ostream &sout);
 

@@ -13,6 +13,7 @@
 #include "MyAssignment.h"
 #include "MyComparison.h"
 
+#include <list>
 #include <vector>
 
 using namespace VAL;
@@ -20,36 +21,31 @@ using namespace std;
 
 namespace mdbr {
 
-enum propositionKind {precondition, addEffect, deleteEffect};
-
-class MyLiftedPartialAction;
+class MyPartialOperator;
 class MyLiftedAssignment;
 class MyLiftedComparison;
 
 class MyOperator {
 private:
 	bool grounded;
+
+	list <MyPartialOperator *>::iterator findPartialOperator (const MyPartialOperator *a);
 public:
 
+	operator_ *originalOperator;
 	int id;
 
 	vector <MyType *> argument;
-
-	vector <MyLiftedPartialAction *> myAddEffect;
-	vector <MyLiftedPartialAction *> myDeleteEffect;
-	vector <MyLiftedPartialAction *> myPrecondition;
-	vector <MyLiftedComparison *> myComparison;
-	vector <MyLiftedAssignment *> myAssignment;
-
-	operator_ *originalOperator;
 	vector <int> offset;      							//The offset used for unifications
+
+	list <MyPartialOperator *> partialOperator;
 
 
 	MyOperator();
 
 	void prepare (operator_ *originalOperator, int id);
 
-	void prepareSimpleEffect (pc_list <simple_effect *> &valEffectList, propositionKind pKind, vector <MyLiftedPartialAction *> &effectList);
+	void prepareSimpleEffect (pc_list <simple_effect *> &valEffectList, bool addEffect);
 	void prepareAssignment (pc_list <assignment *> &assignmentList);
 	void preparePreconditions (goal *gl);
 

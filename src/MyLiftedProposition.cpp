@@ -8,88 +8,111 @@
 #include "MyLiftedProposition.h"
 #include "MyProblem.h"
 #include "Utilities.h"
+#include "VALfiles/parsing/ptree.h"
+
+using namespace VAL;
 
 namespace mdbr {
 
+void MyPartialOperator::findTypes(const expression *exp){
+	const binary_expression *binary = dynamic_cast <const binary_expression *>(exp);
+	if (binary){
+		findTypes(binary->getRHS());
+		findTypes(binary->getLHS());
+		return;
+	}
 
-void MyLiftedPartialAction::prepare(MyOperator *op, propositionKind pKind,const proposition *prop){
-	originalPredicate = prop;
+	const uminus_expression *uMinus = dynamic_cast <const uminus_expression *> (exp);
+	if (uMinus){
+		findTypes(uMinus->getExpr());
+		return;
+	}
+
+	const func_term *function = dynamic_cast <const func_term *> (exp);
+	if (function){
+		parameter_symbol_list::const_iterator it, itEnd;
+		it = function->getArgs()->begin();
+		itEnd = function->getArgs()->end();
+		for (; it != itEnd; ++it){
+			var_symbol_list::iterator argIt, argItEnd;
+			argIt = op->originalOperator->parameters->begin();
+			argItEnd = op->originalOperator->parameters->end();
+			for (int j = 0; argIt != argItEnd; ++argIt, ++j){
+				if ((*argIt)->getName() == (*it)->getName()){
+					placement[(*it)->getName()] = j;
+					argument[(*it)->getName()] = &(myProblem.types[(*it)->type]);
+					break;
+				}
+			}
+		}
+		return;
+	}
+
+	const num_expression *number = dynamic_cast <const num_expression *> (exp);
+	if (number){
+		return;
+	}
+
+	CANT_HANDLE("some expression can not be handled!!!");
+	return;
+}
+
+
+void MyPartialOperator::prepare(MyOperator *op, const proposition *prop){
 	this->op =  op;
-	this->pKind = pKind;
-	nArguments = prop->args->size();
-	argument.resize(nArguments);
-	placement.resize(nArguments);
 	parameter_symbol_list::iterator pIt, pItEnd;
 	pIt = prop->args->begin();
 	pItEnd = prop->args->end();
 	for (int i = 0; pIt != pItEnd; ++pIt, ++i){
 		var_symbol_list::iterator it, itEnd;
-		argument[i] = &(myProblem.types[(*pIt)->type]);
 		it = op->originalOperator->parameters->begin();
 		itEnd = op->originalOperator->parameters->end();
 		for (int j = 0; it != itEnd; ++it, ++j){
 			if ((*it)->getName() == (*pIt)->getName()){
-				placement[i] = j;
+				placement[(*it)->getName()] = j;
+				argument[(*it)->getName()] = &(myProblem.types[(*it)->type]);
 				break;
 			}
 		}
 	}
-
-	grounding();
 }
 
-void MyLiftedPartialAction::grounding() {
-	if (grounded){
-		return;
-	}
-	selectedObject.resize(argument.size());
-	IdOfSelectedObject.resize(argument.size());
-	grounding(0);
-	grounded = true;
+void MyPartialOperator::prepare (MyOperator *op, const assignment *asgn){
+	this->op = op;
+	findTypes(asgn->getExpr());
+	findTypes(asgn->getFTerm());
 }
 
-void MyLiftedPartialAction::grounding(unsigned int argumentIndex){
-	if (argumentIndex == argument.size()){
-		int partialActionId = myProblem.partialAction.size();
+void MyPartialOperator::prepare (MyOperator *op, const comparison *cmp){
+	this->op = op;
+	findTypes(cmp->getLHS());
+	findTypes(cmp->getRHS());
+}
+
+
+
+void MyPartialOperator::grounding() {
+	selectedObject.clear();
+	IdOfUnification.clear();
+	grounding(argument.begin());
+}
+
+void MyPartialOperator::grounding(map <string, MyType *>::iterator it){
+	if (it == argument.end()){
+		int partialActionId = myProblem.nPartialActions ++;
 		myProblem.partialAction.push_back(MyPartialAction());
-		myProblem.partialAction.rbegin()->prepare(pKind, op, this, selectedObject, IdOfSelectedObject, partialActionId);
+		myProblem.partialAction.rbegin()->prepare(pKind, op, this, selectedObject, IdOfUnification, partialActionId);
 		return;
 	}
-	int nObjects = argument[argumentIndex]->objects.size();
+	map <string, MyType *>::iterator nextIt;
+	nextIt = it;
+	++nextIt;
+	int nObjects = it->second->objects.size();
 	for (int i = 0; i < nObjects; ++i){
-		selectedObject[argumentIndex] = argument[argumentIndex]->objects[i];
-		IdOfSelectedObject [argumentIndex] = i;
-		grounding(argumentIndex + 1);
+		selectedObject[it->first] = it->second->objects[i];
+		IdOfUnification [it->first] = i;
+		grounding(nextIt);
 	}
-}
-
-
-MyLiftedProposition::MyLiftedProposition(const proposition *valProposition, vector <MyObject *> &arguments){
-	this->initialValue = false;
-
-	parameter_symbol_list *parameters = new parameter_symbol_list;
-	int nArgs = arguments.size();
-	this->arguments.resize(nArgs);
-	for (int i = 0; i < nArgs; ++i){
-		parameters->push_back(arguments[i]->originalObject);
-		this->arguments[i] = arguments[i];
-	}
-
-	proposition prop(valProposition->head, parameters);
-	FastEnvironment env(0);
-	Literal lit(&prop, &env);
-	originalLiteral = instantiatedOp::findLiteral(&lit);
-	ids.resize(myProblem.operators.size(), -2);
-}
-
-MyLiftedProposition *MyLiftedProposition::find(){
-	map <Literal *, MyLiftedProposition>::iterator it;
-	it = myProblem.liftedPropositions.find(this->originalLiteral);
-	if (it == myProblem.liftedPropositions.end()){
-		myProblem.liftedPropositions[this->originalLiteral] = *this ;
-		return &(myProblem.liftedPropositions[this->originalLiteral]);
-	}
-	return &(it->second);
 }
 
 void MyLiftedProposition::write (ostream &sout){

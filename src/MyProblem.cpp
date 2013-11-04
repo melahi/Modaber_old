@@ -182,7 +182,9 @@ void MyProblem::updateInitialValuesForLiftedProposition(){
 	for (; it1 != it1End; it1++){
 		Literal lit ((*it1)->prop, &env);
 		Literal *lit2 = instantiatedOp::findLiteral(&lit);
-		liftedPropositions[lit2].initialValue = true;
+		if (lit2->getStateID() != -1){
+			liftedPropositions[lit2->getStateID()].initialValue = true;
+		}
 	}
 }
 
@@ -304,10 +306,12 @@ void MyProblem::liftedInitializing(){
 
 
 	//preparing operators
+	nPartialActions = 0;
+	operators.resize(current_analysis->the_domain->ops->size());
+	liftedPropositions.resize(instantiatedOp::howManyNonStaticLiterals());
 	operator_list::iterator opIt, opItEnd;
 	opIt = current_analysis->the_domain->ops->begin();
 	opItEnd = current_analysis->the_domain->ops->end();
-	operators.resize(current_analysis->the_domain->ops->size());
 	nUnification = 0;
 	for (int i = 0; opIt != opItEnd; ++opIt, ++i){
 		operators[i] = new MyOperator();

@@ -201,18 +201,18 @@ void LiftedTranslator::addPartialActions(int significantTimePoint){
 		solver.addPartialAction(VAL::E_NEG, it->id, significantTimePoint);
 		solver.addOperators(VAL::E_POS, it->op->id, significantTimePoint);
 		solver.endClause();
-		int nArguments = it->objectId.size();
+		int nArguments = it->unificationId.size();
 
 		for (int i = 0; i < nArguments; ++i){
 			solver.addPartialAction(VAL::E_NEG, it->id, significantTimePoint);
-			solver.addUnification(VAL::E_POS, it->objectId[i] + it->op->offset[it->liftedPartialAction->placement[i]], significantTimePoint);
+			solver.addUnification(VAL::E_POS, it->unificationId[i] + it->op->offset[it->liftedPartialAction->placement[i]], significantTimePoint);
 			solver.endClause();
 		}
 
 		//If an operator and some of it's unifications are true then the corresponding partial action also should be true;
 		solver.addOperators(VAL::E_NEG, it->op->id, significantTimePoint);
 		for (int i = 0; i < nArguments; ++i){
-			solver.addUnification(VAL::E_NEG, it->objectId[i] + it->op->offset[it->liftedPartialAction->placement[i]], significantTimePoint);
+			solver.addUnification(VAL::E_NEG, it->unificationId[i] + it->op->offset[it->liftedPartialAction->placement[i]], significantTimePoint);
 		}
 		solver.addPartialAction(VAL::E_POS, it->id, significantTimePoint);
 		solver.endClause();

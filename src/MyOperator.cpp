@@ -13,32 +13,65 @@ namespace mdbr {
 
 MyOperator::MyOperator() {}
 
+list <MyPartialOperator *>::iterator MyOperator::findPartialOperator (const MyPartialAction *a){
+	list <MyPartialOperator *>::iterator ret, pAEnd;
+	ret = partialOperator.begin();
+	pAEnd = partialOperator.end();
+
+	for (; ret != pAEnd; ++ret){
+		if (**ret == *a){
+			break;
+		}
+	}
+	return ret;
+}
+
 void MyOperator::prepare (operator_ *originalOperator, int id){
 	this->id = id;
 	this->originalOperator = originalOperator;
 	var_symbol_list::iterator it, itEnd;
 	it = originalOperator->parameters->begin();
 	itEnd = originalOperator->parameters->end();
-	offset.resize(originalOperator->parameters->size());
-	argument.resize(originalOperator->parameters->size());
+	int nArgument = originalOperator->parameters->size();
+	offset.resize(nArgument);
+	argument.resize(nArgument);
 	for (int i = 0; it != itEnd; ++it, ++i){
 		argument[i] = &(myProblem.types[(*it)->type]);
 	}
-	prepareSimpleEffect(originalOperator->effects->add_effects, mdbr::addEffect, myAddEffect);
-	prepareSimpleEffect(originalOperator->effects->del_effects, mdbr::deleteEffect, myDeleteEffect);
+
 	preparePreconditions(originalOperator->precondition);
+	prepareSimpleEffect(originalOperator->effects->add_effects, true);
+	prepareSimpleEffect(originalOperator->effects->del_effects, false);
 	prepareAssignment(originalOperator->effects->assign_effects);
+
+	list <MyPartialOperator *>::iterator opIt, opItEnd;
+	opIt = partialOperator.begin();
+	opItEnd = partialOperator.end();
+	for (; opIt != opItEnd; ++opIt){
+		(*opIt)->grounding();
+	}
 }
 
 
-void MyOperator::prepareSimpleEffect(pc_list<simple_effect*> &valEffectList, propositionKind pKind, vector <MyLiftedPartialAction *> &effectList){
+void MyOperator::prepareSimpleEffect(pc_list<simple_effect*> &valEffectList, bool addEffect){
 	pc_list<simple_effect *>::iterator it, itEnd;
 	it = valEffectList.begin();
 	itEnd = valEffectList.end();
-	effectList.resize(valEffectList.size());
 	for (int i = 0; it != itEnd; ++it, ++i){
-		effectList[i] = new MyLiftedPartialAction();
-		effectList[i]->prepare(this, pKind, (*it)->prop);
+		MyPartialOperator *a = new MyPartialOperator();
+		a->prepare(this, (*it)->prop);
+		list <MyPartialOperator *>::iterator it2 = findPartialOperator(a);
+		if (a == partialOperator.end()){
+			partialOperator.push_back(a);
+			it2 = partialOperator.rbegin();
+		}else{
+			delete (a);
+		}
+		if (addEffect){
+			(*it2)->addEffect.push_back((*it)->prop);
+		}else{
+			(*it2)->deleteEffect.push_back((*it)->prop);
+		}
 	}
 }
 
@@ -46,24 +79,47 @@ void MyOperator::prepareAssignment(pc_list <assignment *> &assignmentList){
 	pc_list<assignment *>::iterator it, itEnd;
 	it = assignmentList.begin();
 	itEnd = assignmentList.end();
-	myAssignment.resize(assignmentList.size());
 	for (int i = 0; it != itEnd; ++it, ++i){
-		myAssignment[i] = new MyLiftedAssignment();
-		myAssignment[i]->prepare(this, *it);
+		MyPartialOperator *a = new MyPartialOperator();
+		a->prepare(this, *it);
+		list <MyPartialOperator *>::iterator it2 = findPartialOperator(a);
+		if (a == partialOperator.end()){
+			partialOperator.push_back(a);
+			it2 = partialOperator.rbegin();
+		}else{
+			delete (a);
+		}
+		(*it2)->assignmentEffect.push_back(*it);
 	}
 }
 
 void MyOperator::preparePreconditions(goal *gl){
 	const simple_goal *simple = dynamic_cast<const simple_goal *>(gl);
 	if (simple){
-		myPrecondition.push_back(new MyLiftedPartialAction());
-		myPrecondition[myPrecondition.size() - 1]->prepare(this , mdbr::precondition, simple->getProp());
+		MyPartialOperator *a = new MyPartialOperator();
+		a->prepare(this, simple->getProp());
+		list <MyPartialOperator *>::iterator it2 = findPartialOperator(a);
+		if (a == partialOperator.end()){
+			partialOperator.push_back(a);
+			it2 = partialOperator.rbegin();
+		}else{
+			delete (a);
+		}
+		(*it2)->precondition.push_back(simple->getProp());
 		return;
 	}
 	const VAL::comparison *comp = dynamic_cast<const comparison*> (gl);
 	if (comp){
-		myComparison.push_back(new MyLiftedComparison());
-		(*(myComparison.rbegin()))->prepare(this, comp);
+		MyPartialOperator *a = new MyPartialOperator();
+		a->prepare(this, comp);
+		list <MyPartialOperator *>::iterator it2 = findPartialOperator(a);
+		if (a == partialOperator.end()){
+			partialOperator.push_back(a);
+			it2 = partialOperator.rbegin();
+		}else{
+			delete (a);
+		}
+		(*it2)->comparisonPrecondition.push_back(comp);
 		return;
 	}
 	const conj_goal *conjunctive = dynamic_cast<const conj_goal *>(gl);
@@ -76,31 +132,17 @@ void MyOperator::preparePreconditions(goal *gl){
 		}
 		return;
 	}
-	CANT_HANDLE("Can't handle some precondition in analyzing!!!")
+	CANT_HANDLE("Can't handle some precondition in preparing operator!!!")
 	return;
 }
 
 
 MyOperator::~MyOperator() {
-	int theSize = myAddEffect.size();
-	for (int i = 0; i < theSize; i++){
-		delete (myAddEffect[i]);
-	}
-	theSize = myDeleteEffect.size();
-	for (int i = 0; i < theSize; i++){
-		delete (myDeleteEffect[i]);
-	}
-	theSize = myPrecondition.size();
-	for (int i = 0; i < theSize; i++){
-		delete (myPrecondition[i]);
-	}
-	theSize = myAssignment.size();
-	for (int i = 0; i < theSize; i++){
-		delete (myAssignment[i]);
-	}
-	theSize = myComparison.size();
-	for (int i = 0; i < theSize; i++){
-		delete (myComparison[i]);
+	list <MyPartialOperator *>::iterator it, itEnd;
+	it = partialOperator.begin();
+	itEnd = partialOperator.end();
+	for (; it != itEnd; ++it){
+		delete (*it);
 	}
 }
 

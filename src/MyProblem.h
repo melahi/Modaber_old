@@ -46,12 +46,12 @@ public:
 
 	vector <MyAction> actions;
 	vector <MyProposition> propositions;
+	vector <MyLiftedProposition> liftedPropositions;
 	vector <MyVariable> variables;
 	vector <MyStateVariable> stateVariables;
 
 	map <VAL::pddl_type *, MyType> types;
 	map <VAL::const_symbol *, MyObject> objects;
-	map <Literal *, MyLiftedProposition> liftedPropositions;
 	vector <MyOperator *> operators;
 	list <MyPartialAction> partialAction;
 	list <MyComparison> comparisons;
@@ -60,6 +60,7 @@ public:
 	int nUnification;
 	int nValues;
 	int nPropositionVariables;  //The number of variables needed for propositions for each layer in SAT formula
+	int nPartialActions;
 
 	MyEnvironment environment;
 
