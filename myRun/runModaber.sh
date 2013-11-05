@@ -2,13 +2,13 @@
 
 #In the name of God
 
-Algorithm="Evolutionary"
+Algorithm="Lifted"
 Algorithm="Simple"
 NPG="1"
 
 #Set maximum memory limit
-MaximumMemoryLimit=$((3 * 1024 * 1024))
-ulimit -v $MaximumMemoryLimit
+#MaximumMemoryLimit=$((1 * 1024 * 1024))
+#ulimit -v $MaximumMemoryLimit
 
 
 

@@ -6,14 +6,15 @@
 
 
 Planner="SimpleModaber"
+Planner="POPF"
 
-Domain=( 'Depots' 'ZenoTravel' 'DriverLog');
-DomainFile=( 'DepotsNum.pddl' 'zenonumeric.pddl' 'driverlogNumeric.pddl');
+Domain=( 'Depots' 'ZenoTravel' 'DriverLog' 'Rovers');
+DomainFile=( 'DepotsNum.pddl' 'zenonumeric.pddl' 'driverlogNumeric.pddl' 'NumRover.pddl');
 
 
 
 #Set maximum memory limit
-MaximumMemoryLimit=$((3 * 1024 * 1024))
+MaximumMemoryLimit=$((1 * 1024 * 1024))
 ulimit -v $MaximumMemoryLimit
 
 for (( j = 0; j < ${#Domain[*]} ; j++)) {
@@ -26,7 +27,8 @@ for (( i = 1; i <= 20; i++)) {
 		TheDomainFile="../../Problem/ipc2002/Tests1/${Domain[$j]}/Numeric/${DomainFile[$j]}"
 		TheProblemFile="../../Problem/ipc2002/Tests1/${Domain[$j]}/Numeric/pfile$i"
 		echo "Planner \"$Planner\" try to solve: $TheDomainFile $TheProblemFile"   
-		timeout 30m ./runModaber.sh "$TheDomainFile" "$TheProblemFile" > "${Planner}Results/${Domain[$j]}/pfile$i.output" 2>&1
+#		timeout 30m ./runModaber.sh "$TheDomainFile" "$TheProblemFile" > "${Planner}Results/${Domain[$j]}/pfile$i.output" 2>&1
+		timeout 30m ./optic-clp -N "$TheDomainFile" "$TheProblemFile" > "${Planner}Results/${Domain[$j]}/pfile$i.output" 2>&1
 		if [ -f solution ]; then
 			mv solution "${Planner}Results/${Domain[$j]}/pfile$i.solution"
 		fi

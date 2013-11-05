@@ -108,7 +108,7 @@ void MyComparison::prepare(MyOperator *op_, MyLiftedComparison *liftedComparison
 	objectId = objectId_;
 	comparisonId = comparisonId_;
 	findVariables(liftedComparison->originalComparison);
-	findPossibleValues();
+	findPossibleRanges();
 }
 
 void MyComparison::findVariables(const expression *exp){
@@ -161,92 +161,101 @@ void MyComparison::findVariables(const expression *exp){
 
 }
 
-void MyComparison::findPossibleValues(){
-	selectedValues.clear();
-	possibleValues.clear();
-	findPossibleValues(variables.begin());
+void MyComparison::findPossibleRanges(){
+	selectedRanges.clear();
+	possibleRanges.clear();
+	findPossibleRanges(variables.begin());
 }
 
-void MyComparison::findPossibleValues (map <const func_term *, MyVariable *>::iterator it){
+void MyComparison::findPossibleRanges (map <const func_term *, MyVariable *>::iterator it){
 	if (it == variables.end()){
-		pair <list <MyValue *>, bool > result;
-		map <const func_term *, MyValue *>::iterator it, itEnd;
-		it = selectedValues.begin();
-		itEnd = selectedValues.end();
+		pair <list <MyRange *>, bool > result;
+		map <const func_term *, MyRange *>::iterator it, itEnd;
+		it = selectedRanges.begin();
+		itEnd = selectedRanges.end();
 		for (; it != itEnd; ++it){
 			result.first.push_back(it->second);
 		}
 		result.second = evalute();
-		possibleValues.push_back(result);
+		possibleRanges.push_back(result);
 		return;
 	}
 	map <const func_term *, MyVariable *>::iterator next = it;
 	++next;
 	if (it->second->domain.size() == 1){
-		findPossibleValues(next);
+		findPossibleRanges(next);
 		return;
 	}
-	map <double, MyValue>::iterator it1, it1End;
-	it1 = it->second->domain.begin();
-	it1End = it->second->domain.end();
+	set <MyRange>::iterator it1, it1End;
+	it1 = it->second->domainRange.begin();
+	it1End = it->second->domainRange.end();
 
 	for (; it1 != it1End; ++it1){
-		selectedValues[it->first] = &(it1->second);
-		findPossibleValues(next);
+		selectedRanges[it->first] = &(*it1);
+		findPossibleRanges(next);
 	}
+
 	return;
 }
 
-bool MyComparison::evalute (){
-	double left, right;
-	left = evalute (liftedComparison->originalComparison->getLHS());
-	right = evalute (liftedComparison->originalComparison->getRHS());
-	if (left == undefinedValue || right == undefinedValue){
-		return true;
-	}
-	if (liftedComparison->originalComparison->getOp() == E_GREATER){
-		return (left > right);
-	}else if (liftedComparison->originalComparison->getOp() == E_GREATEQ){
-		return (left >= right);
-	}else if (liftedComparison->originalComparison->getOp() == E_LESS){
-		return (left < right);
-	}else if (liftedComparison->originalComparison->getOp() == E_LESSEQ){
-		return (left <= right);
-	}else if (liftedComparison->originalComparison->getOp() == E_EQUALS){
-		return (left == right);
-	}
-	CANT_HANDLE ("SOME PROBLEM IN EVALUATION!!!");
-	return false;
-}
-
-double MyComparison::evalute (const expression *exp){
+double MyComparison::minEvalute (const expression *exp){
 	const binary_expression *binary = dynamic_cast <const binary_expression *> (exp);
 	if (binary){
 		double left, right;
-		left = evalute(binary->getLHS());
-		right = evalute(binary->getRHS());
-		if (left == undefinedValue || right == undefinedValue){
-			return undefinedValue;
-		}
 		if (dynamic_cast <const plus_expression *> (exp)){
+			left = minEvalute(binary->getLHS());
+			right = minEvalute(binary->getRHS());
 			return left + right;
 		}else if (dynamic_cast <const minus_expression *> (exp)){
+			left = minEvalute(binary->getLHS());
+			right = maxEvalute(binary->getRHS());
 			return left - right;
 		}else if (dynamic_cast <const mul_expression *> (exp)){
-			return left * right;
+			left = minEvalute(binary->getLHS());
+			right = minEvalute(binary->getRHS());
+			double left2, right2;
+			left2 = maxEvalute(binary->getLHS());
+			right2 = maxEvalute(binary->getRHS());
+			double tempRet[4], ret;
+			tempRet[0] = left * right;
+			tempRet[1] = left2 * right;
+			tempRet[2] = left * right2;
+			tempRet[3] = left2 * right2;
+			ret = tempRet[0];
+			for (int i = 1; i < 4; i++){
+				if (tempRet[i] < ret)
+					ret = tempRet[i];
+			}
+			return ret;
 		}else if (dynamic_cast <const div_expression *> (exp)){
-			return left / right;
+			left = minEvalute(binary->getLHS());
+			right = minEvalute(binary->getRHS());
+			double left2, right2;
+			left2 = maxEvalute(binary->getLHS());
+			right2 = maxEvalute(binary->getRHS());
+			double tempRet[4], ret;
+			tempRet[0] = left / right;
+			tempRet[1] = left2 / right;
+			tempRet[2] = left / right2;
+			tempRet[3] = left2 / right2;
+			ret = tempRet[0];
+			for (int i = 1; i < 4; i++){
+				if (tempRet[i] < ret)
+					ret = tempRet[i];
+			}
+			return ret;
 		}else {
 			CANT_HANDLE("I can't handle some binary expression!!!");
 		}
 	}
 	const uminus_expression *unitMinus = dynamic_cast <const uminus_expression *> (exp);
 	if (unitMinus){
-		double ret = evalute(unitMinus->getExpr());
-		if (ret == undefinedValue){
-			return undefinedValue;
+		double ret = -1 * maxEvalute(unitMinus->getExpr());
+		double ret1 = -1 * minEvalute(unitMinus->getExpr());
+		if (ret1 < ret){
+			return ret1;
 		}
-		return -1 * ret;
+		return ret;
 	}
 	const num_expression *number = dynamic_cast <const num_expression *> (exp);
 	if (number){
@@ -257,11 +266,89 @@ double MyComparison::evalute (const expression *exp){
 		if (variables[function]->domain.size() == 1){
 			return variables[function]->domain.begin()->first;
 		}
-		return selectedValues[function]->value;
+		return selectedRanges[function]->starting;
 	}
 	CANT_HANDLE("I can't handle some expression!!!");
 	return 0;
 }
+
+
+double MyComparison::maxEvalute (const expression *exp){
+	const binary_expression *binary = dynamic_cast <const binary_expression *> (exp);
+	if (binary){
+		double left, right;
+		if (dynamic_cast <const plus_expression *> (exp)){
+			left = maxEvalute(binary->getLHS());
+			right = maxEvalute(binary->getRHS());
+			return left + right;
+		}else if (dynamic_cast <const minus_expression *> (exp)){
+			left = maxEvalute(binary->getLHS());
+			right = minEvalute(binary->getRHS());
+			return left - right;
+		}else if (dynamic_cast <const mul_expression *> (exp)){
+			left = minEvalute(binary->getLHS());
+			right = minEvalute(binary->getRHS());
+			double left2, right2;
+			left2 = maxEvalute(binary->getLHS());
+			right2 = maxEvalute(binary->getRHS());
+			double tempRet[4], ret;
+			tempRet[0] = left * right;
+			tempRet[1] = left2 * right;
+			tempRet[2] = left * right2;
+			tempRet[3] = left2 * right2;
+			ret = tempRet[0];
+			for (int i = 1; i < 4; i++){
+				if (tempRet[i] > ret)
+					ret = tempRet[i];
+			}
+			return ret;
+		}else if (dynamic_cast <const div_expression *> (exp)){
+			left = minEvalute(binary->getLHS());
+			right = minEvalute(binary->getRHS());
+			double left2, right2;
+			left2 = maxEvalute(binary->getLHS());
+			right2 = maxEvalute(binary->getRHS());
+			double tempRet[4], ret;
+			tempRet[0] = left / right;
+			tempRet[1] = left2 / right;
+			tempRet[2] = left / right2;
+			tempRet[3] = left2 / right2;
+			ret = tempRet[0];
+			for (int i = 1; i < 4; i++){
+				if (tempRet[i] > ret)
+					ret = tempRet[i];
+			}
+			return ret;
+		}else {
+			CANT_HANDLE("I can't handle some binary expression!!!");
+		}
+	}
+	const uminus_expression *unitMinus = dynamic_cast <const uminus_expression *> (exp);
+	if (unitMinus){
+		double ret = -1 * maxEvalute(unitMinus->getExpr());
+		double ret1 = -1 * minEvalute(unitMinus->getExpr());
+		if (ret1 > ret){
+			return ret1;
+		}
+		return ret;
+	}
+	const num_expression *number = dynamic_cast <const num_expression *> (exp);
+	if (number){
+		return number->double_value();
+	}
+	const func_term *function = dynamic_cast <const func_term *> (exp);
+	if (function){
+		if (variables[function]->domain.size() == 1){
+			return variables[function]->domain.begin()->first;
+		}
+		return selectedRanges[function]->ending;
+	}
+	CANT_HANDLE("I can't handle some expression!!!");
+	return 0;
+}
+
+
+
 
 void MyComparison::write(ostream &sout){
 	cout << "=======================" << endl;
@@ -275,10 +362,10 @@ void MyComparison::write(ostream &sout){
 	}
 	cout << endl;
 
-	sout << possibleValues.size() << endl;
+	sout << possibleRanges.size() << endl;
 	list<pair<list <MyValue*>, bool> >::iterator it, itEnd;
-	it = possibleValues.begin();
-	itEnd = possibleValues.end();
+	it = possibleRanges.begin();
+	itEnd = possibleRanges.end();
 	for (; it != itEnd; ++it){
 		list <MyValue*>::iterator valueIt, valueItEnd;
 		valueIt = it->first.begin();

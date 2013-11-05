@@ -97,62 +97,6 @@ void MyLiftedAssignment::grounding(map <string, MyType*>::iterator it){
 	}
 }
 
-MyAssignment::MyAssignment() {}
-
-bool MyAssignment::isMutex (MyAssignment *other){
-	if (possibleValues.size() == 0 || other->possibleValues.size() == 0){
-		return false;
-	}
-	int idOfChangingVariable = possibleValues.begin()->second->variable->originalPNE->getStateID();
-
-	if (idOfChangingVariable == other->possibleValues.begin()->second->variable->originalPNE->getStateID()){
-		return true;
-	}
-
-	list <MyValue*>::iterator it, itEnd;
-	it = other->possibleValues.begin()->first.begin();
-	itEnd = other->possibleValues.begin()->first.end();
-	for (; it != itEnd; ++it){
-		if (idOfChangingVariable == (*it)->variable->originalPNE->getStateID()){
-			return true;
-		}
-	}
-	return false;
-}
-
-bool MyAssignment::isMutex (MyComparison *other){
-	if (possibleValues.size() == 0 || other->possibleValues.size() == 0){
-		return false;
-	}
-	if (op->id == other->op->id && objectId.size() == other->objectId.size()){
-		map <string, int>::iterator it1, it2, it1End, it2End;
-		it1 = objectId.begin();
-		it1End = objectId.end();
-		it2 = other->objectId.begin();
-		it2End = other->objectId.end();
-		for (; it1 != it1End; ++it1, ++it2){
-			if ((it1->first != it2->first) || (it1->second != it2->second)){
-				break;
-			}
-		}
-		if (it1 == it1End){
-			//both of comparison and assignment are for same action
-			return false;
-		}
-	}
-
-	int idOfChangingVariable = possibleValues.begin()->second->variable->originalPNE->getStateID();
-	list <MyValue*>::iterator it, itEnd;
-	it = other->possibleValues.begin()->first.begin();
-	itEnd = other->possibleValues.begin()->first.end();
-	for (; it != itEnd; ++it){
-		if (idOfChangingVariable == (*it)->variable->originalPNE->getStateID()){
-			return true;
-		}
-	}
-	return false;
-}
-
 void MyAssignment::prepare(MyOperator *op_, MyLiftedAssignment *liftedAssignment_, map <string, MyObject *> &selectedObject_, map <string, int> &objectId_, int assignmentId_){
 	op = op_;
 	liftedAssignment = liftedAssignment_;
@@ -165,7 +109,7 @@ void MyAssignment::prepare(MyOperator *op_, MyLiftedAssignment *liftedAssignment
 	if (aVariableNotFounded || !(myProblem.variables[variables[liftedAssignment->originalAssignment->getFTerm()]->originalPNE->getStateID()].visitInPrecondition)){
 		return;
 	}
-	findPossibleValues();
+	findPossibleRanges();
 	variables[liftedAssignment->originalAssignment->getFTerm()]->assigner.push_back(this);
 }
 
@@ -223,108 +167,176 @@ void MyAssignment::findVariables(const expression *exp){
 
 }
 
-void MyAssignment::findPossibleValues(){
-	selectedValues.clear();
-	possibleValues.clear();
-	findPossibleValues(variables.begin());
+void MyAssignment::findPossibleRanges(){
+	selectedRanges.clear();
+	possibleRanges.clear();
+	findPossibleRanges(variables.begin());
 }
 
-void MyAssignment::findPossibleValues (map <const func_term *, MyVariable *>::iterator it){
+void MyAssignment::findPossibleRanges (map <const func_term *, MyVariable *>::iterator it){
 	if (it == variables.end()){
-		pair <list <MyValue *>, MyValue* > result;
-		map <const func_term *, MyValue *>::iterator it, itEnd;
-		it = selectedValues.begin();
-		itEnd = selectedValues.end();
+		pair <list <MyRange *>, MyRange *> result;
+		map <const func_term *, MyRange *>::iterator it, itEnd;
+		it = selectedRanges.begin();
+		itEnd = selectedRanges.end();
 		for (; it != itEnd; ++it){
 			result.first.push_back(it->second);
 		}
 		result.second = evalute();
-		possibleValues.push_back(result);
+		possibleRanges.push_back(result);
 		return;
 	}
 	map <const func_term *, MyVariable *>::iterator next = it;
 	++next;
 	if (it->second->domain.size() == 1){
-		findPossibleValues(next);
+		findPossibleRanges(next);
 		return;
 	}
-	map <double, MyValue>::iterator it1, it1End;
-	it1 = it->second->domain.begin();
-	it1End = it->second->domain.end();
+	set <MyRange>::iterator it1, it1End;
+	it1 = it->second->domainRange.begin();
+	it1End = it->second->domainRange.end();
 
 	for (; it1 != it1End; ++it1){
-		selectedValues[it->first] = &(it1->second);
-		findPossibleValues(next);
+		selectedRanges[it->first] = &(*it1);
+		findPossibleRanges(next);
 	}
 	return;
 }
 
-MyValue *MyAssignment::evalute (){
+MyRange *MyAssignment::evalute (){
 
 	MyVariable *returnValue = variables[liftedAssignment->originalAssignment->getFTerm()];
 
-	double rightHand, finalValue;
-	rightHand = evalute (liftedAssignment->originalAssignment->getExpr());
-	finalValue = evalute(liftedAssignment->originalAssignment->getFTerm());
-	if (rightHand != undefinedValue && finalValue != undefinedValue){
-		if (liftedAssignment->originalAssignment->getOp() == E_ASSIGN){
-			finalValue = rightHand;
-		}else if (liftedAssignment->originalAssignment->getOp() == E_INCREASE){
-			finalValue += rightHand;
-		}else if (liftedAssignment->originalAssignment->getOp() == E_DECREASE){
-			finalValue -= rightHand;
-		}else if (liftedAssignment->originalAssignment->getOp() == E_SCALE_UP){
-			finalValue *= rightHand;
-		}else if (liftedAssignment->originalAssignment->getOp() == E_SCALE_DOWN){
-			finalValue /= rightHand;
-		}else{
-			CANT_HANDLE ("SOME PROBLEM IN EVALUATION!!!");
+	double minRightHand, maxRightHand, minFinalValue, maxFinalValue;
+	minRightHand = minEvalute (liftedAssignment->originalAssignment->getExpr());
+	maxRightHand = maxEvalute (liftedAssignment->originalAssignment->getExpr());
+	minFinalValue = minEvalute(liftedAssignment->originalAssignment->getFTerm());
+	maxFinalValue = maxEvalute(liftedAssignment->originalAssignment->getFTerm());
+	if (liftedAssignment->originalAssignment->getOp() == E_ASSIGN){
+		minFinalValue = minEvalute (liftedAssignment->originalAssignment->getExpr());
+		maxFinalValue = maxEvalute (liftedAssignment->originalAssignment->getExpr());
+	}else if (liftedAssignment->originalAssignment->getOp() == E_INCREASE){
+		minRightHand = minEvalute (liftedAssignment->originalAssignment->getExpr());
+		maxRightHand = maxEvalute (liftedAssignment->originalAssignment->getExpr());
+		minFinalValue = minEvalute(liftedAssignment->originalAssignment->getFTerm());
+		maxFinalValue = maxEvalute(liftedAssignment->originalAssignment->getFTerm());
+		minFinalValue += minRightHand;
+		maxFinalValue += maxFinalValue;
+	}else if (liftedAssignment->originalAssignment->getOp() == E_DECREASE){
+		minRightHand = minEvalute (liftedAssignment->originalAssignment->getExpr());
+		maxRightHand = maxEvalute (liftedAssignment->originalAssignment->getExpr());
+		minFinalValue = minEvalute(liftedAssignment->originalAssignment->getFTerm());
+		maxFinalValue = maxEvalute(liftedAssignment->originalAssignment->getFTerm());
+		minFinalValue -= maxRightHand;
+		maxFinalValue -= minRightHand;
+	}else if (liftedAssignment->originalAssignment->getOp() == E_SCALE_UP){
+		minRightHand = minEvalute (liftedAssignment->originalAssignment->getExpr());
+		maxRightHand = maxEvalute (liftedAssignment->originalAssignment->getExpr());
+		minFinalValue = minEvalute(liftedAssignment->originalAssignment->getFTerm());
+		maxFinalValue = maxEvalute(liftedAssignment->originalAssignment->getFTerm());
+		double temp[4];
+		temp[0] = minFinalValue * minRightHand;
+		temp[1] = minFinalValue * maxRightHand;
+		temp[2] = maxFinalValue * minRightHand;
+		temp[3] = maxFinalValue * maxRightHand;
+		minFinalValue = temp[0];
+		maxFinalValue = temp[0];
+		for (int i = 1; i < 4; ++i){
+			if (minFinalValue > temp[i]){
+				minFinalValue = temp[i];
+			}
+			if (maxFinalValue < temp[i]){
+				maxFinalValue = temp[i];
+			}
 		}
-
-		if (returnValue->domain.find(finalValue) == returnValue->domain.end()){
-			finalValue = undefinedValue;
+	}else if (liftedAssignment->originalAssignment->getOp() == E_SCALE_DOWN){
+		minRightHand = minEvalute (liftedAssignment->originalAssignment->getExpr());
+		maxRightHand = maxEvalute (liftedAssignment->originalAssignment->getExpr());
+		minFinalValue = minEvalute(liftedAssignment->originalAssignment->getFTerm());
+		maxFinalValue = maxEvalute(liftedAssignment->originalAssignment->getFTerm());
+		double temp[4];
+		temp[0] = minFinalValue / minRightHand;
+		temp[1] = minFinalValue / maxRightHand;
+		temp[2] = maxFinalValue / minRightHand;
+		temp[3] = maxFinalValue / maxRightHand;
+		minFinalValue = temp[0];
+		maxFinalValue = temp[0];
+		for (int i = 1; i < 4; ++i){
+			if (minFinalValue > temp[i]){
+				minFinalValue = temp[i];
+			}
+			if (maxFinalValue < temp[i]){
+				maxFinalValue = temp[i];
+			}
 		}
-
 	}else{
-		finalValue = undefinedValue;
+		CANT_HANDLE ("SOME PROBLEM IN EVALUATION!!!");
 	}
 
-	if (returnValue->domain.find(finalValue) != returnValue->domain.end()){
-		return &(returnValue->domain[finalValue]);
-	}
-	return NULL;
+	MyRange a;
+	a.starting = returnValue->findGreatestMinimum(minFinalValue);
+	a.ending = returnValue->findLeastMaximum(maxFinalValue);
+	return &(returnValue->domainRange(a));
 }
 
-double MyAssignment::evalute (const expression *exp){
+double MyAssignment::minEvalute (const expression *exp){
 	const binary_expression *binary = dynamic_cast <const binary_expression *> (exp);
 	if (binary){
 		double left, right;
-		left = evalute(binary->getLHS());
-		right = evalute(binary->getRHS());
-
-		if (left == undefinedValue || right == undefinedValue){
-			return undefinedValue;
-		}
-
 		if (dynamic_cast <const plus_expression *> (exp)){
+			left = minEvalute(binary->getLHS());
+			right = minEvalute(binary->getRHS());
 			return left + right;
 		}else if (dynamic_cast <const minus_expression *> (exp)){
+			left = minEvalute(binary->getLHS());
+			right = maxEvalute(binary->getRHS());
 			return left - right;
 		}else if (dynamic_cast <const mul_expression *> (exp)){
-			return left * right;
+			left = minEvalute(binary->getLHS());
+			right = minEvalute(binary->getRHS());
+			double left2, right2;
+			left2 = maxEvalute(binary->getLHS());
+			right2 = maxEvalute(binary->getRHS());
+			double tempRet[4], ret;
+			tempRet[0] = left * right;
+			tempRet[1] = left2 * right;
+			tempRet[2] = left * right2;
+			tempRet[3] = left2 * right2;
+			ret = tempRet[0];
+			for (int i = 1; i < 4; i++){
+				if (tempRet[i] < ret)
+					ret = tempRet[i];
+			}
+			return ret;
 		}else if (dynamic_cast <const div_expression *> (exp)){
-			return left / right;
+			left = minEvalute(binary->getLHS());
+			right = minEvalute(binary->getRHS());
+			double left2, right2;
+			left2 = maxEvalute(binary->getLHS());
+			right2 = maxEvalute(binary->getRHS());
+			double tempRet[4], ret;
+			tempRet[0] = left / right;
+			tempRet[1] = left2 / right;
+			tempRet[2] = left / right2;
+			tempRet[3] = left2 / right2;
+			ret = tempRet[0];
+			for (int i = 1; i < 4; i++){
+				if (tempRet[i] < ret)
+					ret = tempRet[i];
+			}
+			return ret;
 		}else {
 			CANT_HANDLE("I can't handle some binary expression!!!");
 		}
 	}
 	const uminus_expression *unitMinus = dynamic_cast <const uminus_expression *> (exp);
 	if (unitMinus){
-		double ret = evalute(unitMinus->getExpr());
-		if (ret == undefinedValue){
-			return undefinedValue;
+		double ret = -1 * maxEvalute(unitMinus->getExpr());
+		double ret1 = -1 * minEvalute(unitMinus->getExpr());
+		if (ret1 < ret){
+			return ret1;
 		}
-		return -1 * ret;
+		return ret;
 	}
 	const num_expression *number = dynamic_cast <const num_expression *> (exp);
 	if (number){
@@ -335,7 +347,82 @@ double MyAssignment::evalute (const expression *exp){
 		if (variables[function]->domain.size() == 1){
 			return variables[function]->domain.begin()->first;
 		}
-		return selectedValues[function]->value;
+		return selectedRanges[function]->starting;
+	}
+	CANT_HANDLE("I can't handle some expression!!!");
+	return 0;
+}
+
+
+double MyAssignment::maxEvalute (const expression *exp){
+	const binary_expression *binary = dynamic_cast <const binary_expression *> (exp);
+	if (binary){
+		double left, right;
+		if (dynamic_cast <const plus_expression *> (exp)){
+			left = maxEvalute(binary->getLHS());
+			right = maxEvalute(binary->getRHS());
+			return left + right;
+		}else if (dynamic_cast <const minus_expression *> (exp)){
+			left = maxEvalute(binary->getLHS());
+			right = minEvalute(binary->getRHS());
+			return left - right;
+		}else if (dynamic_cast <const mul_expression *> (exp)){
+			left = minEvalute(binary->getLHS());
+			right = minEvalute(binary->getRHS());
+			double left2, right2;
+			left2 = maxEvalute(binary->getLHS());
+			right2 = maxEvalute(binary->getRHS());
+			double tempRet[4], ret;
+			tempRet[0] = left * right;
+			tempRet[1] = left2 * right;
+			tempRet[2] = left * right2;
+			tempRet[3] = left2 * right2;
+			ret = tempRet[0];
+			for (int i = 1; i < 4; i++){
+				if (tempRet[i] > ret)
+					ret = tempRet[i];
+			}
+			return ret;
+		}else if (dynamic_cast <const div_expression *> (exp)){
+			left = minEvalute(binary->getLHS());
+			right = minEvalute(binary->getRHS());
+			double left2, right2;
+			left2 = maxEvalute(binary->getLHS());
+			right2 = maxEvalute(binary->getRHS());
+			double tempRet[4], ret;
+			tempRet[0] = left / right;
+			tempRet[1] = left2 / right;
+			tempRet[2] = left / right2;
+			tempRet[3] = left2 / right2;
+			ret = tempRet[0];
+			for (int i = 1; i < 4; i++){
+				if (tempRet[i] > ret)
+					ret = tempRet[i];
+			}
+			return ret;
+		}else {
+			CANT_HANDLE("I can't handle some binary expression!!!");
+		}
+	}
+	const uminus_expression *unitMinus = dynamic_cast <const uminus_expression *> (exp);
+	if (unitMinus){
+		double ret = -1 * maxEvalute(unitMinus->getExpr());
+		double ret1 = -1 * minEvalute(unitMinus->getExpr());
+		if (ret1 > ret){
+			return ret1;
+		}
+		return ret;
+	}
+	const num_expression *number = dynamic_cast <const num_expression *> (exp);
+	if (number){
+		return number->double_value();
+	}
+	const func_term *function = dynamic_cast <const func_term *> (exp);
+	if (function){
+		if (variables[function]->domain.size() == 1){
+			return variables[function]->domain.begin()->first;
+		}
+		return selectedRanges[function]->ending;
 	}
 	CANT_HANDLE("I can't handle some expression!!!");
 	return 0;
@@ -378,10 +465,10 @@ void MyAssignment::write(ostream &sout){
 	}
 	cout << endl;
 
-	sout << possibleValues.size() << endl;
+	sout << possibleRanges.size() << endl;
 	list<pair<list <MyValue*>, MyValue*> >::iterator it, itEnd;
-	it = possibleValues.begin();
-	itEnd = possibleValues.end();
+	it = possibleRanges.begin();
+	itEnd = possibleRanges.end();
 	for (; it != itEnd; ++it){
 		list <MyValue*>::iterator valueIt, valueItEnd;
 		valueIt = it->first.begin();

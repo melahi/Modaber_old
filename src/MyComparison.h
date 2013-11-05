@@ -51,11 +51,11 @@ class MyComparison {
 private:
 	list <MyVariable *> myCreatedVariables;
 
-	map <const func_term *, MyValue *> selectedValues;
+	map <const func_term *, MyRange *> selectedRanges;
 
 public:
 	map <const func_term *, MyVariable *> variables;
-	list < pair < list < MyValue* >, bool> > possibleValues;
+	list < pair < list < MyRange* >, bool> > possibleRanges;
 
 
 	map <string, MyObject *> selectedObject;
@@ -73,12 +73,13 @@ public:
 
 	void findVariables (const expression *exp);
 
-	void findPossibleValues ();
-	void findPossibleValues ( map <const func_term *, MyVariable *>::iterator it);
+	void findPossibleRanges ();
+	void findPossibleRanges ( map <const func_term *, MyVariable *>::iterator it);
 
 	bool evalute ();
 
-	double evalute (const expression *exp);
+	double minEvalute (const expression *exp);
+	double maxEvalute (const expression *exp);
 
 	void write (ostream &sout);
 

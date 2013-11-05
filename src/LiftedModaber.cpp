@@ -83,15 +83,20 @@ bool LiftedModaber::tryToSolve(){
 
 
 		if (updatingValues){
-
-
+			myProblem.assignIdToValues();
+			int nVariables = myProblem.variables.size();
+			for (int i = 0; i < nVariables; ++i){
+				myProblem.variables[i].completeDomainRange();
+				myProblem.variables[i].write(cout);
+				cout << endl;
+			}
 			list <MyComparison>::iterator cmpIt, cmpItEnd;
 			cmpIt = myProblem.comparisons.begin();
 			cmpItEnd = myProblem.comparisons.end();
 
 			for (; cmpIt != cmpItEnd; ++cmpIt){
 //				cout << "=====" << cmpIt->possibleValues.size();
-				cmpIt->findPossibleValues();
+				cmpIt->findPossibleRanges();
 //				cmpIt->write(cout);
 //				cout << "=====" << cmpIt->possibleValues.size() << endl;
 
@@ -103,16 +108,11 @@ bool LiftedModaber::tryToSolve(){
 
 			for (; asgnIt != asgnItEnd; ++asgnIt){
 //				cout << "*****" << asgnIt->possibleValues.size();
-				asgnIt->findPossibleValues();
+				asgnIt->findPossibleRanges();
 //				asgnIt->write(cout);
 //				cout << "*****" << asgnIt->possibleValues.size() << endl;
 			}
-			myProblem.assignIdToValues();
-			int nVariables = myProblem.variables.size();
-			for (int i = 0; i < nVariables; ++i){
-				myProblem.variables[i].write(cout);
-				cout << endl;
-			}
+
 		}
 	}
 	return foundSolution;

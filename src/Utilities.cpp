@@ -6,7 +6,8 @@
 
 using namespace std;
 
-const double undefinedValue = numeric_limits <double>::min();
+const double NegInf = -1.0 / 0.0;
+const double PosInf = 1.0 / 0.0;
 
 
 

@@ -229,8 +229,8 @@ void LiftedTranslator::addComparisons(int significantTimePoint){
 		//If a comparison should hold then all of possible values that contradict with the comparison should not hold
 //			it->write(cout);
 		list < pair < list < MyValue* >, bool> >::iterator it1, it1End;
-		it1 = it->possibleValues.begin();
-		it1End = it->possibleValues.end();
+		it1 = it->possibleRanges.begin();
+		it1End = it->possibleRanges.end();
 
 		for (; it1 != it1End; ++it1){
 			if (it1->second == false){
@@ -289,8 +289,8 @@ void LiftedTranslator::addAssignments(int significantTimePoint){
 //		it->write(cout);
 
 		list < pair < list < MyValue* >, MyValue*> >::iterator it1, it1End;
-		it1 = it->possibleValues.begin();
-		it1End = it->possibleValues.end();
+		it1 = it->possibleRanges.begin();
+		it1End = it->possibleRanges.end();
 
 		for (; it1 != it1End; ++it1){
 			solver.addAssignment(VAL::E_NEG, it->assignmentId, significantTimePoint);

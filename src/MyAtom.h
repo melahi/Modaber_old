@@ -89,7 +89,7 @@ public:
 
 //	int globalValueId;
 
-	vector <int> ids;
+//	vector <int> ids;
 
 	MyValue(MyVariable *variable, double value): MyAtom(), variable(variable), value(value){}
 	MyValue(): MyAtom(){}
@@ -100,6 +100,20 @@ public:
 
 	~MyValue(){}
 
+};
+
+class MyRange {
+public:
+	double starting, ending;
+
+	vector <int> ids;
+
+	MyRange(): starting(0), ending(0), ids (current_analysis->the_domain->ops->size(), -2) {}
+
+	bool operator < (const MyRange &a) const{
+		if (starting != a.starting) return starting < a.starting;
+		return ending < a.ending;
+	}
 };
 
 class MyVariable{
@@ -127,6 +141,9 @@ public:
 
 	map <double, MyValue> domain;
 
+	set <MyRange> domainRange;
+
+
 	MyVariable (PNE *originalPNE): originalPNE(originalPNE), visitInPrecondition(false), initialValue(NULL){}
 	MyVariable (): originalPNE(0), visitInPrecondition(false), initialValue(NULL){}
 
@@ -137,6 +154,60 @@ public:
 		}
 		domain[value].visiting(layerNumber, action);
 	}
+
+	void completeDomainRange() {
+		if (domain.size() < 1 || originalPNE->getStateID() == -1){
+			return;
+		}
+		map <double, MyValue>::iterator it, itEnd, it2;
+		it = domain.begin();
+		itEnd = domain.end();
+
+		domain[NegInf].value = NegInf;
+		domain[PosInf].value = PosInf;
+
+		for (; it != itEnd; ++it){
+			for (it2 = it; it2 != itEnd; ++it2){
+				MyRange a;
+				a.starting = it->first;
+				a.ending = it2->first;
+				domainRange.insert(a);
+			}
+		}
+	}
+
+
+	double findGreatestMinimum (double a){
+		map <double, MyValue>::iterator it, itEnd;
+		it = domain.begin();
+		itEnd = domain.end();
+		double ret = it->first;
+		it++;
+		for (; it != itEnd; ++it){
+			if (it->first > a){
+				return ret;
+			ret = it->first;
+			}
+		}
+		return ret;
+	}
+
+	double findLeastMaximum (double a){
+		map <double, MyValue>::reverse_iterator it, itEnd;
+		it = domain.rbegin();
+		itEnd = domain.rend();
+		double ret = it->first;
+		it++;
+		for (; it != itEnd; ++it){
+			if (it->first < a){
+				return ret;
+			ret = it->first;
+			}
+		}
+		return ret;
+	}
+
+
 
 	void restart () {
 		interanalState = domain.begin();

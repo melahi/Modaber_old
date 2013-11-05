@@ -49,7 +49,7 @@ public:
 
 	void grounding (map <string, MyType *>::iterator it);
 
-	MyLiftedAssignment() {}
+	MyLiftedAssignment(): grounded(false), originalAssignment(NULL), op(NULL) {}
 	virtual ~MyLiftedAssignment() {}
 };
 
@@ -58,16 +58,13 @@ class MyAssignment {
 private:
 	list <MyVariable *> myCreatedVariables;
 
-	map <const func_term *, MyValue *> selectedValues;
-
-	bool isMutex (MyAssignment *other);
-	bool isMutex (MyComparison *other);
+	map <const func_term *, MyRange *> selectedRanges;
 
 	bool aVariableNotFounded;
 
 public:
 	map <const func_term *, MyVariable *> variables;
-	list < pair < list < MyValue* >, MyValue*> > possibleValues;
+	list < pair < list < MyRange* >, MyRange*> > possibleRanges;
 
 
 	map <string, MyObject *> selectedObject;
@@ -83,17 +80,18 @@ public:
 	list <MyAssignment *> assignmentMutex;
 	list <MyComparison *> comparisonMutex;
 
-	MyAssignment();
+	MyAssignment(): aVariableNotFounded(false), op(NULL), op(NULL), liftedAssignment(NULL), assignmentId(-2) {};
 	void prepare (MyOperator *op_, MyLiftedAssignment *liftedAssignment_, map <string, MyObject *> &selectedObject_, map <string, int> &objectId_, int assignmentId_);
 
 	void findVariables (const expression *exp);
 
-	void findPossibleValues ();
-	void findPossibleValues ( map <const func_term *, MyVariable *>::iterator it);
+	void findPossibleRanges ();
+	void findPossibleRanges ( map <const func_term *, MyVariable *>::iterator it);
 
-	MyValue *evalute ();
+	MyRange *evalute ();
 
-	double evalute (const expression *exp);
+	double minEvalute (const expression *exp);
+	double maxEvalute (const expression *exp);
 
 	void findAllMutexes();
 
