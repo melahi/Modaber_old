@@ -24,7 +24,7 @@ public:
 	list <MyType *> children;
 	vector <MyObject *> objects;
 
-	MyType(): completedChildren(false) {}
+	MyType(): completedChildren(false), originalType(NULL) {}
 	virtual ~MyType() {}
 
 	void completingChildren();

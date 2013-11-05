@@ -1,10 +1,3 @@
-/*
- * SimpleModaber.cpp
- *
- *  Created on: Jun 22, 2013
- *      Author: sadra
- */
-
 #include "LiftedModaber.h"
 
 
@@ -38,81 +31,15 @@ void LiftedModaber::initialization (char *domainFilePath, char *problemFilePath,
 bool LiftedModaber::tryToSolve(){
 
 	bool foundSolution = false;
-	bool usingUndefinedVariables = true;
-	bool updatingValues;
-	int nUnsuccessfulSolution = 0;
-	int unsuccessfulSolutionThreshold = 20;
 
 	while (!foundSolution){
-		updatingValues = false;
 		cout  << "nSignificantTimePoint: " << nSignificantTimePoints << endl;
 		cout << "solving ..." << endl;
-		translator.prepare(myProblem.operators.size(), myProblem.nPropositionVariables, myProblem.nUnification, myProblem.partialAction.size(), myProblem.assignments.size(), myProblem.comparisons.size(), myProblem.nValues);
+		translator.prepare(myProblem.operators.size(), myProblem.nPropositionIDs, myProblem.nUnification, myProblem.partialAction.size(), myProblem.assignments.size(), myProblem.comparisons.size(), myProblem.nValues);
 		foundSolution = translator.solve(nSignificantTimePoints);
 		cout << "end solving" << endl;
 		if (!foundSolution){
-			if (usingUndefinedVariables){
 				nSignificantTimePoints += 5;
-			}else{
-				usingUndefinedVariables = true;
-				simulator.addUndefinedValues();
-				updatingValues = true;
-			}
-		}else{
-
-			vector <pair <operator_ *, FastEnvironment> > solution;
-			translator.getSolution(solution);
-			int nValuesBeforeSimulation = simulator.countValues();
-			foundSolution =	simulator.isValid(solution);
-			int nValuesAfterSimulation = simulator.countValues();
-
-			if (!foundSolution){
-				translator.printSolution(cout);
-				cout << endl << endl << "------------------" << endl << "A plan has been found but is not valid!!!" << endl << endl;
-				nUnsuccessfulSolution++;
-				if (nValuesAfterSimulation == nValuesBeforeSimulation || nUnsuccessfulSolution > unsuccessfulSolutionThreshold){
-					usingUndefinedVariables = false;
-					simulator.removeUndefinedValues();
-				}else{
-					usingUndefinedVariables = true;
-					simulator.addUndefinedValues();
-				}
-				updatingValues = true;
-			}
-		}
-
-
-		if (updatingValues){
-
-
-			list <MyComparison>::iterator cmpIt, cmpItEnd;
-			cmpIt = myProblem.comparisons.begin();
-			cmpItEnd = myProblem.comparisons.end();
-
-			for (; cmpIt != cmpItEnd; ++cmpIt){
-//				cout << "=====" << cmpIt->possibleValues.size();
-				cmpIt->findPossibleValues();
-//				cmpIt->write(cout);
-//				cout << "=====" << cmpIt->possibleValues.size() << endl;
-
-			}
-
-			list <MyAssignment>::iterator asgnIt, asgnItEnd;
-			asgnIt = myProblem.assignments.begin();
-			asgnItEnd = myProblem.assignments.end();
-
-			for (; asgnIt != asgnItEnd; ++asgnIt){
-//				cout << "*****" << asgnIt->possibleValues.size();
-				asgnIt->findPossibleValues();
-//				asgnIt->write(cout);
-//				cout << "*****" << asgnIt->possibleValues.size() << endl;
-			}
-			myProblem.assignIdToValues();
-			int nVariables = myProblem.variables.size();
-			for (int i = 0; i < nVariables; ++i){
-				myProblem.variables[i].write(cout);
-				cout << endl;
-			}
 		}
 	}
 	return foundSolution;

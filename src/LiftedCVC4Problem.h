@@ -5,8 +5,8 @@
  *      Author: sadra
  */
 
-#ifndef CVC4PROBLEM_H_
-#define CVC4PROBLEM_H_
+#ifndef LIFTEDCVC4PROBLEM_H_
+#define LIFTEDCVC4PROBLEM_H_
 
 #include "VALfiles/instantiation.h"
 #include "VALfiles/FastEnvironment.h"
@@ -26,16 +26,15 @@ using namespace VAL;
 using namespace mdbr;
 
 
-class CVC4Problem {
+class LiftedCVC4Problem {
 public:
-
 
 	void guaranteeSize (unsigned int maxSignificantTimePoint);
 
 
 	void initialization();
 
-	CVC4Problem (int nVariables, int nProposition, int nAction);
+	LiftedCVC4Problem (int nVariables, int nProposition, int nAction);
 
 	//Start to build new clause for SMT problem
 	virtual void startNewClause();
@@ -96,7 +95,7 @@ public:
 
 	void activePermanentChange() { permanentChange = true;}
 	void inActivePermanentChange() { permanentChange = false;}
-	virtual ~CVC4Problem();
+	virtual ~LiftedCVC4Problem();
 
 private:
 
@@ -215,4 +214,4 @@ private:
 
 
 
-#endif /* CVC4PROBLEM_H_ */
+#endif /* LIFTEDCVC4PROBLEM_H_ */

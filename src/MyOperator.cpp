@@ -11,9 +11,9 @@
 
 namespace mdbr {
 
-MyOperator::MyOperator() {}
 
-list <MyPartialOperator *>::iterator MyOperator::findPartialOperator (const MyPartialAction *a){
+
+list <MyPartialOperator *>::iterator MyOperator::findPartialOperator (const MyPartialOperator *a){
 	list <MyPartialOperator *>::iterator ret, pAEnd;
 	ret = partialOperator.begin();
 	pAEnd = partialOperator.end();

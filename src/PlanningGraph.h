@@ -1,12 +1,6 @@
-/*
- * NumericalPlanningGraph.h
- *
- *  Created on: Jul 8, 2013
- *      Author: sadra
- */
 
-#ifndef NUMERICALPLANNINGGRAPH_H_
-#define NUMERICALPLANNINGGRAPH_H_
+#ifndef PLANNINGGRAPH_H_
+#define PLANNINGGRAPH_H_
 
 #include "MyAction.h"
 #include "MyAtom.h"
@@ -24,14 +18,14 @@ using namespace VAL;
 
 namespace mdbr{
 
-class NumericalPlanningGraph {
+class PlanningGraph {
 public:
 
 	int numberOfLayers;
 	int numberOfDynamicMutexesInLastLayer;
 	bool levelOff;
 
-	NumericalPlanningGraph();
+	PlanningGraph();
 
 	void ignoreGraph();
 
@@ -41,11 +35,9 @@ public:
 
 	bool extendOneLayer();
 
-	void write(ostream &sout);
-
-	virtual ~NumericalPlanningGraph();
+	virtual ~PlanningGraph();
 };
 
 } /* namespace mdbr */
 
-#endif /* NUMERICALPLANNINGGRAPH_H_ */
+#endif /* PLANNINGGRAPH_H_ */

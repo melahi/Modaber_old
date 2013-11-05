@@ -173,22 +173,7 @@ void MyProblem::updateGoalValues (goal *the_goal, FastEnvironment *env){
 	CANT_HANDLE("Can't create some state value from some goals!!!");
 }
 
-void MyProblem::updateInitialValuesForLiftedProposition(){
-	//Find initial value for
-	pc_list<simple_effect*>::const_iterator it1 = current_analysis->the_problem->initial_state->add_effects.begin();
-	pc_list<simple_effect*>::const_iterator it1End = current_analysis->the_problem->initial_state->add_effects.end();
-	FastEnvironment env(0);
-
-	for (; it1 != it1End; it1++){
-		Literal lit ((*it1)->prop, &env);
-		Literal *lit2 = instantiatedOp::findLiteral(&lit);
-		if (lit2->getStateID() != -1){
-			liftedPropositions[lit2->getStateID()].initialValue = true;
-		}
-	}
-}
-
-void MyProblem::updateInitialValuesForVariables(){
+void MyProblem::updateInitialLayer(){
 	//Find initial value for variables
 	pc_list<assignment*>::const_iterator it = current_analysis->the_problem->initial_state->assign_effects.begin();
 	pc_list<assignment*>::const_iterator itEnd = current_analysis->the_problem->initial_state->assign_effects.end();
@@ -201,9 +186,24 @@ void MyProblem::updateInitialValuesForVariables(){
 		PNE *pne2 = instantiatedOp::findPNE(&pne);
 		const num_expression *numExpr = dynamic_cast <const num_expression *>((*it)->getExpr());
 		if (pne2 && numExpr && (*it)->getOp() == E_ASSIGN){
-			initialValue[pne2->getGlobalID()] = numExpr->double_value();
+			double theInitialValue = numExpr->double_value();
+			initialValue[pne2->getGlobalID()] = theInitialValue;
+			variables[pne2->getStateID()].initialValue = theInitialValue;
 		}else{
 			CANT_HANDLE("Can't find Some Initial Value ");
+		}
+	}
+
+	//Find initial value for propositions
+	pc_list<simple_effect*>::const_iterator it1 = current_analysis->the_problem->initial_state->add_effects.begin();
+	pc_list<simple_effect*>::const_iterator it1End = current_analysis->the_problem->initial_state->add_effects.end();
+	FastEnvironment env(0);
+
+	for (; it1 != it1End; it1++){
+		Literal lit ((*it1)->prop, &env);
+		Literal *lit2 = instantiatedOp::findLiteral(&lit);
+		if (lit2->getStateID() != -1){
+			propositions[lit2->getStateID()].initialValue = true;
 		}
 	}
 
@@ -235,7 +235,7 @@ void MyProblem::initializing(bool usingSASPlus){
 		}
 	}
 
-	updateInitialValuesForVariables();
+	updateInitialLayer();
 
 	//Preparing actions
 	int nAction = instantiatedOp::howMany();
@@ -308,7 +308,6 @@ void MyProblem::liftedInitializing(){
 	//preparing operators
 	nPartialActions = 0;
 	operators.resize(current_analysis->the_domain->ops->size());
-	liftedPropositions.resize(instantiatedOp::howManyNonStaticLiterals());
 	operator_list::iterator opIt, opItEnd;
 	opIt = current_analysis->the_domain->ops->begin();
 	opItEnd = current_analysis->the_domain->ops->end();
@@ -322,54 +321,38 @@ void MyProblem::liftedInitializing(){
 		}
 	}
 
-	assignIdToValues();
-	assignIdToLiftedPropositions();
-	list <MyAssignment>::iterator asgnIt, asgnItEnd;
-	asgnIt = assignments.begin();
-	asgnItEnd = assignments.end();
-	for (; asgnIt != asgnItEnd; ++asgnIt){
-		asgnIt->findAllMutexes();
-	}
-
-	updateInitialValuesForLiftedProposition();
+	assignIdToPropositions();
 }
 
 
-void MyProblem::assignIdToLiftedPropositions(){
-	map <Literal *, MyLiftedProposition>::iterator it, itEnd;
-	it = liftedPropositions.begin();
-	itEnd = liftedPropositions.end();
-	nPropositionVariables = instantiatedOp::howManyLiteralsOfAnySort();
-
+void MyProblem::assignIdToPropositions(){
+	vector <MyProposition>::iterator it, itEnd;
+	it = propositions.begin();
+	itEnd = propositions.end();
 	int nOperators = operators.size();
 
-	it = liftedPropositions.begin();
+	nPropositionIDs = 0;
+
 	for (; it != itEnd; ++it){
-		if (it->first == NULL){
-			continue;
-		}
 
 		vector <bool> possibleModificationByOperator (nOperators, false);
 
 		//find which operator affect on this proposition
 		list <MyPartialAction *>::iterator paIt, paItEnd;
 
-		paIt = it->second.adder.begin();
-		paItEnd = it->second.adder.end();
+		paIt = it->adder.begin();
+		paItEnd = it->adder.end();
 		for (; paIt != paItEnd; ++paIt){
 			possibleModificationByOperator[(*paIt)->op->id] = true;
 		}
 
-		paIt = it->second.deleter.begin();
-		paItEnd = it->second.deleter.end();
+		paIt = it->deleter.begin();
+		paItEnd = it->deleter.end();
 		for (; paIt != paItEnd; ++paIt){
 			possibleModificationByOperator[(*paIt)->op->id] = true;
 		}
-
-
 
 		//assigning id
-		it->second.ids.resize(nOperators);
 		int lastModifierOperator;
 		for (lastModifierOperator = nOperators - 1; lastModifierOperator >= 0; --lastModifierOperator){
 			if (possibleModificationByOperator[lastModifierOperator]){
@@ -377,41 +360,44 @@ void MyProblem::assignIdToLiftedPropositions(){
 			}
 		}
 		if (lastModifierOperator == -1){
-			it->second.ids[0] = -1;
+			CANT_HANDLE("Technically this proposition should not be static, but there is no action which affect on it");
 		}else{
-			it->second.ids[0] = it->first->getGlobalID();
+			it->ids[0] = nPropositionIDs++;
 		}
 		for (int i = 1; i < nOperators; ++i){
 			if (i > lastModifierOperator){
-				it->second.ids[i] = -1;
+				it->ids[i] = -1;
 				continue;
 			}
 			if (possibleModificationByOperator[i - 1]){
-				it->second.ids[i] = nPropositionVariables;
-				nPropositionVariables++;
+				it->ids[i] = nPropositionIDs++;
 				continue;
 			}
-			it->second.ids[i] = it->second.ids[i - 1];
+			it->ids[i] = it->ids[i - 1];
 		}
 	}
 }
 
-void MyProblem::assignIdToValues(){
-	int nVariables = variables.size();
+
+void MyProblem::assignIdToVariables(){
+	vector <MyVariable>::iterator it, itEnd;
+	it = variables.begin();
+	itEnd = variables.end();
 	int nOperators = operators.size();
-	nValues = 0;
-	for (int i = 0; i < nVariables; ++i){
-		if (variables[i].domain.size() == 0){
-			continue;
-		}
+
+	nVariableIDs = 0;
+
+	for (; it != itEnd; ++it){
+
 		vector <bool> possibleModificationByOperator (nOperators, false);
 
 		//find which operator affect on this proposition
-		list <MyAssignment *>::iterator asgnIt, asgnItEnd;
-		asgnIt = variables[i].assigner.begin();
-		asgnItEnd = variables[i].assigner.end();
-		for (; asgnIt != asgnItEnd; ++asgnIt){
-			possibleModificationByOperator[(*asgnIt)->op->id] = true;
+		list <MyPartialAction*>::iterator paIt, paItEnd;
+
+		paIt = it->modifier.begin();
+		paItEnd = it->modifier.end();
+		for (; paIt != paItEnd; ++paIt){
+			possibleModificationByOperator[(*paIt)->op->id] = true;
 		}
 
 		//assigning id
@@ -422,33 +408,25 @@ void MyProblem::assignIdToValues(){
 			}
 		}
 		if (lastModifierOperator == -1){
-			CANT_HANDLE("SOME THING STRANGE HAS HAPPENED (I THOUGH THIS VARIABLE IS NOT STATIC BUT NO ACTION AFFECT ON IT)");
+			CANT_HANDLE("Technically this proposition should not be static, but there is no action which affect on it");
+		}else{
+			it->ids[0] = nVariableIDs++;
 		}
-
-		map <double, MyValue>::iterator valueIt, valueItEnd;
-		valueIt = variables[i].domain.begin();
-		valueItEnd = variables[i].domain.end();
-		for (; valueIt != valueItEnd; ++valueIt){
-			valueIt->second.ids.resize(nOperators);
-			valueIt->second.ids[0] = nValues;
-//			valueIt->second.write(cout); cout << "Operator: " << 0 << " ==> id: " << nValues << endl;
-			nValues++;
-			for (int j = 1; j < nOperators; ++j){
-				if (j > lastModifierOperator){
-					valueIt->second.ids[j] = -1;
-					continue;
-				}
-				if (possibleModificationByOperator[j - 1]){
-					valueIt->second.ids[j] = nValues;
-//					valueIt->second.write(cout); cout << "Operator: " << j << " ==> id: " << nValues << endl;
-					nValues++;
-					continue;
-				}
-				valueIt->second.ids[j] = valueIt->second.ids[j - 1];
+		for (int i = 1; i < nOperators; ++i){
+			if (i > lastModifierOperator){
+				it->ids[i] = -1;
+				continue;
 			}
+			if (possibleModificationByOperator[i - 1]){
+				it->ids[i] = nVariableIDs++;
+				continue;
+			}
+			it->ids[i] = it->ids[i - 1];
 		}
 	}
 }
+
+
 
 void MyProblem::write(ostream &sout){
 
@@ -529,22 +507,6 @@ void MyProblem::writeDTG(ostream &sout){
 		}
 		sout << "--------------------------------------------------------" << endl;
 	}
-}
-
-void MyProblem::writeAllLiftedPropositional(){
-	map<Literal *, MyLiftedProposition>::iterator it, itEnd;
-	it = liftedPropositions.begin();
-	itEnd = liftedPropositions.end();
-
-	for (; it != itEnd; ++it){
-		it->second.write(cout);
-	}
-
-}
-
-MyProblem::MyProblem() {
-	// TODO Auto-generated constructor stub
-
 }
 
 } /* namespace mdbr */

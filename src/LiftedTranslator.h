@@ -1,77 +1,67 @@
-/*
- * LiftedTranslator.h
- *
- *  Created on: Sep 28, 2013
- *      Author: sadra
- */
 
 #ifndef LIFTEDTRANSLATOR_H_
 #define LIFTEDTRANSLATOR_H_
 
-#include "Solver.h"
-#include "VALfiles/parsing/ptree.h"
+
+#include "LiftedCVC4Problem.h"
+#include "VALfiles/instantiation.h"
 #include "VALfiles/FastEnvironment.h"
-#include "MyLiftedProposition.h"
-#include "MyAtom.h"
+#include "SketchyPlan.h"
+#include "MyTimer.h"
+#include <ptree.h>
+#include "Utilities.h"
 
-#include <vector>
-
-using namespace std;
 using namespace VAL;
+using namespace Inst;
 
-extern "C" {
-	#include "Lingeling/lglib.h"
-}
 
-namespace mdbr {
+
+
+
+
 
 class LiftedTranslator {
 private:
-	Solver solver;
-
-	int nCompletedSignificantTimePoint;
-
-	void addGoal (const goal *gl, int operatorIndex, int significantTimePoint);
-
-	void findIdOfProposition (MyLiftedProposition &theProposition, unsigned int operatorIndex, int &id, int &significantTimePoint);
-	void findIdOfValue (MyValue &theValue, unsigned int operatorIndex, int &id, int &significantTimePoint);
-
+	LiftedCVC4Problem *smtProblem;
+	Expr goals;
+	void prepareGoals();
+	void addInitialState();
+	void addGoals(int significantTimePoint);
+	void addActions(int significantTimePoint);
+	void addExplanatoryAxioms(int significantTimePoint);
+	void addActionMutex(int significantTimePoint);
+	void addAtomMutex(int significantTimePoint);
+	void addSkechyPlan(SketchyPlan* sketchyPlan);
 
 public:
-	LiftedTranslator();
+	int translatedLength;
 
-	void prepare (int nOperators, int nPropositions, int nUnifications, int nPartialActions, int nAssignments, int nComparisons, int nValues) {
-		solver.prepare (nOperators, nPropositions, nUnifications, nPartialActions, nAssignments, nComparisons, nValues);
+	LiftedTranslator(CVC4Problem* smtProblem) :
+		smtProblem(smtProblem) {
+		this->smtProblem->activePermanentChange();
+		addInitialState();
+		this->smtProblem->inActivePermanentChange();
+		translatedLength = 1;
 	}
+	void prepare (int length);
 
-	void addInitialState();
+	int solve (SketchyPlan *sketchyPlan);
 
-	void addGoals(int significantTimePoint);
+	bool solve ();
 
-	void addOperators(int significantTimePoint);
+	virtual ~LiftedTranslator(){}
 
-	void addPartialActions (int significantTimePoint);
+private:
 
-	void addComparisons (int significantTimePoint);
+	void addSimpleEffectList (polarity plrty, const pc_list<simple_effect*> &simpleEffectList, FastEnvironment *env, int significantTimePoint, int actionID = -1);
 
-	void addAssignments (int significantTimePoint);
+	void addAssignmentList (const pc_list <assignment *> &assignmentEffects, FastEnvironment *env, int significantTimePoint, int actionID = -1);
 
-	void addExplanatoryAxioms(int significantTimePoint);
+	void addEffectList (const effect_lists *effects, FastEnvironment *env, int significantTimePoint, int actionId = -1);
 
-	void addAtomMutex(int significantTimePoint);
+	void addGoal (const goal *gl, FastEnvironment *env, int significantTimePoint, int actionId = -1);
 
-	void buildFormula (int nSignificantTimePoints);
 
-	bool solve (int nSignificantTimePoints);
-
-	void printSolution (ostream &sout);
-
-	void getSolution (vector <pair <operator_ *, FastEnvironment> > &solution);
-
-	void writeSATProposition (ostream &sout);
-
-	virtual ~LiftedTranslator();
 };
 
-} /* namespace mdbr */
 #endif /* LIFTEDTRANSLATOR_H_ */

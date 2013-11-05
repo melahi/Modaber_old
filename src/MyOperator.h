@@ -10,8 +10,6 @@
 
 #include "VALfiles/parsing/ptree.h"
 #include "MyObject.h"
-#include "MyAssignment.h"
-#include "MyComparison.h"
 
 #include <list>
 #include <vector>
@@ -27,8 +25,6 @@ class MyLiftedComparison;
 
 class MyOperator {
 private:
-	bool grounded;
-
 	list <MyPartialOperator *>::iterator findPartialOperator (const MyPartialOperator *a);
 public:
 
@@ -41,7 +37,7 @@ public:
 	list <MyPartialOperator *> partialOperator;
 
 
-	MyOperator();
+	MyOperator(): originalOperator(NULL), id (-2) {}
 
 	void prepare (operator_ *originalOperator, int id);
 

@@ -13,7 +13,8 @@
 #include "MyStateVariable.h"
 #include "MyEnvironment.h"
 #include "MyObject.h"
-#include "MyLiftedProposition.h"
+#include "MyOperator.h"
+#include "MyPartialAction.h"
 #include "VALfiles/parsing/ptree.h"
 #include "VALfiles/instantiation.h"
 
@@ -36,17 +37,15 @@ private:
 
 	void filterVariables();
 
-	void assignIdToLiftedPropositions();
+	void assignIdToPropositions();
+	void assignIdToVariables();
 
 public:
-
-	void assignIdToValues();
 
 	bool usingSASPlus;
 
 	vector <MyAction> actions;
 	vector <MyProposition> propositions;
-	vector <MyLiftedProposition> liftedPropositions;
 	vector <MyVariable> variables;
 	vector <MyStateVariable> stateVariables;
 
@@ -54,13 +53,12 @@ public:
 	map <VAL::const_symbol *, MyObject> objects;
 	vector <MyOperator *> operators;
 	list <MyPartialAction> partialAction;
-	list <MyComparison> comparisons;
-	list <MyAssignment> assignments;
+
 
 	int nUnification;
-	int nValues;
-	int nPropositionVariables;  //The number of variables needed for propositions for each layer in SAT formula
+	int nPropositionIDs;  //The number of variables needed for propositions for each layer in SAT formula
 	int nPartialActions;
+	int nVariableIDs;
 
 	MyEnvironment environment;
 
@@ -68,9 +66,10 @@ public:
 	vector <MyStateValue*> goalValue;
 
 
-	void updateInitialValuesForVariables ();
+	MyProblem():usingSASPlus(false), nUnification(0), nPropositionIDs(0), nPartialActions(0){}
 
-	void updateInitialValuesForLiftedProposition();
+
+	void updateInitialLayer ();
 
 	void updateGoalValues();
 
@@ -86,9 +85,6 @@ public:
 
 	void writeDTG(ostream &sout);
 
-	void writeAllLiftedPropositional();
-
-	MyProblem();
 	virtual ~MyProblem() {
 		int nOperators = operators.size();
 		for (int i = 0; i < nOperators; i++){

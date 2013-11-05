@@ -7,6 +7,7 @@
 #include <map>
 #include <iostream>
 #include "MyAtom.h"
+#include "Utilities.h"
 #include "VALfiles/instantiation.h"
 #include "VALfiles/parsing/ptree.h"
 #include "VALfiles/FastEnvironment.h"
@@ -30,11 +31,20 @@ class MyAction;
 class MyGroundedAction;
 
 class MyAction {
+private:
+
+	bool isPreconditionSatisfied(goal *precondition, FastEnvironment *env, int layerNumber);
+
+
 public:
 
 	instantiatedOp *valAction;
 
 	int firstVisitedLayer;
+
+	map <MyAction*, int > lastLayerMutexivity;
+	map <MyProposition*, int > lastLayerPropositionMutexivity;
+
 
 
 	set < MyAction * > staticMutex;
@@ -49,69 +59,37 @@ public:
 	list < MyProposition *> addList;
 	list < MyProposition *> propositionPrecondition;
 
-
-	set < MyGroundedAction > groundedActions;
-
-
 	void initialize (instantiatedOp *valAction);
 
 	void computeStaticMutex();
 	bool isStaticallyMutex(MyAction *otherAction);
-	bool isAtomStaticallyMutex (MyAtom *atom);
+	bool isPropositionStaticallyMutex (MyProposition *otherProposition);
 
-	bool computeGroundedAction (int layerNumber);
-	void visitNewGroundedAction (int layerNumber, const MyGroundedAction &newGroundedAction);
+	bool isApplicable (int layerNumber);
+
+	void applyAction (int layerNumber);
+	void addSimpleEffectList (const pc_list <simple_effect*> &simpleEffectList, FastEnvironment *env, int layerNumber);
+
+
+
+
+	bool isDynamicallyMutex(int layerNumber, MyAction *otherAction);
+	bool isMutex (int layerNumber, MyAction *otherAction);
+
+	bool isPropositionDynamicallyMutex (int layerNumber, MyProposition *otherProposition);
+	bool isPropositionMutex (int layerNumber, MyProposition *otherProposition);
+
+	bool checkDynamicMutex (int layerNumber, MyAction *otherAction);
+	bool checkDynamicPropositionMutex (int layerNumber, MyProposition *otherProposition);
+
+	void insertMutex (int layerNumber, MyAction *otherAciton);
+	void insertPropositionMutex (int layerNumber, MyProposition *otherProposition);
 
 	void write (ostream &sout);
 
 
 	MyAction();
 	virtual ~MyAction();
-};
-
-class MyGroundedAction {
-private:
-
-	double evaluateExpression (const expression *expr, FastEnvironment *env);
-
-	bool isPreconditionSatisfied(goal *precondition, FastEnvironment *env, int layerNumber);
-
-public:
-
-	int firstVisitedLayer;
-
-	map <MyGroundedAction*, int > lastLayerMutexivity;
-	map <MyAtom*, int > lastLayerAtomMutexivity;
-
-	MyAction *parentAction;
-	map < int, MyValue *> variablePrecondition;  //it's a map from variable id (or PNE id) to an atom (or MyValue *)
-
-
-	bool isApplicable (int layerNumber);
-
-	void applyAction (int layerNumber);
-	void addSimpleEffectList (const pc_list <simple_effect*> &simpleEffectList, FastEnvironment *env, int layerNumber);
-	void addAssignmentList (const pc_list <assignment *> &assignmentEffects, FastEnvironment *env, int layerNumber);
-
-
-	bool isDynamicallyMutex(int layerNumber, MyGroundedAction *otherAction);
-	bool isMutex (int layerNumber, MyGroundedAction *otherAction);
-
-	bool isAtomDynamicallyMutex (int layerNumber, MyAtom *otherAtom);
-	bool isAtomMutex (int layerNumber, MyAtom *otherAtom);
-
-	bool checkDynamicMutex (int layerNumber, MyGroundedAction *otherAction);
-	bool checkDynamicAtomMutex (int layerNumber, MyAtom *otherAtom);
-
-	void insertMutex (int layerNumber, MyGroundedAction *otherAciton);
-	void insertAtomMutex (int layerNumber, MyAtom *otherAtom);
-
-	MyGroundedAction (MyAction *parentAction, const map <int, MyValue*> &variablePrecondition): firstVisitedLayer(-1), parentAction(parentAction), variablePrecondition(variablePrecondition)  {}
-
-	bool operator < (const MyGroundedAction &a) const;
-
-	void write (ostream &sout);
-
 };
 
 } /* namespace mdbr */

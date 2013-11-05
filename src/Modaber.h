@@ -5,7 +5,7 @@
 
 
 #include "CVC4Problem.h"
-#include "NumericalPlanningGraph.h"
+#include "PlanningGraph.h"
 #include "Translator.h"
 #include <ostream>
 
@@ -16,7 +16,7 @@ namespace mdbr{
 class Modaber {
 protected:
 
-	NumericalPlanningGraph *nPG;
+	PlanningGraph *nPG;
 
 	bool usingPlanningGraph;
 
@@ -29,7 +29,7 @@ protected:
 
 public:
 
-	Modaber();
+	Modaber(): nPG(NULL), usingPlanningGraph(false) {}
 
 	virtual ~Modaber();
 

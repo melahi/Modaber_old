@@ -7,7 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include "CVC4Problem.h"
-#include "NumericalPlanningGraph.h"
+#include "PlanningGraph.h"
 #include "MyProblem.h"
 
 using namespace std;
@@ -53,15 +53,12 @@ void Modaber::instantiation(char *domainFile, char *problemFile){
 void Modaber::initialization(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph, bool usingSASPlus){
 	instantiation(domainFilePath, problemFilePath);
 	myProblem.initializing(usingSASPlus);
-	nPG = new NumericalPlanningGraph();
+	nPG = new PlanningGraph();
 	this->usingPlanningGraph = usingPlanningGraph;
 	if (!usingPlanningGraph){
 		nPG->ignoreGraph();
 	}
 }
-
-
-Modaber::Modaber(){}
 
 
 Modaber::~Modaber(){

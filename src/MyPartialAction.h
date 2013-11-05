@@ -8,9 +8,11 @@
 #ifndef MYPARTIALACTION_H_
 #define MYPARTIALACTION_H_
 
-#include "MyLiftedProposition.h"
 #include "MyOperator.h"
 #include "VALfiles/parsing/ptree.h"
+#include "VALfiles/instantiation.h"
+#include "MyAtom.h"
+#include "MyObject.h"
 
 #include <vector>
 #include <string>
@@ -20,12 +22,13 @@ using namespace std;
 
 namespace mdbr {
 
-class MyLiftedProposition;
+class MyProposition;
+
 
 class MyPartialOperator{
 private:
 	map <string, MyObject*> selectedObject;  //A temporary vector used in grounding
-	map <string, int> IdOfUnification;  //A temporary vector used in grounding
+	map <string, int> unificationId;  //A temporary vector used in grounding
 
 	void findTypes(const VAL::expression *exp);
 
@@ -45,25 +48,14 @@ public:
 
 
 
-	MyPartialOperator() {}
+	MyPartialOperator(): op(NULL) {}
 	void prepare (MyOperator *op, const proposition *prop);
 	void prepare (MyOperator *op, const assignment *asgn);
 	void prepare (MyOperator *op, const comparison *cmp);
 	void grounding();
 	void grounding (map <string, MyType *>::iterator it);
 
-	bool operator == (const MyPartialOperator &a) const{
-		if (op != a.op) return false;
-		if (argument.size() != a.argument.size()) return false;
-		map <int, MyType *>::iterator it1, itEnd, it2;
-		it1 = argument.begin();
-		it2 = a.argument.begin();
-		itEnd = argument.end();
-		for (; it1 != itEnd; ++it1, ++it2){
-			if (it1->second != it2->second) return false;
-		}
-		return true;
-	}
+	bool operator == (const MyPartialOperator &a) const;
 
 };
 
@@ -77,11 +69,11 @@ public:
 	int id;
 
 	enum propositionKind { E_PRECONDITION, E_ADD_EFFECT, E_DELETE_EFFECT};
-	list <MyLiftedProposition *> precondition;
-	list <MyLiftedProposition *> addEffect;
-	list <MyLiftedProposition *> deleteEffect;
+	list <MyProposition *> precondition;
+	list <MyProposition *> addEffect;
+	list <MyProposition *> deleteEffect;
 
-	map <func_term *, PNE *> variables;
+	map <func_term *, Inst::PNE *> variables;
 
 
 	MyPartialOperator *partialOperator;
@@ -91,10 +83,12 @@ public:
 	map <string, MyObject *> objects;
 	map <string, int> unificationId;
 
-	MyPartialAction() {}
+	MyPartialAction():isValid(true), id (-2), partialOperator(NULL), op(NULL) {}
 
 	void prepare (MyOperator *op, MyPartialOperator *partialOperator, map <string, MyObject*> &objects, map <string, int> &unificationId, int id);
-	void preparePropositionList (list <const proposition *> &liftedList, list <MyLiftedProposition *> &instantiatedList, propositionKind kind);
+	void preparePropositionList (list <const proposition *> &liftedList, list <MyProposition *> &instantiatedList, propositionKind kind);
+	void prepareAssignmentList (list <const assignment *> &assignmentList);
+	void prepareComparisonList (list <const comparison *> &comparisonList);
 	void findVariables(const expression *exp);
 
 	virtual ~MyPartialAction();

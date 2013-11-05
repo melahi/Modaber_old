@@ -3,13 +3,13 @@
 #include "Utilities.h"
 using namespace mdbr;
 
-bool MyAtom::checkMutex (int layerNumber, MyAtom *otherAtom){
+bool MyProposition::checkMutex (int layerNumber, MyProposition *otherProposition){
 
-	list <MyGroundedAction *>::iterator it, itEnd;
+	list <MyAction *>::iterator it, itEnd;
 
 
-	if (isVisited(firstVisitedLayer ,layerNumber - 1) && isVisited(otherAtom->firstVisitedLayer, layerNumber - 1)){
-		if (isMutex(layerNumber - 1, otherAtom) == false){
+	if (isVisited(firstVisitedLayer ,layerNumber - 1) && isVisited(otherProposition->firstVisitedLayer, layerNumber - 1)){
+		if (isMutex(layerNumber - 1, otherProposition) == false){
 			//In the layerNumber - 1 these two proposition were not mutex, so in the layerNumber these two are not mutex too!
 			return false;
 		}
@@ -17,9 +17,9 @@ bool MyAtom::checkMutex (int layerNumber, MyAtom *otherAtom){
 
 	//check mutex of no-op action of this proposition and provider actions of other proposition
 	if (isVisited(firstVisitedLayer ,layerNumber - 1)){
-		it = otherAtom->provider.begin(); itEnd = otherAtom->provider.end();
+		it = otherProposition->provider.begin(); itEnd = otherProposition->provider.end();
 		for (; it != itEnd; ++it){
-			if ( !(*it)->isAtomMutex(layerNumber - 1, this)){
+			if ( !(*it)->isPropositionMutex(layerNumber - 1, this)){
 				return false;
 			}
 		}
@@ -27,24 +27,23 @@ bool MyAtom::checkMutex (int layerNumber, MyAtom *otherAtom){
 
 
 	//check mutex of no-op action of other proposition and provider actions of this proposition
-	if (isVisited(otherAtom->firstVisitedLayer, layerNumber - 1)){
+	if (isVisited(otherProposition->firstVisitedLayer, layerNumber - 1)){
 		it = provider.begin(); itEnd = provider.end();
 		for (; it != itEnd; ++it){
-			if ( !(*it)->isAtomMutex(layerNumber - 1, otherAtom)){
+			if ( !(*it)->isPropositionMutex(layerNumber - 1, otherProposition)){
 				return false;
 			}
 		}
 	}
 
 	it = provider.begin(); itEnd = provider.end();
-	list <MyGroundedAction *>::iterator othIt, othItEnd;
-	othItEnd = otherAtom->provider.end();
+	list <MyAction *>::iterator othIt, othItEnd;
+	othItEnd = otherProposition->provider.end();
 
 	for (; it != itEnd; ++it){
 
-		othIt = otherAtom->provider.begin();
+		othIt = otherProposition->provider.begin();
 		for (; othIt != othItEnd; ++othIt){
-
 			if ( !((*it)->isMutex(layerNumber - 1, *othIt)) ){
 				return false;
 			}
@@ -54,9 +53,9 @@ bool MyAtom::checkMutex (int layerNumber, MyAtom *otherAtom){
 	return true;
 }
 
-bool MyAtom::isMutex (int layerNumber, MyAtom *otherAtom){
-	map <MyAtom *, int>::iterator it;
-	it = lastLayerMutexivity.find(otherAtom);
+bool MyProposition::isMutex (int layerNumber, MyProposition *otherProposition){
+	map <MyProposition *, int>::iterator it;
+	it = lastLayerMutexivity.find(otherProposition);
 	if (it == lastLayerMutexivity.end()){
 		return false;
 	}
@@ -66,13 +65,13 @@ bool MyAtom::isMutex (int layerNumber, MyAtom *otherAtom){
 	return true;
 }
 
-void MyAtom::insertMutex (int layerNumber, MyAtom *mutexAtom){
-	if (lastLayerMutexivity[mutexAtom] < layerNumber){
-		lastLayerMutexivity[mutexAtom] = layerNumber;
+void MyProposition::insertMutex (int layerNumber, MyProposition *mutexProposition){
+	if (lastLayerMutexivity[mutexProposition] < layerNumber){
+		lastLayerMutexivity[mutexProposition] = layerNumber;
 	}
 }
 
-void MyAtom::visiting(int layerNumber, MyGroundedAction *action) {
+void MyProposition::visiting(int layerNumber, MyAction *action) {
 	if (!isVisited(firstVisitedLayer, layerNumber)){
 		firstVisitedLayer = layerNumber;
 	}
@@ -85,34 +84,10 @@ void MyAtom::visiting(int layerNumber, MyGroundedAction *action) {
 	provider.push_back(action);
 }
 
-MyAtom::MyAtom() {
-	firstVisitedLayer = -1;
-}
-
 void MyProposition::write(ostream &sout){
 	originalLiteral->write(sout);
 	if (stateValue){
 		sout << ", state-variable: " << stateValue->theStateVariable->variableId << ", value: " << stateValue->valueId;
 	}
 }
-
-MyAtom::~MyAtom() {
-	// TODO Auto-generated destructor stub
-}
-
-
-
-bool MyValue::operator < (const MyValue &otherValue) const {
-	if (variable->originalPNE->getStateID() == otherValue.variable->originalPNE->getStateID()){
-		return value < otherValue.value;
-	}
-	return variable->originalPNE->getStateID() < otherValue.variable->originalPNE->getStateID();
-}
-
-void MyValue::write (ostream &sout){
-	sout << "(";
-	variable->originalPNE->write(sout);
-	sout << ": " << value << ")";
-}
-
 
