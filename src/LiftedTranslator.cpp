@@ -365,10 +365,8 @@ void LiftedTranslator::addAssignments(int significantTimePoint){
 				solver.addValue(VAL::E_NEG, id + 1, stp);
 			}
 			stp = significantTimePoint;
-			if ((it1->second)){
-				findIdOfValue(*(it1->second->startingValue), it->op->id + 1, id, stp);
-				solver.addValue(VAL::E_POS, id, stp);
-			}
+			findIdOfValue(*(it1->second->startingValue), it->op->id + 1, id, stp);
+			solver.addValue(VAL::E_POS, id, stp);
 			solver.endClause();
 
 

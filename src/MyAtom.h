@@ -164,12 +164,13 @@ public:
 			return;
 		}
 		map <double, MyValue>::iterator it, itEnd, it2;
-		it = domain.begin();
-		itEnd = domain.end();
+
 
 		domain[NegInf].value = NegInf;
 		domain[PosInf].value = PosInf;
 
+		it = domain.begin();
+		itEnd = domain.end();
 		for (; it != itEnd; ++it){
 			for (it2 = it; it2 != itEnd; ++it2){
 				MyRange a;
