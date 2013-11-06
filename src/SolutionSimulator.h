@@ -42,9 +42,6 @@ private:
 public:
 	int countValues();
 
-	void addUndefinedValues();
-	void removeUndefinedValues();
-
 	SolutionSimulator();
 	virtual ~SolutionSimulator();
 

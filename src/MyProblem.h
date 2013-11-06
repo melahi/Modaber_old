@@ -38,6 +38,8 @@ private:
 
 	void assignIdToLiftedPropositions();
 
+	void prepareGoalComparisons (goal *gl);
+
 public:
 
 	void assignIdToValues();
@@ -56,6 +58,9 @@ public:
 	list <MyPartialAction> partialAction;
 	list <MyComparison> comparisons;
 	list <MyAssignment> assignments;
+
+	list <MyLiftedComparison> liftedGoalComparisons;
+	list <MyComparison> goalComparisons;
 
 	int nUnification;
 	int nValues;

@@ -222,9 +222,6 @@ int SolutionSimulator::countValues (){
 	int ret = 0;
 	for (int i = 0; i < nVariables; ++i){
 		ret += myProblem.variables[i].domain.size();
-		if (myProblem.variables[i].domain.find(undefinedValue) != myProblem.variables[i].domain.end()){
-			ret --;
-		}
 	}
 	return ret;
 }
@@ -285,26 +282,6 @@ void SolutionSimulator::prepareInitialState(State &state){
 		myProblem.variables[i].initialValue = &(myProblem.variables[i].domain[state.variableValues[myProblem.variables[i].originalPNE->getGlobalID()]]);
 	}
 }
-
-void SolutionSimulator::addUndefinedValues(){
-	//Insert undefined values to each variable's domain
-	int nVariables = myProblem.variables.size();
-	for (int i = 0; i < nVariables; ++i){
-		if (myProblem.variables[i].visitInPrecondition){
-			myProblem.variables[i].domain[undefinedValue].value = undefinedValue;
-			myProblem.variables[i].domain[undefinedValue].variable = &(myProblem.variables[i]);
-		}
-	}
-}
-
-void SolutionSimulator::removeUndefinedValues(){
-	//Delete undefined values from each variable's domain
-	int nVariables = myProblem.variables.size();
-	for (int i = 0; i < nVariables; ++i){
-		myProblem.variables[i].domain.erase(undefinedValue);
-	}
-}
-
 SolutionSimulator::SolutionSimulator() {
 }
 

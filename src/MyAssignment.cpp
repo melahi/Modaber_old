@@ -168,6 +168,9 @@ void MyAssignment::findVariables(const expression *exp){
 }
 
 void MyAssignment::findPossibleRanges(){
+	if (aVariableNotFounded){
+		return;
+	}
 	selectedRanges.clear();
 	possibleRanges.clear();
 	findPossibleRanges(variables.begin());
@@ -197,7 +200,7 @@ void MyAssignment::findPossibleRanges (map <const func_term *, MyVariable *>::it
 	it1End = it->second->domainRange.end();
 
 	for (; it1 != it1End; ++it1){
-		selectedRanges[it->first] = &(*it1);
+		selectedRanges[it->first] = const_cast <MyRange *> (&(*it1));
 		findPossibleRanges(next);
 	}
 	return;
@@ -276,7 +279,8 @@ MyRange *MyAssignment::evalute (){
 	MyRange a;
 	a.starting = returnValue->findGreatestMinimum(minFinalValue);
 	a.ending = returnValue->findLeastMaximum(maxFinalValue);
-	return &(returnValue->domainRange(a));
+	MyRange* ret = const_cast <MyRange *> (&(*(returnValue->domainRange.find(a))));
+	return ret;
 }
 
 double MyAssignment::minEvalute (const expression *exp){
@@ -430,55 +434,33 @@ double MyAssignment::maxEvalute (const expression *exp){
 
 
 
-void MyAssignment::findAllMutexes(){
-	list <MyAssignment>::iterator it, itEnd;
-	it = myProblem.assignments.begin();
-	itEnd = myProblem.assignments.end();
-	for (; it != itEnd; ++it){
-		if (assignmentId != it->assignmentId){
-			if (isMutex(&(*it))){
-				assignmentMutex.push_back(&(*it));
-			}
-		}
-	}
-
-	list <MyComparison>::iterator it1, it1End;
-	it1 = myProblem.comparisons.begin();
-	it1End = myProblem.comparisons.end();
-	for (; it1 != it1End; ++it1){
-		if (isMutex(&(*it1))){
-			comparisonMutex.push_back(&(*it1));
-		}
-	}
-}
-
 
 void MyAssignment::write(ostream &sout){
-	cout << "***********************" << endl;
-	cout << assignmentId << ": " << op->originalOperator->name->getName()<< endl;
-	map <string, MyObject *>::iterator objIt, objItEnd;
-	objIt = selectedObject.begin();
-	objItEnd = selectedObject.end();
-	cout << "OBJECTS: ";
-	for (; objIt != objItEnd; ++objIt){
-		cout << objIt->second->originalObject->getName() << ' ';
-	}
-	cout << endl;
-
-	sout << possibleRanges.size() << endl;
-	list<pair<list <MyValue*>, MyValue*> >::iterator it, itEnd;
-	it = possibleRanges.begin();
-	itEnd = possibleRanges.end();
-	for (; it != itEnd; ++it){
-		list <MyValue*>::iterator valueIt, valueItEnd;
-		valueIt = it->first.begin();
-		valueItEnd = it->first.end();
-		for (; valueIt != valueItEnd; ++valueIt){
-			sout << "-----";
-			(*valueIt)->write(sout);
-		}
-		sout << "******"; it->second->write(sout); cout << endl;
-	}
+//	cout << "***********************" << endl;
+//	cout << assignmentId << ": " << op->originalOperator->name->getName()<< endl;
+//	map <string, MyObject *>::iterator objIt, objItEnd;
+//	objIt = selectedObject.begin();
+//	objItEnd = selectedObject.end();
+//	cout << "OBJECTS: ";
+//	for (; objIt != objItEnd; ++objIt){
+//		cout << objIt->second->originalObject->getName() << ' ';
+//	}
+//	cout << endl;
+//
+//	sout << possibleRanges.size() << endl;
+//	list<pair<list <MyValue*>, MyValue*> >::iterator it, itEnd;
+//	it = possibleRanges.begin();
+//	itEnd = possibleRanges.end();
+//	for (; it != itEnd; ++it){
+//		list <MyValue*>::iterator valueIt, valueItEnd;
+//		valueIt = it->first.begin();
+//		valueItEnd = it->first.end();
+//		for (; valueIt != valueItEnd; ++valueIt){
+//			sout << "-----";
+//			(*valueIt)->write(sout);
+//		}
+//		sout << "******"; it->second->write(sout); cout << endl;
+//	}
 
 }
 

@@ -24,7 +24,9 @@ void MyLiftedComparison::prepare(MyOperator *op_,const comparison *originalCompa
 	grounded = false;
 	op = op_;
 	originalComparison = originalComparison_;
-	findTypes(originalComparison_);
+	if (op){
+		findTypes(originalComparison_);
+	}
 	grounding();
 }
 
@@ -81,9 +83,14 @@ void MyLiftedComparison::grounding(){
 
 void MyLiftedComparison::grounding(map <string, MyType*>::iterator it){
 	if (it == types.end()){
-		int comparisonId = myProblem.comparisons.size();
-		myProblem.comparisons.push_back(MyComparison());
-		myProblem.comparisons.rbegin()->prepare(op, this, selectedObject, objectId, comparisonId);
+		if (op){
+			int comparisonId = myProblem.comparisons.size();
+			myProblem.comparisons.push_back(MyComparison());
+			myProblem.comparisons.rbegin()->prepare(op, this, selectedObject, objectId, comparisonId);
+		}else{
+			myProblem.goalComparisons.push_back(MyComparison());
+			myProblem.goalComparisons.rbegin()->prepare(op, this, selectedObject, objectId, -1);
+		}
 		return;
 	}
 	map<string, MyType *>::iterator nextIt;
@@ -103,11 +110,15 @@ MyComparison::MyComparison() {}
 
 void MyComparison::prepare(MyOperator *op_, MyLiftedComparison *liftedComparison_, map <string, MyObject *> &selectedObject_, map <string, int> &objectId_, int comparisonId_){
 	op = op_;
+	aVariableNotFounded = false;
 	liftedComparison = liftedComparison_;
 	selectedObject = selectedObject_;
 	objectId = objectId_;
 	comparisonId = comparisonId_;
 	findVariables(liftedComparison->originalComparison);
+	if (aVariableNotFounded){
+		return;
+	}
 	findPossibleRanges();
 }
 
@@ -127,19 +138,31 @@ void MyComparison::findVariables(const expression *exp){
 
 	const func_term *function = dynamic_cast <const func_term *> (exp);
 	if (function){
-		parameter_symbol_list *arguments = new parameter_symbol_list();
-		parameter_symbol_list::const_iterator it, itEnd;
-		it = function->getArgs()->begin();
-		itEnd = function->getArgs()->end();
-		for (; it != itEnd; ++it){
-			arguments->push_back(selectedObject[(*it)->getName()]->originalObject);
+		PNE *pne2;
+		if (op != NULL){
+			parameter_symbol_list *arguments = new parameter_symbol_list();
+			parameter_symbol_list::const_iterator it, itEnd;
+			it = function->getArgs()->begin();
+			itEnd = function->getArgs()->end();
+			for (; it != itEnd; ++it){
+				arguments->push_back(selectedObject[(*it)->getName()]->originalObject);
+			}
+
+			const func_term func(const_cast <func_symbol *> (function->getFunction()), arguments);
+
+			FastEnvironment env(0);
+			PNE pne(&func, &env);
+
+			pne2 = instantiatedOp::findPNE(&pne);
+		}else{
+			FastEnvironment env(0);
+			PNE pne(function, &env);
+			pne2 = instantiatedOp::findPNE(&pne);
 		}
-		const func_term func(const_cast <func_symbol *> (function->getFunction()), arguments);
-
-		FastEnvironment env(0);
-		PNE pne(&func, &env);
-
-		PNE *pne2 = instantiatedOp::findPNE(&pne);
+		if (!pne2){
+			aVariableNotFounded = true;
+			return;
+		}
 		if (pne2->getStateID() == -1){
 			MyVariable *myVariable = new MyVariable();
 			myCreatedVariables.push_back(myVariable);
@@ -162,6 +185,9 @@ void MyComparison::findVariables(const expression *exp){
 }
 
 void MyComparison::findPossibleRanges(){
+	if (aVariableNotFounded){
+		return;
+	}
 	selectedRanges.clear();
 	possibleRanges.clear();
 	findPossibleRanges(variables.begin());
@@ -191,12 +217,47 @@ void MyComparison::findPossibleRanges (map <const func_term *, MyVariable *>::it
 	it1End = it->second->domainRange.end();
 
 	for (; it1 != it1End; ++it1){
-		selectedRanges[it->first] = &(*it1);
+		selectedRanges[it->first] = const_cast <MyRange *> (&(*it1));
 		findPossibleRanges(next);
 	}
 
 	return;
 }
+
+bool MyComparison::evalute (){
+	double left, right, left2, right2;
+	if (liftedComparison->originalComparison->getOp() == E_GREATER){
+		left2 = maxEvalute (liftedComparison->originalComparison->getLHS());
+		right = minEvalute (liftedComparison->originalComparison->getRHS());
+		return (left2 > right);
+	}else if (liftedComparison->originalComparison->getOp() == E_GREATEQ){
+		left2 = maxEvalute (liftedComparison->originalComparison->getLHS());
+		right = minEvalute (liftedComparison->originalComparison->getRHS());
+		return (left2 >= right);
+	}else if (liftedComparison->originalComparison->getOp() == E_LESS){
+        left = minEvalute (liftedComparison->originalComparison->getLHS());
+        right2 = maxEvalute (liftedComparison->originalComparison->getRHS());
+        return (left < right2);
+	}else if (liftedComparison->originalComparison->getOp() == E_LESSEQ){
+        left = minEvalute (liftedComparison->originalComparison->getLHS());
+        right2 = maxEvalute (liftedComparison->originalComparison->getRHS());
+		return (left <= right2);
+	}else if (liftedComparison->originalComparison->getOp() == E_EQUALS){
+        left = minEvalute (liftedComparison->originalComparison->getLHS());
+		left2 = maxEvalute (liftedComparison->originalComparison->getLHS());
+		right = minEvalute (liftedComparison->originalComparison->getRHS());
+        right2 = maxEvalute (liftedComparison->originalComparison->getRHS());
+        if (left > right){
+        	swap(left, right);
+        	swap(left2, right2);
+        }
+		return (right <= left2);
+	}
+	CANT_HANDLE ("SOME PROBLEM IN EVALUATION!!!");
+	return false;
+}
+
+
 
 double MyComparison::minEvalute (const expression *exp){
 	const binary_expression *binary = dynamic_cast <const binary_expression *> (exp);
@@ -351,31 +412,31 @@ double MyComparison::maxEvalute (const expression *exp){
 
 
 void MyComparison::write(ostream &sout){
-	cout << "=======================" << endl;
-	cout << comparisonId << ": " << op->originalOperator->name->getName()<< endl;
-	map <string, MyObject *>::iterator objIt, objItEnd;
-	objIt = selectedObject.begin();
-	objItEnd = selectedObject.end();
-	cout << "OBJECTS: ";
-	for (; objIt != objItEnd; ++objIt){
-		cout << objIt->second->originalObject->getName() << ' ';
-	}
-	cout << endl;
-
-	sout << possibleRanges.size() << endl;
-	list<pair<list <MyValue*>, bool> >::iterator it, itEnd;
-	it = possibleRanges.begin();
-	itEnd = possibleRanges.end();
-	for (; it != itEnd; ++it){
-		list <MyValue*>::iterator valueIt, valueItEnd;
-		valueIt = it->first.begin();
-		valueItEnd = it->first.end();
-		for (; valueIt != valueItEnd; ++valueIt){
-			sout << "-----";
-			(*valueIt)->write(sout);
-		}
-		sout << "======" << it->second << endl;
-	}
+//	cout << "=======================" << endl;
+//	cout << comparisonId << ": " << op->originalOperator->name->getName()<< endl;
+//	map <string, MyObject *>::iterator objIt, objItEnd;
+//	objIt = selectedObject.begin();
+//	objItEnd = selectedObject.end();
+//	cout << "OBJECTS: ";
+//	for (; objIt != objItEnd; ++objIt){
+//		cout << objIt->second->originalObject->getName() << ' ';
+//	}
+//	cout << endl;
+//
+//	sout << possibleRanges.size() << endl;
+//	list<pair<list <MyValue*>, bool> >::iterator it, itEnd;
+//	it = possibleRanges.begin();
+//	itEnd = possibleRanges.end();
+//	for (; it != itEnd; ++it){
+//		list <MyValue*>::iterator valueIt, valueItEnd;
+//		valueIt = it->first.begin();
+//		valueItEnd = it->first.end();
+//		for (; valueIt != valueItEnd; ++valueIt){
+//			sout << "-----";
+//			(*valueIt)->write(sout);
+//		}
+//		sout << "======" << it->second << endl;
+//	}
 }
 
 } /* namespace mdbr */

@@ -60,6 +60,8 @@ void LiftedTranslator::addInitialState(){
 				findIdOfValue(valueIt->second, 0, id, stp);
 				solver.addValue(plrty, id, stp);
 				solver.endClause();
+				solver.addValue(plrty, id + 1, stp);
+				solver.endClause();
 			}
 		}
 	}
@@ -116,6 +118,10 @@ void LiftedTranslator::addGoal (const goal *gl, int operatorIndex, int significa
 		solver.endClause();
 		return;
 	}
+	const VAL::comparison *comp = dynamic_cast<const comparison*> (gl);
+	if (comp){
+		return;
+	}
 	const conj_goal *conjunctiveGoal = dynamic_cast <const conj_goal *> (gl);
 	if (conjunctiveGoal){
 		const goal_list *goalList = conjunctiveGoal->getGoals();
@@ -132,6 +138,47 @@ void LiftedTranslator::addGoal (const goal *gl, int operatorIndex, int significa
 
 void LiftedTranslator::addGoals (int significantTimePoint){
 	addGoal (current_analysis->the_problem->the_goal, 0, significantTimePoint);
+	addGoalComparisons(significantTimePoint);
+}
+
+void LiftedTranslator::addGoalComparisons(int significantTimePoint){
+	list <MyComparison>::iterator it, itEnd;
+	it = myProblem.goalComparisons.begin();
+	itEnd = myProblem.goalComparisons.end();
+
+	for (; it != itEnd; ++it){
+		//If a comparison should hold then all of possible values that contradict with the comparison should not hold
+//			it->write(cout);
+		list < pair < list < MyRange* >, bool> >::iterator it1, it1End;
+		it1 = it->possibleRanges.begin();
+		it1End = it->possibleRanges.end();
+
+
+		if (it->aVariableNotFounded){
+			//The problem is wrong!
+			CANT_HANDLE("The problem is wrong!");
+			exit(1);
+		}
+
+		for (; it1 != it1End; ++it1){
+			if (it1->second == false){
+				list <MyRange *>::iterator it2, it2End;
+				it2 = it1->first.begin();
+				it2End = it1->first.end();
+				for (; it2 != it2End; ++it2){
+					int id, stp;
+					stp = significantTimePoint;
+					findIdOfValue(*((*it2)->startingValue), 0, id, stp);
+					solver.addValue(VAL::E_NEG, id, stp);
+					findIdOfValue(*((*it2)->endingValue), 0, id, stp);
+					solver.addValue(VAL::E_NEG, id + 1, stp);
+				}
+				solver.endClause();
+			}
+		}
+	}
+
+
 }
 
 void LiftedTranslator::addOperators(int significantTimePoint){
@@ -228,14 +275,20 @@ void LiftedTranslator::addComparisons(int significantTimePoint){
 	for (; it != itEnd; ++it){
 		//If a comparison should hold then all of possible values that contradict with the comparison should not hold
 //			it->write(cout);
-		list < pair < list < MyValue* >, bool> >::iterator it1, it1End;
+		list < pair < list < MyRange* >, bool> >::iterator it1, it1End;
 		it1 = it->possibleRanges.begin();
 		it1End = it->possibleRanges.end();
+
+
+		if (it->aVariableNotFounded){
+			solver.addComparison(VAL::E_NEG, it->comparisonId, significantTimePoint);
+			solver.endClause();
+		}
 
 		for (; it1 != it1End; ++it1){
 			if (it1->second == false){
 				solver.addComparison(VAL::E_NEG, it->comparisonId, significantTimePoint);
-				list <MyValue *>::iterator it2, it2End;
+				list <MyRange *>::iterator it2, it2End;
 				it2 = it1->first.begin();
 				it2End = it1->first.end();
 				for (; it2 != it2End; ++it2){
@@ -243,8 +296,11 @@ void LiftedTranslator::addComparisons(int significantTimePoint){
 //					cout << endl;
 					int id, stp;
 					stp = significantTimePoint;
-					findIdOfValue(**it2, it->op->id, id, stp);
+					findIdOfValue(*((*it2)->startingValue), it->op->id, id, stp);
 					solver.addValue(VAL::E_NEG, id, stp);
+					findIdOfValue(*((*it2)->endingValue), it->op->id, id, stp);
+					solver.addValue(VAL::E_NEG, id + 1, stp);
+
 				}
 				solver.endClause();
 			}
@@ -288,30 +344,49 @@ void LiftedTranslator::addAssignments(int significantTimePoint){
 
 //		it->write(cout);
 
-		list < pair < list < MyValue* >, MyValue*> >::iterator it1, it1End;
+		list < pair < list < MyRange* >, MyRange*> >::iterator it1, it1End;
 		it1 = it->possibleRanges.begin();
 		it1End = it->possibleRanges.end();
-
+		if (it->aVariableNotFounded){
+			solver.addAssignment(VAL::E_NEG, it->assignmentId, significantTimePoint);
+			solver.endClause();
+		}
 		for (; it1 != it1End; ++it1){
 			solver.addAssignment(VAL::E_NEG, it->assignmentId, significantTimePoint);
-			list <MyValue *>::iterator it2, it2End;
+			list <MyRange *>::iterator it2, it2End;
 			it2 = it1->first.begin();
 			it2End = it1->first.end();
 			int id, stp;
 			for (; it2 != it2End; ++it2){
 				stp = significantTimePoint;
-				findIdOfValue(**it2, it->op->id, id, stp);
+				findIdOfValue(*((*it2)->startingValue), it->op->id, id, stp);
 				solver.addValue(VAL::E_NEG, id, stp);
+				findIdOfValue(*((*it2)->endingValue), it->op->id, id, stp);
+				solver.addValue(VAL::E_NEG, id + 1, stp);
 			}
 			stp = significantTimePoint;
 			if ((it1->second)){
-				findIdOfValue(*(it1->second), it->op->id + 1, id, stp);
+				findIdOfValue(*(it1->second->startingValue), it->op->id + 1, id, stp);
 				solver.addValue(VAL::E_POS, id, stp);
-			}else{
-				//The value is not exist in the domain so we should add FALSE to the clause
-				solver.addLiteral(VAL::E_NEG, 1);
 			}
 			solver.endClause();
+
+
+			it2 = it1->first.begin();
+			for (; it2 != it2End; ++it2){
+				stp = significantTimePoint;
+				findIdOfValue(*((*it2)->startingValue), it->op->id, id, stp);
+				solver.addValue(VAL::E_NEG, id, stp);
+				findIdOfValue(*((*it2)->endingValue), it->op->id, id, stp);
+				solver.addValue(VAL::E_NEG, id + 1, stp);
+			}
+			stp = significantTimePoint;
+			if ((it1->second)){
+				findIdOfValue(*(it1->second->endingValue), it->op->id + 1, id, stp);
+				solver.addValue(VAL::E_POS, id + 1, stp);
+			}
+			solver.endClause();
+
 		}
 
 
@@ -433,31 +508,33 @@ void LiftedTranslator::addExplanatoryAxioms(int significantTimePoint){
 				continue;
 			}
 			for (valueIt = myProblem.variables[i].domain.begin(); valueIt != valueItEnd; ++valueIt){
-				int idBefore, idAfter, stpBefore, stpAfter;
-				stpBefore = stpAfter = significantTimePoint;
-				findIdOfValue(valueIt->second, j, idBefore, stpBefore);
-				findIdOfValue(valueIt->second, j + 1, idAfter, stpAfter);
+				for (int k = 0; k < 2; ++k){
+					int idBefore, idAfter, stpBefore, stpAfter;
+					stpBefore = stpAfter = significantTimePoint;
+					findIdOfValue(valueIt->second, j, idBefore, stpBefore);
+					findIdOfValue(valueIt->second, j + 1, idAfter, stpAfter);
 
-				//IF a value became TRUE then some assignment should have been applied
-				solver.addValue(E_POS, idBefore, stpBefore);
-				solver.addValue(E_NEG, idAfter, stpAfter);
-				assignerIt = assigners[j].begin();
-				assignerItEnd = assigners[j].end();
-				for (; assignerIt != assignerItEnd; ++assignerIt){
-					solver.addAssignment(E_POS, (*assignerIt)->assignmentId, significantTimePoint);
+					//IF a value became TRUE then some assignment should have been applied
+					solver.addValue(E_POS, idBefore + k, stpBefore);
+					solver.addValue(E_NEG, idAfter + k, stpAfter);
+					assignerIt = assigners[j].begin();
+					assignerItEnd = assigners[j].end();
+					for (; assignerIt != assignerItEnd; ++assignerIt){
+						solver.addAssignment(E_POS, (*assignerIt)->assignmentId, significantTimePoint);
+					}
+					solver.endClause();
+
+					//IF a value became FALSE then some assignment should have been applied
+					solver.addValue(E_NEG, idBefore + k, stpBefore);
+					solver.addValue(E_POS, idAfter + k, stpAfter);
+					assignerIt = assigners[j].begin();
+					assignerItEnd = assigners[j].end();
+					for (; assignerIt != assignerItEnd; ++assignerIt){
+						solver.addAssignment(E_POS, (*assignerIt)->assignmentId, significantTimePoint);
+					}
+					solver.endClause();
+
 				}
-				solver.endClause();
-
-				//IF a value became FALSE then some assignment should have been applied
-				solver.addValue(E_NEG, idBefore, stpBefore);
-				solver.addValue(E_POS, idAfter, stpAfter);
-				assignerIt = assigners[j].begin();
-				assignerItEnd = assigners[j].end();
-				for (; assignerIt != assignerItEnd; ++assignerIt){
-					solver.addAssignment(E_POS, (*assignerIt)->assignmentId, significantTimePoint);
-				}
-				solver.endClause();
-
 			}
 		}
 	}
@@ -509,9 +586,11 @@ void LiftedTranslator::addAtomMutex(int significantTimePoint){
 				valueIt2 = myProblem.variables[i].domain.begin();
 				for (; valueIt2 != valueIt; ++valueIt2){
 					findIdOfValue(valueIt2->second, j, id2, stp);
-					solver.addValue(E_NEG, id1, stp);
-					solver.addValue(E_NEG, id2, stp);
-					solver.endClause();
+					for (int k = 0; k < 2; k++){
+						solver.addValue(E_NEG, id1 + k, stp);
+						solver.addValue(E_NEG, id2 + k, stp);
+						solver.endClause();
+					}
 				}
 				lastId1 = id1;
 				lastStp = stp;

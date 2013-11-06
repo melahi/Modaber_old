@@ -60,9 +60,10 @@ private:
 
 	map <const func_term *, MyRange *> selectedRanges;
 
-	bool aVariableNotFounded;
 
 public:
+	bool aVariableNotFounded;
+
 	map <const func_term *, MyVariable *> variables;
 	list < pair < list < MyRange* >, MyRange*> > possibleRanges;
 
@@ -80,7 +81,7 @@ public:
 	list <MyAssignment *> assignmentMutex;
 	list <MyComparison *> comparisonMutex;
 
-	MyAssignment(): aVariableNotFounded(false), op(NULL), op(NULL), liftedAssignment(NULL), assignmentId(-2) {};
+	MyAssignment(): aVariableNotFounded(false), op(NULL), liftedAssignment(NULL), assignmentId(-2) {};
 	void prepare (MyOperator *op_, MyLiftedAssignment *liftedAssignment_, map <string, MyObject *> &selectedObject_, map <string, int> &objectId_, int assignmentId_);
 
 	void findVariables (const expression *exp);
@@ -92,8 +93,6 @@ public:
 
 	double minEvalute (const expression *exp);
 	double maxEvalute (const expression *exp);
-
-	void findAllMutexes();
 
 	void write (ostream &sout);
 

@@ -16,6 +16,7 @@
 #include "MyAction.h"
 #include "MyStateVariable.h"
 #include "VALfiles/instantiation.h"
+#include "Utilities.h"
 
 
 
@@ -89,10 +90,10 @@ public:
 
 //	int globalValueId;
 
-//	vector <int> ids;
+	vector <int> ids;
 
-	MyValue(MyVariable *variable, double value): MyAtom(), variable(variable), value(value){}
-	MyValue(): MyAtom(){}
+	MyValue(MyVariable *variable, double value): MyAtom(), variable(variable), value(value), ids (current_analysis->the_domain->ops->size(), -2){}
+	MyValue(): MyAtom(), variable(NULL), value(0), ids (current_analysis->the_domain->ops->size(), -2){}
 
 	bool operator < (const MyValue &otherValue) const;
 
@@ -106,9 +107,12 @@ class MyRange {
 public:
 	double starting, ending;
 
-	vector <int> ids;
+	MyValue *startingValue, *endingValue;
 
-	MyRange(): starting(0), ending(0), ids (current_analysis->the_domain->ops->size(), -2) {}
+//	vector <int> ids;
+
+
+	MyRange(): starting(0), ending(0), startingValue(NULL), endingValue(NULL) {}
 
 	bool operator < (const MyRange &a) const{
 		if (starting != a.starting) return starting < a.starting;
@@ -171,6 +175,8 @@ public:
 				MyRange a;
 				a.starting = it->first;
 				a.ending = it2->first;
+				a.startingValue = &(it->second);
+				a.endingValue= &(it2->second);
 				domainRange.insert(a);
 			}
 		}
@@ -186,8 +192,8 @@ public:
 		for (; it != itEnd; ++it){
 			if (it->first > a){
 				return ret;
-			ret = it->first;
 			}
+			ret = it->first;
 		}
 		return ret;
 	}
@@ -201,8 +207,8 @@ public:
 		for (; it != itEnd; ++it){
 			if (it->first < a){
 				return ret;
-			ret = it->first;
 			}
+			ret = it->first;
 		}
 		return ret;
 	}

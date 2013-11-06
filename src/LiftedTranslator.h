@@ -33,6 +33,8 @@ private:
 
 	void addGoal (const goal *gl, int operatorIndex, int significantTimePoint);
 
+	void addGoalComparisons (int significantTimePoint);
+
 	void findIdOfProposition (MyLiftedProposition &theProposition, unsigned int operatorIndex, int &id, int &significantTimePoint);
 	void findIdOfValue (MyValue &theValue, unsigned int operatorIndex, int &id, int &significantTimePoint);
 

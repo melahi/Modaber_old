@@ -54,6 +54,8 @@ private:
 	map <const func_term *, MyRange *> selectedRanges;
 
 public:
+
+	bool aVariableNotFounded;
 	map <const func_term *, MyVariable *> variables;
 	list < pair < list < MyRange* >, bool> > possibleRanges;
 

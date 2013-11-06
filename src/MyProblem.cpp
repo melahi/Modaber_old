@@ -318,16 +318,44 @@ void MyProblem::liftedInitializing(){
 		}
 	}
 
+	prepareGoalComparisons(current_analysis->the_problem->the_goal);
+
 	assignIdToValues();
 	assignIdToLiftedPropositions();
-	list <MyAssignment>::iterator asgnIt, asgnItEnd;
-	asgnIt = assignments.begin();
-	asgnItEnd = assignments.end();
-	for (; asgnIt != asgnItEnd; ++asgnIt){
-		asgnIt->findAllMutexes();
-	}
-
+//	list <MyAssignment>::iterator asgnIt, asgnItEnd;
+//	asgnIt = assignments.begin();
+//	asgnItEnd = assignments.end();
+//	for (; asgnIt != asgnItEnd; ++asgnIt){
+//		asgnIt->findAllMutexes();
+//	}
+//
 	updateInitialValuesForLiftedProposition();
+}
+
+
+void MyProblem::prepareGoalComparisons(goal *gl){
+	const simple_goal *simple = dynamic_cast<const simple_goal *>(gl);
+	if (simple){
+		return;
+	}
+	const VAL::comparison *comp = dynamic_cast<const comparison*> (gl);
+	if (comp){
+		liftedGoalComparisons.push_back(MyLiftedComparison());
+		liftedGoalComparisons.rbegin()->prepare(NULL, comp);
+		return;
+	}
+	const conj_goal *conjunctive = dynamic_cast<const conj_goal *>(gl);
+	if (conjunctive){
+		goal_list::const_iterator glIt, glItEnd;
+		glIt = conjunctive->getGoals()->begin();
+		glItEnd = conjunctive->getGoals()->end();
+		for (; glIt != glItEnd; ++glIt){
+			prepareGoalComparisons(*glIt);
+		}
+		return;
+	}
+	CANT_HANDLE("Can't handle some precondition in analyzing!!!")
+	return;
 }
 
 
@@ -428,7 +456,7 @@ void MyProblem::assignIdToValues(){
 			valueIt->second.ids.resize(nOperators);
 			valueIt->second.ids[0] = nValues;
 //			valueIt->second.write(cout); cout << "Operator: " << 0 << " ==> id: " << nValues << endl;
-			nValues++;
+			nValues += 2;
 			for (int j = 1; j < nOperators; ++j){
 				if (j > lastModifierOperator){
 					valueIt->second.ids[j] = -1;
@@ -437,7 +465,7 @@ void MyProblem::assignIdToValues(){
 				if (possibleModificationByOperator[j - 1]){
 					valueIt->second.ids[j] = nValues;
 //					valueIt->second.write(cout); cout << "Operator: " << j << " ==> id: " << nValues << endl;
-					nValues++;
+					nValues += 2;
 					continue;
 				}
 				valueIt->second.ids[j] = valueIt->second.ids[j - 1];
