@@ -6,6 +6,8 @@
 !src/*/*
 !src/*/*/*
 !TranslateToSASPlus/*
+!TranslateToSASPlus/*/*
+!TranslateToSASPlus/*/*/*
 !VALfiles/*
 !VALfiles/*/*
 !VALfiles/*/*/*
