@@ -81,11 +81,13 @@ int main (int argc, char * argv[]){
 	}else {
 		LiftedModaber liftedModaber (argv[domainFileIndex], argv[problemFileIndex], usingPlanningGraph);
 	}
+
 /*
 	else{
 		EvolutionaryModaber evolutionaryModaber(argv[domainFileIndex], argv[problemFileIndex], usingPlanningGraph);
 	}
 */
+
 
 	return 0;
 }

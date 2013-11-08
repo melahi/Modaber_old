@@ -198,7 +198,7 @@ void LiftedTranslator::addOperators(int significantTimePoint){
 
 			//There should exist no two unification for one argument!
 			for (int k = 0; k < nUnification; k++){
-				for (int l = 0; l < nUnification; l++){
+				for (int l = 0; l < k; l++){
 					if (k != l){
 						solver.addUnification(VAL::E_NEG, myProblem.operators[i]->offset[j] + k, significantTimePoint);
 						solver.addUnification(VAL::E_NEG, myProblem.operators[i]->offset[j] + l, significantTimePoint);
@@ -370,6 +370,7 @@ void LiftedTranslator::addAssignments(int significantTimePoint){
 			solver.endClause();
 
 
+			solver.addAssignment(VAL::E_NEG, it->assignmentId, significantTimePoint);
 			it2 = it1->first.begin();
 			for (; it2 != it2End; ++it2){
 				stp = significantTimePoint;
@@ -379,10 +380,8 @@ void LiftedTranslator::addAssignments(int significantTimePoint){
 				solver.addValue(VAL::E_NEG, id + 1, stp);
 			}
 			stp = significantTimePoint;
-			if ((it1->second)){
-				findIdOfValue(*(it1->second->endingValue), it->op->id + 1, id, stp);
-				solver.addValue(VAL::E_POS, id + 1, stp);
-			}
+			findIdOfValue(*(it1->second->endingValue), it->op->id + 1, id, stp);
+			solver.addValue(VAL::E_POS, id + 1, stp);
 			solver.endClause();
 
 		}
@@ -541,7 +540,6 @@ void LiftedTranslator::addExplanatoryAxioms(int significantTimePoint){
 void LiftedTranslator::addAtomMutex(int significantTimePoint){
 
 	int nOperators = myProblem.operators.size();
-
 	int nPropositions = myProblem.propositions.size();
 
 	for (int i = 0; i < nPropositions; ++i){
@@ -568,33 +566,34 @@ void LiftedTranslator::addAtomMutex(int significantTimePoint){
 		}
 	}
 
-	int nVariables = myProblem.variables.size();
-	for (int i = 0; i < nVariables; ++i){
-		map <double, MyValue>::iterator valueIt, valueIt2, valueItEnd;
-		valueIt = myProblem.variables[i].domain.begin();
-		valueItEnd = myProblem.variables[i].domain.end();
-		int id1, id2, stp, lastId1, lastStp;
-		lastStp = lastId1 = -1;
-		for (; valueIt != valueItEnd; ++valueIt){
-			for (int j = 0; j < nOperators; ++j){
-				findIdOfValue(valueIt->second, j, id1, stp);
-				if (lastId1 == id1 && lastStp == stp){
-					continue;
-				}
-				valueIt2 = myProblem.variables[i].domain.begin();
-				for (; valueIt2 != valueIt; ++valueIt2){
-					findIdOfValue(valueIt2->second, j, id2, stp);
-					for (int k = 0; k < 2; k++){
-						solver.addValue(E_NEG, id1 + k, stp);
-						solver.addValue(E_NEG, id2 + k, stp);
-						solver.endClause();
-					}
-				}
-				lastId1 = id1;
-				lastStp = stp;
-			}
-		}
-	}
+//	int nVariables = myProblem.variables.size();
+//	for (int i = 0; i < nVariables; ++i){
+//		map <double, MyValue>::iterator valueIt, valueIt2, valueItEnd;
+//		valueIt = myProblem.variables[i].domain.begin();
+//		valueItEnd = myProblem.variables[i].domain.end();
+//		int id1, id2, stp, lastId1, lastStp;
+//		lastStp = lastId1 = -1;
+//		for (; valueIt != valueItEnd; ++valueIt){
+//			for (int j = 0; j < nOperators; ++j){
+//				stp = significantTimePoint;
+//				findIdOfValue(valueIt->second, j, id1, stp);
+//				if (lastId1 == id1 && lastStp == stp){
+//					continue;
+//				}
+//				valueIt2 = myProblem.variables[i].domain.begin();
+//				for (; valueIt2 != valueIt; ++valueIt2){
+//					findIdOfValue (valueIt2->second, j, id2, stp);
+//					for (int k = 0; k < 2; k++){
+//						solver.addValue(E_NEG, id1 + k, stp);
+//						solver.addValue(E_NEG, id2 + k, stp);
+//						solver.endClause();
+//					}
+//				}
+//				lastId1 = id1;
+//				lastStp = stp;
+//			}
+//		}
+//	}
 
 }
 
@@ -609,11 +608,17 @@ void LiftedTranslator::buildFormula(int nSignificantTimePoints){
 		nCompletedSignificantTimePoint++;
 	}
 	for (; nCompletedSignificantTimePoint < nSignificantTimePoints; nCompletedSignificantTimePoint++){
+//		cout << "Add atom mutex" << endl;
 		addAtomMutex(nCompletedSignificantTimePoint);
+//		cout << "Add explantory axioms" << endl;
 		addExplanatoryAxioms(nCompletedSignificantTimePoint - 1);
+//		cout << "Add operators" << endl;
 		addOperators(nCompletedSignificantTimePoint - 1);
+//		cout << "Add partial actions" << endl;
 		addPartialActions(nCompletedSignificantTimePoint - 1);
+//		cout << "Add comparisons" << endl;
 		addComparisons(nCompletedSignificantTimePoint - 1);
+//		cout << "Add assignments" << endl;
 		addAssignments(nCompletedSignificantTimePoint - 1);
 	}
 

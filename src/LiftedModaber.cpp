@@ -48,7 +48,7 @@ bool LiftedModaber::tryToSolve(){
 		foundSolution = translator.solve(nSignificantTimePoints);
 		cout << "end solving" << endl;
 		if (!foundSolution){
-			nSignificantTimePoints += 5;
+			nSignificantTimePoints += 1;
 		}else{
 			vector <pair <operator_ *, FastEnvironment> > solution;
 			translator.getSolution(solution);
@@ -63,13 +63,14 @@ bool LiftedModaber::tryToSolve(){
 
 
 		if (updatingValues){
-			myProblem.assignIdToValues();
 			int nVariables = myProblem.variables.size();
 			for (int i = 0; i < nVariables; ++i){
 				myProblem.variables[i].completeDomainRange();
 				myProblem.variables[i].write(cout);
 				cout << endl;
 			}
+			myProblem.assignIdToValues();
+
 			list <MyComparison>::iterator cmpIt, cmpItEnd;
 			cmpIt = myProblem.comparisons.begin();
 			cmpItEnd = myProblem.comparisons.end();

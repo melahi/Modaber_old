@@ -76,7 +76,7 @@ public:
 		if (plrty == E_NEG){
 			sign = -1;
 		}
-		cout << sign * literalId << '(' << sign * (((literalId - 2) % nSatVariableForOneLayer) + 2) << ") ";
+//		cout << sign * literalId << '(' << sign * (((literalId - 2) % nSatVariableForOneLayer) + 2) << ") ";
 		lgladd (lgl, sign * literalId);
 	}
 
@@ -103,7 +103,7 @@ public:
 		lgladd(lgl, 0);
 	}
 	void endClause() {
-		cout << endl;
+//		cout << endl;
 		lgladd(lgl, 0);
 	}
 

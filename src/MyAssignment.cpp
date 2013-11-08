@@ -186,6 +186,8 @@ void MyAssignment::findPossibleRanges (map <const func_term *, MyVariable *>::it
 			result.first.push_back(it->second);
 		}
 		result.second = evalute();
+		cout << result.second->starting << " " << result.second->ending << endl;
+
 		possibleRanges.push_back(result);
 		return;
 	}
@@ -224,7 +226,7 @@ MyRange *MyAssignment::evalute (){
 		minFinalValue = minEvalute(liftedAssignment->originalAssignment->getFTerm());
 		maxFinalValue = maxEvalute(liftedAssignment->originalAssignment->getFTerm());
 		minFinalValue += minRightHand;
-		maxFinalValue += maxFinalValue;
+		maxFinalValue += maxRightHand;
 	}else if (liftedAssignment->originalAssignment->getOp() == E_DECREASE){
 		minRightHand = minEvalute (liftedAssignment->originalAssignment->getExpr());
 		maxRightHand = maxEvalute (liftedAssignment->originalAssignment->getExpr());
@@ -279,6 +281,7 @@ MyRange *MyAssignment::evalute (){
 	MyRange a;
 	a.starting = returnValue->findGreatestMinimum(minFinalValue);
 	a.ending = returnValue->findLeastMaximum(maxFinalValue);
+	cout << minFinalValue << " " << a.starting << " " << maxFinalValue << " " << a.ending << endl;
 	MyRange* ret = const_cast <MyRange *> (&(*(returnValue->domainRange.find(a))));
 	return ret;
 }
