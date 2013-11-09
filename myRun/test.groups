@@ -1,0 +1,791 @@
+170
+var 0
+ 7
+  0 Atom in-highspeed-saw(b0, highspeed-saw0)
+  1 Atom in-highspeed-saw(b1, highspeed-saw0)
+  2 Atom in-highspeed-saw(b4, highspeed-saw0)
+  3 Atom in-highspeed-saw(b5, highspeed-saw0)
+  4 Atom empty(highspeed-saw0)
+  5 Atom in-highspeed-saw(b2, highspeed-saw0)
+  6 Atom in-highspeed-saw(b3, highspeed-saw0)
+var 1
+ 5
+  0 Atom wood(p5, walnut)
+  1 Atom wood(p5, cherry)
+  2 Atom wood(p5, pine)
+  3 Atom unused(p5)
+  4 Atom wood(p5, teak)
+var 2
+ 5
+  0 Atom treatment(p8, untreated)
+  1 Atom treatment(p8, varnished)
+  2 Atom treatment(p8, glazed)
+  3 Atom unused(p8)
+  4 Atom treatment(p8, colourfragments)
+var 3
+ 5
+  0 Atom treatment(p10, glazed)
+  1 Atom treatment(p10, untreated)
+  2 Atom treatment(p10, varnished)
+  3 Atom unused(p10)
+  4 Atom treatment(p10, colourfragments)
+var 4
+ 5
+  0 Atom unused(p6)
+  1 Atom wood(p6, pine)
+  2 Atom wood(p6, teak)
+  3 Atom wood(p6, walnut)
+  4 Atom wood(p6, cherry)
+var 5
+ 5
+  0 Atom treatment(p11, varnished)
+  1 Atom treatment(p11, colourfragments)
+  2 Atom treatment(p11, glazed)
+  3 Atom treatment(p11, untreated)
+  4 Atom unused(p11)
+var 6
+ 5
+  0 Atom treatment(p13, colourfragments)
+  1 Atom unused(p13)
+  2 Atom treatment(p13, varnished)
+  3 Atom treatment(p13, untreated)
+  4 Atom treatment(p13, glazed)
+var 7
+ 5
+  0 Atom unused(p14)
+  1 Atom wood(p14, pine)
+  2 Atom wood(p14, teak)
+  3 Atom wood(p14, walnut)
+  4 Atom wood(p14, cherry)
+var 8
+ 4
+  0 Atom treatment(p9, colourfragments)
+  1 Atom treatment(p9, varnished)
+  2 Atom treatment(p9, untreated)
+  3 Atom treatment(p9, glazed)
+var 9
+ 5
+  0 Atom treatment(p7, colourfragments)
+  1 Atom unused(p7)
+  2 Atom treatment(p7, varnished)
+  3 Atom treatment(p7, untreated)
+  4 Atom treatment(p7, glazed)
+var 10
+ 4
+  0 Atom treatment(p12, untreated)
+  1 Atom treatment(p12, varnished)
+  2 Atom treatment(p12, glazed)
+  3 Atom treatment(p12, colourfragments)
+var 11
+ 5
+  0 Atom treatment(p3, varnished)
+  1 Atom treatment(p3, untreated)
+  2 Atom treatment(p3, glazed)
+  3 Atom treatment(p3, colourfragments)
+  4 Atom unused(p3)
+var 12
+ 5
+  0 Atom wood(p0, teak)
+  1 Atom wood(p0, cherry)
+  2 Atom wood(p0, pine)
+  3 Atom wood(p0, walnut)
+  4 Atom unused(p0)
+var 13
+ 5
+  0 Atom wood(p4, cherry)
+  1 Atom unused(p4)
+  2 Atom wood(p4, teak)
+  3 Atom wood(p4, walnut)
+  4 Atom wood(p4, pine)
+var 14
+ 5
+  0 Atom treatment(p2, glazed)
+  1 Atom treatment(p2, untreated)
+  2 Atom treatment(p2, varnished)
+  3 Atom unused(p2)
+  4 Atom treatment(p2, colourfragments)
+var 15
+ 5
+  0 Atom wood(p1, pine)
+  1 Atom unused(p1)
+  2 Atom wood(p1, teak)
+  3 Atom wood(p1, walnut)
+  4 Atom wood(p1, cherry)
+var 16
+ 5
+  0 Atom treatment(p1, colourfragments)
+  1 Atom treatment(p1, varnished)
+  2 Atom treatment(p1, untreated)
+  3 Atom treatment(p1, glazed)
+  4 <none of those>
+var 17
+ 5
+  0 Atom treatment(p4, varnished)
+  1 Atom treatment(p4, colourfragments)
+  2 Atom treatment(p4, glazed)
+  3 Atom treatment(p4, untreated)
+  4 <none of those>
+var 18
+ 5
+  0 Atom treatment(p5, untreated)
+  1 Atom treatment(p5, colourfragments)
+  2 Atom treatment(p5, glazed)
+  3 Atom treatment(p5, varnished)
+  4 <none of those>
+var 19
+ 5
+  0 Atom treatment(p0, untreated)
+  1 Atom treatment(p0, varnished)
+  2 Atom treatment(p0, glazed)
+  3 Atom treatment(p0, colourfragments)
+  4 <none of those>
+var 20
+ 5
+  0 Atom wood(p3, teak)
+  1 Atom wood(p3, pine)
+  2 Atom wood(p3, walnut)
+  3 Atom wood(p3, cherry)
+  4 <none of those>
+var 21
+ 5
+  0 Atom treatment(p6, untreated)
+  1 Atom treatment(p6, glazed)
+  2 Atom treatment(p6, colourfragments)
+  3 Atom treatment(p6, varnished)
+  4 <none of those>
+var 22
+ 5
+  0 Atom wood(p11, cherry)
+  1 Atom wood(p11, teak)
+  2 Atom wood(p11, pine)
+  3 Atom wood(p11, walnut)
+  4 <none of those>
+var 23
+ 5
+  0 Atom wood(p7, walnut)
+  1 Atom wood(p7, teak)
+  2 Atom wood(p7, pine)
+  3 Atom wood(p7, cherry)
+  4 <none of those>
+var 24
+ 5
+  0 Atom treatment(p14, untreated)
+  1 Atom treatment(p14, glazed)
+  2 Atom treatment(p14, colourfragments)
+  3 Atom treatment(p14, varnished)
+  4 <none of those>
+var 25
+ 5
+  0 Atom wood(p10, walnut)
+  1 Atom wood(p10, cherry)
+  2 Atom wood(p10, teak)
+  3 Atom wood(p10, pine)
+  4 <none of those>
+var 26
+ 4
+  0 Atom wood(p2, cherry)
+  1 Atom wood(p2, teak)
+  2 Atom wood(p2, pine)
+  3 <none of those>
+var 27
+ 4
+  0 Atom surface-condition(p13, rough)
+  1 Atom surface-condition(p13, verysmooth)
+  2 Atom surface-condition(p13, smooth)
+  3 <none of those>
+var 28
+ 4
+  0 Atom surface-condition(p11, rough)
+  1 Atom surface-condition(p11, verysmooth)
+  2 Atom surface-condition(p11, smooth)
+  3 <none of those>
+var 29
+ 4
+  0 Atom surface-condition(p0, rough)
+  1 Atom surface-condition(p0, smooth)
+  2 Atom surface-condition(p0, verysmooth)
+  3 <none of those>
+var 30
+ 4
+  0 Atom surface-condition(p14, verysmooth)
+  1 Atom surface-condition(p14, rough)
+  2 Atom surface-condition(p14, smooth)
+  3 <none of those>
+var 31
+ 4
+  0 Atom surface-condition(p2, smooth)
+  1 Atom surface-condition(p2, verysmooth)
+  2 Atom surface-condition(p2, rough)
+  3 <none of those>
+var 32
+ 4
+  0 Atom surface-condition(p5, verysmooth)
+  1 Atom surface-condition(p5, rough)
+  2 Atom surface-condition(p5, smooth)
+  3 <none of those>
+var 33
+ 4
+  0 Atom wood(p8, teak)
+  1 Atom wood(p8, cherry)
+  2 Atom wood(p8, pine)
+  3 <none of those>
+var 34
+ 4
+  0 Atom surface-condition(p7, smooth)
+  1 Atom surface-condition(p7, rough)
+  2 Atom surface-condition(p7, verysmooth)
+  3 <none of those>
+var 35
+ 4
+  0 Atom surface-condition(p10, verysmooth)
+  1 Atom surface-condition(p10, smooth)
+  2 Atom surface-condition(p10, rough)
+  3 <none of those>
+var 36
+ 4
+  0 Atom surface-condition(p6, verysmooth)
+  1 Atom surface-condition(p6, rough)
+  2 Atom surface-condition(p6, smooth)
+  3 <none of those>
+var 37
+ 4
+  0 Atom surface-condition(p1, rough)
+  1 Atom surface-condition(p1, verysmooth)
+  2 Atom surface-condition(p1, smooth)
+  3 <none of those>
+var 38
+ 4
+  0 Atom surface-condition(p8, rough)
+  1 Atom surface-condition(p8, verysmooth)
+  2 Atom surface-condition(p8, smooth)
+  3 <none of those>
+var 39
+ 4
+  0 Atom wood(p13, pine)
+  1 Atom wood(p13, teak)
+  2 Atom wood(p13, cherry)
+  3 <none of those>
+var 40
+ 4
+  0 Atom surface-condition(p4, rough)
+  1 Atom surface-condition(p4, smooth)
+  2 Atom surface-condition(p4, verysmooth)
+  3 <none of those>
+var 41
+ 4
+  0 Atom surface-condition(p3, rough)
+  1 Atom surface-condition(p3, verysmooth)
+  2 Atom surface-condition(p3, smooth)
+  3 <none of those>
+var 42
+ 2
+  0 Atom available(b3)
+  1 <none of those>
+var 43
+ 2
+  0 Atom surface-condition(p12, smooth)
+  1 Atom surface-condition(p12, verysmooth)
+var 44
+ 2
+  0 Atom available(b4)
+  1 <none of those>
+var 45
+ 2
+  0 Atom available(b5)
+  1 <none of those>
+var 46
+ 2
+  0 Atom available(b0)
+  1 <none of those>
+var 47
+ 2
+  0 Atom available(b1)
+  1 <none of those>
+var 48
+ 2
+  0 Atom surface-condition(p9, verysmooth)
+  1 Atom surface-condition(p9, smooth)
+var 49
+ 2
+  0 Atom available(b2)
+  1 <none of those>
+var 50
+ 2
+  0 Atom boardsize(b2, s1)
+  1 <none of those>
+var 51
+ 2
+  0 Atom colour(p6, green)
+  1 <none of those>
+var 52
+ 2
+  0 Atom available(p13)
+  1 <none of those>
+var 53
+ 2
+  0 Atom colour(p2, green)
+  1 <none of those>
+var 54
+ 2
+  0 Atom colour(p0, green)
+  1 <none of those>
+var 55
+ 2
+  0 Atom available(p4)
+  1 <none of those>
+var 56
+ 2
+  0 Atom colour(p12, green)
+  1 <none of those>
+var 57
+ 2
+  0 Atom colour(p11, natural)
+  1 <none of those>
+var 58
+ 2
+  0 Atom colour(p9, white)
+  1 <none of those>
+var 59
+ 2
+  0 Atom colour(p1, natural)
+  1 <none of those>
+var 60
+ 2
+  0 Atom colour(p2, red)
+  1 <none of those>
+var 61
+ 2
+  0 Atom colour(p14, mauve)
+  1 <none of those>
+var 62
+ 2
+  0 Atom colour(p3, green)
+  1 <none of those>
+var 63
+ 2
+  0 Atom colour(p7, red)
+  1 <none of those>
+var 64
+ 2
+  0 Atom colour(p11, green)
+  1 <none of those>
+var 65
+ 2
+  0 Atom colour(p9, natural)
+  1 <none of those>
+var 66
+ 2
+  0 Atom boardsize(b4, s1)
+  1 <none of those>
+var 67
+ 2
+  0 Atom colour(p5, natural)
+  1 <none of those>
+var 68
+ 2
+  0 Atom boardsize(b5, s8)
+  1 <none of those>
+var 69
+ 2
+  0 Atom colour(p8, red)
+  1 <none of those>
+var 70
+ 2
+  0 Atom available(p1)
+  1 <none of those>
+var 71
+ 2
+  0 Atom boardsize(b3, s3)
+  1 <none of those>
+var 72
+ 2
+  0 Atom available(p10)
+  1 <none of those>
+var 73
+ 2
+  0 Atom boardsize(b3, s5)
+  1 <none of those>
+var 74
+ 2
+  0 Atom colour(p5, green)
+  1 <none of those>
+var 75
+ 2
+  0 Atom colour(p2, white)
+  1 <none of those>
+var 76
+ 2
+  0 Atom colour(p2, natural)
+  1 <none of those>
+var 77
+ 2
+  0 Atom colour(p0, natural)
+  1 <none of those>
+var 78
+ 2
+  0 Atom boardsize(b0, s2)
+  1 <none of those>
+var 79
+ 2
+  0 Atom colour(p10, white)
+  1 <none of those>
+var 80
+ 2
+  0 Atom colour(p2, mauve)
+  1 <none of those>
+var 81
+ 2
+  0 Atom boardsize(b4, s5)
+  1 <none of those>
+var 82
+ 2
+  0 Atom colour(p13, mauve)
+  1 <none of those>
+var 83
+ 2
+  0 Atom boardsize(b0, s3)
+  1 <none of those>
+var 84
+ 2
+  0 Atom colour(p14, green)
+  1 <none of those>
+var 85
+ 2
+  0 Atom colour(p1, mauve)
+  1 <none of those>
+var 86
+ 2
+  0 Atom colour(p6, mauve)
+  1 <none of those>
+var 87
+ 2
+  0 Atom colour(p3, red)
+  1 <none of those>
+var 88
+ 2
+  0 Atom colour(p11, white)
+  1 <none of those>
+var 89
+ 2
+  0 Atom colour(p13, natural)
+  1 <none of those>
+var 90
+ 2
+  0 Atom colour(p6, red)
+  1 <none of those>
+var 91
+ 2
+  0 Atom colour(p9, mauve)
+  1 <none of those>
+var 92
+ 2
+  0 Atom colour(p10, mauve)
+  1 <none of those>
+var 93
+ 2
+  0 Atom colour(p8, white)
+  1 <none of those>
+var 94
+ 2
+  0 Atom boardsize(b3, s6)
+  1 <none of those>
+var 95
+ 2
+  0 Atom boardsize(b3, s2)
+  1 <none of those>
+var 96
+ 2
+  0 Atom available(p2)
+  1 <none of those>
+var 97
+ 2
+  0 Atom boardsize(b5, s7)
+  1 <none of those>
+var 98
+ 2
+  0 Atom available(p5)
+  1 <none of those>
+var 99
+ 2
+  0 Atom available(p14)
+  1 <none of those>
+var 100
+ 2
+  0 Atom colour(p9, green)
+  1 <none of those>
+var 101
+ 2
+  0 Atom colour(p10, red)
+  1 <none of those>
+var 102
+ 2
+  0 Atom boardsize(b5, s1)
+  1 <none of those>
+var 103
+ 2
+  0 Atom colour(p0, white)
+  1 <none of those>
+var 104
+ 2
+  0 Atom colour(p5, red)
+  1 <none of those>
+var 105
+ 2
+  0 Atom colour(p11, red)
+  1 <none of those>
+var 106
+ 2
+  0 Atom colour(p12, white)
+  1 <none of those>
+var 107
+ 2
+  0 Atom colour(p6, white)
+  1 <none of those>
+var 108
+ 2
+  0 Atom colour(p5, white)
+  1 <none of those>
+var 109
+ 2
+  0 Atom colour(p13, red)
+  1 <none of those>
+var 110
+ 2
+  0 Atom boardsize(b4, s3)
+  1 <none of those>
+var 111
+ 2
+  0 Atom available(p6)
+  1 <none of those>
+var 112
+ 2
+  0 Atom colour(p10, natural)
+  1 <none of those>
+var 113
+ 2
+  0 Atom colour(p12, natural)
+  1 <none of those>
+var 114
+ 2
+  0 Atom colour(p11, mauve)
+  1 <none of those>
+var 115
+ 2
+  0 Atom boardsize(b4, s4)
+  1 <none of those>
+var 116
+ 2
+  0 Atom colour(p3, white)
+  1 <none of those>
+var 117
+ 2
+  0 Atom boardsize(b0, s1)
+  1 <none of those>
+var 118
+ 2
+  0 Atom colour(p3, mauve)
+  1 <none of those>
+var 119
+ 2
+  0 Atom boardsize(b3, s1)
+  1 <none of those>
+var 120
+ 2
+  0 Atom boardsize(b5, s0)
+  1 <none of those>
+var 121
+ 2
+  0 Atom colour(p10, green)
+  1 <none of those>
+var 122
+ 2
+  0 Atom colour(p7, mauve)
+  1 <none of those>
+var 123
+ 2
+  0 Atom colour(p4, natural)
+  1 <none of those>
+var 124
+ 2
+  0 Atom colour(p14, natural)
+  1 <none of those>
+var 125
+ 2
+  0 Atom colour(p12, mauve)
+  1 <none of those>
+var 126
+ 2
+  0 Atom colour(p4, red)
+  1 <none of those>
+var 127
+ 2
+  0 Atom available(p3)
+  1 <none of those>
+var 128
+ 2
+  0 Atom boardsize(b3, s0)
+  1 <none of those>
+var 129
+ 2
+  0 Atom boardsize(b0, s5)
+  1 <none of those>
+var 130
+ 2
+  0 Atom colour(p13, white)
+  1 <none of those>
+var 131
+ 2
+  0 Atom colour(p13, green)
+  1 <none of those>
+var 132
+ 2
+  0 Atom colour(p3, natural)
+  1 <none of those>
+var 133
+ 2
+  0 Atom boardsize(b3, s7)
+  1 <none of those>
+var 134
+ 2
+  0 Atom colour(p4, mauve)
+  1 <none of those>
+var 135
+ 2
+  0 Atom colour(p8, mauve)
+  1 <none of those>
+var 136
+ 2
+  0 Atom colour(p5, mauve)
+  1 <none of those>
+var 137
+ 2
+  0 Atom colour(p7, natural)
+  1 <none of those>
+var 138
+ 2
+  0 Atom colour(p4, white)
+  1 <none of those>
+var 139
+ 2
+  0 Atom colour(p14, white)
+  1 <none of those>
+var 140
+ 2
+  0 Atom colour(p1, white)
+  1 <none of those>
+var 141
+ 2
+  0 Atom boardsize(b3, s4)
+  1 <none of those>
+var 142
+ 2
+  0 Atom colour(p0, red)
+  1 <none of those>
+var 143
+ 2
+  0 Atom boardsize(b5, s4)
+  1 <none of those>
+var 144
+ 2
+  0 Atom colour(p9, red)
+  1 <none of those>
+var 145
+ 2
+  0 Atom colour(p4, green)
+  1 <none of those>
+var 146
+ 2
+  0 Atom boardsize(b5, s3)
+  1 <none of those>
+var 147
+ 2
+  0 Atom colour(p7, white)
+  1 <none of those>
+var 148
+ 2
+  0 Atom available(p7)
+  1 <none of those>
+var 149
+ 2
+  0 Atom boardsize(b5, s6)
+  1 <none of those>
+var 150
+ 2
+  0 Atom boardsize(b1, s0)
+  1 <none of those>
+var 151
+ 2
+  0 Atom colour(p14, red)
+  1 <none of those>
+var 152
+ 2
+  0 Atom colour(p12, red)
+  1 <none of those>
+var 153
+ 2
+  0 Atom colour(p8, natural)
+  1 <none of those>
+var 154
+ 2
+  0 Atom boardsize(b0, s4)
+  1 <none of those>
+var 155
+ 2
+  0 Atom boardsize(b0, s0)
+  1 <none of those>
+var 156
+ 2
+  0 Atom boardsize(b4, s2)
+  1 <none of those>
+var 157
+ 2
+  0 Atom colour(p1, red)
+  1 <none of those>
+var 158
+ 2
+  0 Atom boardsize(b2, s0)
+  1 <none of those>
+var 159
+ 2
+  0 Atom colour(p6, natural)
+  1 <none of those>
+var 160
+ 2
+  0 Atom colour(p7, green)
+  1 <none of those>
+var 161
+ 2
+  0 Atom available(p0)
+  1 <none of those>
+var 162
+ 2
+  0 Atom available(p11)
+  1 <none of those>
+var 163
+ 2
+  0 Atom colour(p1, green)
+  1 <none of those>
+var 164
+ 2
+  0 Atom colour(p0, mauve)
+  1 <none of those>
+var 165
+ 2
+  0 Atom boardsize(b4, s0)
+  1 <none of those>
+var 166
+ 2
+  0 Atom boardsize(b5, s2)
+  1 <none of those>
+var 167
+ 2
+  0 Atom colour(p8, green)
+  1 <none of those>
+var 168
+ 2
+  0 Atom boardsize(b5, s5)
+  1 <none of those>
+var 169
+ 2
+  0 Atom available(p8)
+  1 <none of those>

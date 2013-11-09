@@ -1,0 +1,725 @@
+begin_groups
+183
+group
+5
+15 1 unused 1 p1 
+16 1 treatment 2 p1 varnished 
+16 3 treatment 2 p1 glazed 
+16 2 treatment 2 p1 untreated 
+16 0 treatment 2 p1 colourfragments 
+group
+4
+14 3 unused 1 p2 
+26 1 wood 2 p2 teak 
+26 0 wood 2 p2 cherry 
+26 2 wood 2 p2 pine 
+group
+5
+13 1 unused 1 p4 
+17 0 treatment 2 p4 varnished 
+17 2 treatment 2 p4 glazed 
+17 3 treatment 2 p4 untreated 
+17 1 treatment 2 p4 colourfragments 
+group
+4
+6 1 unused 1 p13 
+27 1 surface-condition 2 p13 verysmooth 
+27 2 surface-condition 2 p13 smooth 
+27 0 surface-condition 2 p13 rough 
+group
+1
+7 0 unused 1 p14 
+group
+2
+99 0 available 1 p14 
+7 0 unused 1 p14 
+group
+2
+70 0 available 1 p1 
+15 1 unused 1 p1 
+group
+1
+15 1 unused 1 p1 
+group
+2
+55 0 available 1 p4 
+13 1 unused 1 p4 
+group
+2
+42 0 available 1 b3 
+0 6 in-highspeed-saw 2 b3 highspeed-saw0 
+group
+5
+15 1 unused 1 p1 
+15 2 wood 2 p1 teak 
+15 4 wood 2 p1 cherry 
+15 3 wood 2 p1 walnut 
+15 0 wood 2 p1 pine 
+group
+5
+1 3 unused 1 p5 
+18 3 treatment 2 p5 varnished 
+18 2 treatment 2 p5 glazed 
+18 0 treatment 2 p5 untreated 
+18 1 treatment 2 p5 colourfragments 
+group
+2
+72 0 available 1 p10 
+3 3 unused 1 p10 
+group
+4
+5 4 unused 1 p11 
+28 1 surface-condition 2 p11 verysmooth 
+28 2 surface-condition 2 p11 smooth 
+28 0 surface-condition 2 p11 rough 
+group
+4
+12 4 unused 1 p0 
+29 2 surface-condition 2 p0 verysmooth 
+29 1 surface-condition 2 p0 smooth 
+29 0 surface-condition 2 p0 rough 
+group
+5
+14 3 unused 1 p2 
+14 2 treatment 2 p2 varnished 
+14 0 treatment 2 p2 glazed 
+14 1 treatment 2 p2 untreated 
+14 4 treatment 2 p2 colourfragments 
+group
+5
+13 1 unused 1 p4 
+13 2 wood 2 p4 teak 
+13 0 wood 2 p4 cherry 
+13 3 wood 2 p4 walnut 
+13 4 wood 2 p4 pine 
+group
+2
+98 0 available 1 p5 
+1 3 unused 1 p5 
+group
+5
+12 4 unused 1 p0 
+19 1 treatment 2 p0 varnished 
+19 2 treatment 2 p0 glazed 
+19 0 treatment 2 p0 untreated 
+19 3 treatment 2 p0 colourfragments 
+group
+2
+52 0 available 1 p13 
+6 1 unused 1 p13 
+group
+5
+11 4 unused 1 p3 
+20 0 wood 2 p3 teak 
+20 3 wood 2 p3 cherry 
+20 2 wood 2 p3 walnut 
+20 1 wood 2 p3 pine 
+group
+1
+3 3 unused 1 p10 
+group
+1
+9 1 unused 1 p7 
+group
+1
+2 3 unused 1 p8 
+group
+4
+7 0 unused 1 p14 
+30 0 surface-condition 2 p14 verysmooth 
+30 2 surface-condition 2 p14 smooth 
+30 1 surface-condition 2 p14 rough 
+group
+4
+14 3 unused 1 p2 
+31 1 surface-condition 2 p2 verysmooth 
+31 0 surface-condition 2 p2 smooth 
+31 2 surface-condition 2 p2 rough 
+group
+1
+13 1 unused 1 p4 
+group
+5
+12 4 unused 1 p0 
+12 0 wood 2 p0 teak 
+12 1 wood 2 p0 cherry 
+12 3 wood 2 p0 walnut 
+12 2 wood 2 p0 pine 
+group
+5
+4 0 unused 1 p6 
+21 3 treatment 2 p6 varnished 
+21 1 treatment 2 p6 glazed 
+21 0 treatment 2 p6 untreated 
+21 2 treatment 2 p6 colourfragments 
+group
+2
+43 1 surface-condition 2 p12 verysmooth 
+43 0 surface-condition 2 p12 smooth 
+group
+4
+1 3 unused 1 p5 
+32 0 surface-condition 2 p5 verysmooth 
+32 2 surface-condition 2 p5 smooth 
+32 1 surface-condition 2 p5 rough 
+group
+2
+44 0 available 1 b4 
+0 2 in-highspeed-saw 2 b4 highspeed-saw0 
+group
+5
+11 4 unused 1 p3 
+11 0 treatment 2 p3 varnished 
+11 2 treatment 2 p3 glazed 
+11 1 treatment 2 p3 untreated 
+11 3 treatment 2 p3 colourfragments 
+group
+5
+5 4 unused 1 p11 
+22 1 wood 2 p11 teak 
+22 0 wood 2 p11 cherry 
+22 3 wood 2 p11 walnut 
+22 2 wood 2 p11 pine 
+group
+1
+6 1 unused 1 p13 
+group
+1
+12 4 unused 1 p0 
+group
+1
+11 4 unused 1 p3 
+group
+4
+10 1 treatment 2 p12 varnished 
+10 2 treatment 2 p12 glazed 
+10 0 treatment 2 p12 untreated 
+10 3 treatment 2 p12 colourfragments 
+group
+4
+2 3 unused 1 p8 
+33 0 wood 2 p8 teak 
+33 1 wood 2 p8 cherry 
+33 2 wood 2 p8 pine 
+group
+5
+9 1 unused 1 p7 
+23 1 wood 2 p7 teak 
+23 3 wood 2 p7 cherry 
+23 0 wood 2 p7 walnut 
+23 2 wood 2 p7 pine 
+group
+5
+9 1 unused 1 p7 
+9 2 treatment 2 p7 varnished 
+9 4 treatment 2 p7 glazed 
+9 3 treatment 2 p7 untreated 
+9 0 treatment 2 p7 colourfragments 
+group
+2
+169 0 available 1 p8 
+2 3 unused 1 p8 
+group
+2
+96 0 available 1 p2 
+14 3 unused 1 p2 
+group
+2
+45 0 available 1 b5 
+0 3 in-highspeed-saw 2 b5 highspeed-saw0 
+group
+4
+9 1 unused 1 p7 
+34 2 surface-condition 2 p7 verysmooth 
+34 0 surface-condition 2 p7 smooth 
+34 1 surface-condition 2 p7 rough 
+group
+2
+46 0 available 1 b0 
+0 0 in-highspeed-saw 2 b0 highspeed-saw0 
+group
+4
+8 1 treatment 2 p9 varnished 
+8 3 treatment 2 p9 glazed 
+8 2 treatment 2 p9 untreated 
+8 0 treatment 2 p9 colourfragments 
+group
+1
+4 0 unused 1 p6 
+group
+5
+7 0 unused 1 p14 
+24 3 treatment 2 p14 varnished 
+24 1 treatment 2 p14 glazed 
+24 0 treatment 2 p14 untreated 
+24 2 treatment 2 p14 colourfragments 
+group
+5
+7 0 unused 1 p14 
+7 2 wood 2 p14 teak 
+7 4 wood 2 p14 cherry 
+7 3 wood 2 p14 walnut 
+7 1 wood 2 p14 pine 
+group
+4
+3 3 unused 1 p10 
+35 0 surface-condition 2 p10 verysmooth 
+35 1 surface-condition 2 p10 smooth 
+35 2 surface-condition 2 p10 rough 
+group
+5
+6 1 unused 1 p13 
+6 2 treatment 2 p13 varnished 
+6 4 treatment 2 p13 glazed 
+6 3 treatment 2 p13 untreated 
+6 0 treatment 2 p13 colourfragments 
+group
+4
+4 0 unused 1 p6 
+36 0 surface-condition 2 p6 verysmooth 
+36 2 surface-condition 2 p6 smooth 
+36 1 surface-condition 2 p6 rough 
+group
+2
+111 0 available 1 p6 
+4 0 unused 1 p6 
+group
+2
+127 0 available 1 p3 
+11 4 unused 1 p3 
+group
+5
+5 4 unused 1 p11 
+5 0 treatment 2 p11 varnished 
+5 2 treatment 2 p11 glazed 
+5 3 treatment 2 p11 untreated 
+5 1 treatment 2 p11 colourfragments 
+group
+5
+3 3 unused 1 p10 
+25 2 wood 2 p10 teak 
+25 1 wood 2 p10 cherry 
+25 0 wood 2 p10 walnut 
+25 3 wood 2 p10 pine 
+group
+2
+47 0 available 1 b1 
+0 1 in-highspeed-saw 2 b1 highspeed-saw0 
+group
+4
+15 1 unused 1 p1 
+37 1 surface-condition 2 p1 verysmooth 
+37 2 surface-condition 2 p1 smooth 
+37 0 surface-condition 2 p1 rough 
+group
+7
+0 4 empty 1 highspeed-saw0 
+0 0 in-highspeed-saw 2 b0 highspeed-saw0 
+0 1 in-highspeed-saw 2 b1 highspeed-saw0 
+0 5 in-highspeed-saw 2 b2 highspeed-saw0 
+0 6 in-highspeed-saw 2 b3 highspeed-saw0 
+0 2 in-highspeed-saw 2 b4 highspeed-saw0 
+0 3 in-highspeed-saw 2 b5 highspeed-saw0 
+group
+5
+4 0 unused 1 p6 
+4 2 wood 2 p6 teak 
+4 4 wood 2 p6 cherry 
+4 3 wood 2 p6 walnut 
+4 1 wood 2 p6 pine 
+group
+4
+2 3 unused 1 p8 
+38 1 surface-condition 2 p8 verysmooth 
+38 2 surface-condition 2 p8 smooth 
+38 0 surface-condition 2 p8 rough 
+group
+4
+6 1 unused 1 p13 
+39 1 wood 2 p13 teak 
+39 2 wood 2 p13 cherry 
+39 0 wood 2 p13 pine 
+group
+1
+5 4 unused 1 p11 
+group
+1
+14 3 unused 1 p2 
+group
+1
+1 3 unused 1 p5 
+group
+5
+3 3 unused 1 p10 
+3 2 treatment 2 p10 varnished 
+3 0 treatment 2 p10 glazed 
+3 1 treatment 2 p10 untreated 
+3 4 treatment 2 p10 colourfragments 
+group
+2
+161 0 available 1 p0 
+12 4 unused 1 p0 
+group
+5
+2 3 unused 1 p8 
+2 1 treatment 2 p8 varnished 
+2 2 treatment 2 p8 glazed 
+2 0 treatment 2 p8 untreated 
+2 4 treatment 2 p8 colourfragments 
+group
+4
+13 1 unused 1 p4 
+40 2 surface-condition 2 p4 verysmooth 
+40 1 surface-condition 2 p4 smooth 
+40 0 surface-condition 2 p4 rough 
+group
+2
+48 0 surface-condition 2 p9 verysmooth 
+48 1 surface-condition 2 p9 smooth 
+group
+5
+1 3 unused 1 p5 
+1 4 wood 2 p5 teak 
+1 1 wood 2 p5 cherry 
+1 0 wood 2 p5 walnut 
+1 2 wood 2 p5 pine 
+group
+2
+148 0 available 1 p7 
+9 1 unused 1 p7 
+group
+2
+49 0 available 1 b2 
+0 5 in-highspeed-saw 2 b2 highspeed-saw0 
+group
+4
+11 4 unused 1 p3 
+41 1 surface-condition 2 p3 verysmooth 
+41 2 surface-condition 2 p3 smooth 
+41 0 surface-condition 2 p3 rough 
+group
+2
+162 0 available 1 p11 
+5 4 unused 1 p11 
+group
+1
+50 0 boardsize 2 b2 s1 
+group
+1
+112 0 colour 2 p10 natural 
+group
+1
+113 0 colour 2 p12 natural 
+group
+1
+51 0 colour 2 p6 green 
+group
+1
+114 0 colour 2 p11 mauve 
+group
+1
+115 0 boardsize 2 b4 s4 
+group
+1
+116 0 colour 2 p3 white 
+group
+1
+73 0 boardsize 2 b3 s5 
+group
+1
+117 0 boardsize 2 b0 s1 
+group
+1
+84 0 colour 2 p14 green 
+group
+1
+118 0 colour 2 p3 mauve 
+group
+1
+119 0 boardsize 2 b3 s1 
+group
+1
+53 0 colour 2 p2 green 
+group
+1
+88 0 colour 2 p11 white 
+group
+1
+120 0 boardsize 2 b5 s0 
+group
+1
+54 0 colour 2 p0 green 
+group
+1
+121 0 colour 2 p10 green 
+group
+1
+122 0 colour 2 p7 mauve 
+group
+1
+56 0 colour 2 p12 green 
+group
+1
+104 0 colour 2 p5 red 
+group
+1
+124 0 colour 2 p14 natural 
+group
+1
+57 0 colour 2 p11 natural 
+group
+1
+123 0 colour 2 p4 natural 
+group
+1
+125 0 colour 2 p12 mauve 
+group
+1
+126 0 colour 2 p4 red 
+group
+1
+146 0 boardsize 2 b5 s3 
+group
+1
+58 0 colour 2 p9 white 
+group
+1
+59 0 colour 2 p1 natural 
+group
+1
+130 0 colour 2 p13 white 
+group
+1
+61 0 colour 2 p14 mauve 
+group
+1
+62 0 colour 2 p3 green 
+group
+1
+128 0 boardsize 2 b3 s0 
+group
+1
+63 0 colour 2 p7 red 
+group
+1
+129 0 boardsize 2 b0 s5 
+group
+1
+64 0 colour 2 p11 green 
+group
+1
+71 0 boardsize 2 b3 s3 
+group
+1
+66 0 boardsize 2 b4 s1 
+group
+1
+67 0 colour 2 p5 natural 
+group
+1
+68 0 boardsize 2 b5 s8 
+group
+1
+163 0 colour 2 p1 green 
+group
+1
+131 0 colour 2 p13 green 
+group
+1
+132 0 colour 2 p3 natural 
+group
+1
+69 0 colour 2 p8 red 
+group
+1
+133 0 boardsize 2 b3 s7 
+group
+1
+134 0 colour 2 p4 mauve 
+group
+1
+135 0 colour 2 p8 mauve 
+group
+1
+65 0 colour 2 p9 natural 
+group
+1
+74 0 colour 2 p5 green 
+group
+1
+136 0 colour 2 p5 mauve 
+group
+1
+137 0 colour 2 p7 natural 
+group
+1
+138 0 colour 2 p4 white 
+group
+1
+89 0 colour 2 p13 natural 
+group
+1
+75 0 colour 2 p2 white 
+group
+1
+76 0 colour 2 p2 natural 
+group
+1
+92 0 colour 2 p10 mauve 
+group
+1
+139 0 colour 2 p14 white 
+group
+1
+140 0 colour 2 p1 white 
+group
+1
+77 0 colour 2 p0 natural 
+group
+1
+78 0 boardsize 2 b0 s2 
+group
+1
+79 0 colour 2 p10 white 
+group
+1
+80 0 colour 2 p2 mauve 
+group
+1
+81 0 boardsize 2 b4 s5 
+group
+1
+82 0 colour 2 p13 mauve 
+group
+1
+83 0 boardsize 2 b0 s3 
+group
+1
+109 0 colour 2 p13 red 
+group
+1
+143 0 boardsize 2 b5 s4 
+group
+1
+85 0 colour 2 p1 mauve 
+group
+1
+86 0 colour 2 p6 mauve 
+group
+1
+145 0 colour 2 p4 green 
+group
+1
+87 0 colour 2 p3 red 
+group
+1
+147 0 colour 2 p7 white 
+group
+1
+90 0 colour 2 p6 red 
+group
+1
+91 0 colour 2 p9 mauve 
+group
+1
+149 0 boardsize 2 b5 s6 
+group
+1
+151 0 colour 2 p14 red 
+group
+1
+150 0 boardsize 2 b1 s0 
+group
+1
+152 0 colour 2 p12 red 
+group
+1
+142 0 colour 2 p0 red 
+group
+1
+153 0 colour 2 p8 natural 
+group
+1
+93 0 colour 2 p8 white 
+group
+1
+94 0 boardsize 2 b3 s6 
+group
+1
+154 0 boardsize 2 b0 s4 
+group
+1
+95 0 boardsize 2 b3 s2 
+group
+1
+155 0 boardsize 2 b0 s0 
+group
+1
+141 0 boardsize 2 b3 s4 
+group
+1
+97 0 boardsize 2 b5 s7 
+group
+1
+156 0 boardsize 2 b4 s2 
+group
+1
+60 0 colour 2 p2 red 
+group
+1
+157 0 colour 2 p1 red 
+group
+1
+100 0 colour 2 p9 green 
+group
+1
+158 0 boardsize 2 b2 s0 
+group
+1
+101 0 colour 2 p10 red 
+group
+1
+160 0 colour 2 p7 green 
+group
+1
+102 0 boardsize 2 b5 s1 
+group
+1
+103 0 colour 2 p0 white 
+group
+1
+105 0 colour 2 p11 red 
+group
+1
+164 0 colour 2 p0 mauve 
+group
+1
+106 0 colour 2 p12 white 
+group
+1
+107 0 colour 2 p6 white 
+group
+1
+165 0 boardsize 2 b4 s0 
+group
+1
+166 0 boardsize 2 b5 s2 
+group
+1
+108 0 colour 2 p5 white 
+group
+1
+159 0 colour 2 p6 natural 
+group
+1
+167 0 colour 2 p8 green 
+group
+1
+110 0 boardsize 2 b4 s3 
+group
+1
+168 0 boardsize 2 b5 s5 
+group
+1
+144 0 colour 2 p9 red 
+end_groups
