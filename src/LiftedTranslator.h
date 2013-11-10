@@ -22,12 +22,12 @@ using namespace Inst;
 
 class LiftedTranslator {
 private:
-	LiftedCVC4Problem *smtProblem;
+	LiftedCVC4Problem *liftedSMTProblem;
 	Expr goals;
 	void prepareGoals();
 	void addInitialState();
 	void addGoals(int significantTimePoint);
-	void addActions(int significantTimePoint);
+	void addPartialActions(int significantTimePoint);
 	void addExplanatoryAxioms(int significantTimePoint);
 	void addActionMutex(int significantTimePoint);
 	void addAtomMutex(int significantTimePoint);
@@ -37,10 +37,10 @@ public:
 	int translatedLength;
 
 	LiftedTranslator(CVC4Problem* smtProblem) :
-		smtProblem(smtProblem) {
-		this->smtProblem->activePermanentChange();
+		liftedSMTProblem(smtProblem) {
+		this->liftedSMTProblem->activePermanentChange();
 		addInitialState();
-		this->smtProblem->inActivePermanentChange();
+		this->liftedSMTProblem->inActivePermanentChange();
 		translatedLength = 1;
 	}
 	void prepare (int length);
@@ -53,13 +53,15 @@ public:
 
 private:
 
-	void addSimpleEffectList (polarity plrty, const pc_list<simple_effect*> &simpleEffectList, FastEnvironment *env, int significantTimePoint, int actionID = -1);
+	void addSimpleEffectList (polarity plrty, const list <MyProposition *> &simpleEffectList, int significantTimePoint, MyPartialAction *partialAction);
 
-	void addAssignmentList (const pc_list <assignment *> &assignmentEffects, FastEnvironment *env, int significantTimePoint, int actionID = -1);
+	void addAssignmentList (const pc_list <assignment *> &assignmentEffects, FastEnvironment *env, int significantTimePoint, MyPartialAction *partialAction = NULL);
+	void addAssignmentList (const list <const assignment *> &assignmentEffects, FastEnvironment *env, int significantTimePoint, MyPartialAction *partialAction);
 
-	void addEffectList (const effect_lists *effects, FastEnvironment *env, int significantTimePoint, int actionId = -1);
+	void addGoal (const goal *gl, FastEnvironment *env, int significantTimePoint, MyPartialAction *partialAction = NULL);
 
-	void addGoal (const goal *gl, FastEnvironment *env, int significantTimePoint, int actionId = -1);
+	void addGoalList (const list <const comparison* > &gls, FastEnvironment *env, int significantTimePoint, MyPartialAction *partialAction);
+	void addGoalList (const list <MyProposition *> &simpleEffectList, int significantTimePoint, MyPartialAction *partialAction){
 
 
 };

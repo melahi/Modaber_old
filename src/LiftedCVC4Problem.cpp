@@ -34,7 +34,7 @@ void LiftedCVC4Problem::initialization(){
 	smt.setOption("produce-assignments", SExpr("true"));
 	smt.setOption("verbosity", SExpr("1073741823"));
 //	smt.setOption("verbosity", SExpr("0"));
-	smt.setOption("incremental", SExpr("false"));
+	smt.setOption("incremental", SExpr("true"));
 	smt.setLogic("QF_LIRA");
 
 	maximumSignificantTimePoint = 0;
@@ -116,12 +116,7 @@ void LiftedCVC4Problem::addConditionToCluase(int propostionId, int operatorId, i
 
 
 void LiftedCVC4Problem::AddConditionToCluase(const MyProposition *myProposition, int operatorId, int significantTimePoint, bool polarity){
-	int index = getPropositionIndex(myProposition->originalLiteral->getStateID(), operatorId, significantTimePoint);
-	if (polarity){
-		buildingClause.push_back(propositionExpr[index]);
-	}else{
-		buildingClause.push_back(em.mkExpr(kind::NOT, propositionExpr[index]));
-	}
+	addConditionToCluase(myProposition->originalLiteral->getStateID(), operatorId, significantTimePoint, polarity);
 }
 
 
