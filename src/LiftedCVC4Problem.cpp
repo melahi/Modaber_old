@@ -12,25 +12,16 @@ using namespace VAL;
 using namespace std;
 
 
-//Declaration for static variables
-ExprManager LiftedCVC4Problem::em;
-vector <Expr> LiftedCVC4Problem::variableExpr;
-vector <Expr> LiftedCVC4Problem::propositionExpr;
-vector <Expr> LiftedCVC4Problem::actionExpr;
-unsigned int LiftedCVC4Problem::maximumSignificantTimePoint;
-
-
-
 
 
 
 void LiftedCVC4Problem::guaranteeSize (unsigned int nSignificantTimePoint){
 
 	if (maximumSignificantTimePoint < nSignificantTimePoint){
-
 		variableExpr.resize (nSignificantTimePoint * nVariables);
 		propositionExpr.resize (nSignificantTimePoint * nProposition);
-		actionExpr.resize((nSignificantTimePoint - 1) * nAction);
+		partialActionExpr.resize((nSignificantTimePoint - 1) * nPartialAction);
+		unificationExpr.resize((nSignificantTimePoint - 1) * nUnification);
 		maximumSignificantTimePoint = nSignificantTimePoint;
 	}
 }
@@ -39,23 +30,32 @@ void LiftedCVC4Problem::initialization(){
 
 	smt.setOption("produce-models", SExpr("true"));
 	smt.setOption("check-models", SExpr("false"));		//In the case of debugging we can turn it to "true"
-	smt.setOption("interactive-mode", SExpr("true"));		//In the case of debugging we can turn it to "true"
+	smt.setOption("interactive-mode", SExpr("false"));		//In the case of debugging we can turn it to "true"
 	smt.setOption("produce-assignments", SExpr("true"));
 	smt.setOption("verbosity", SExpr("1073741823"));
 //	smt.setOption("verbosity", SExpr("0"));
-	smt.setOption("incremental", SExpr("true"));
+	smt.setOption("incremental", SExpr("false"));
 	smt.setLogic("QF_LIRA");
 
 	maximumSignificantTimePoint = 0;
 
 	guaranteeSize(1);
+
+
+	Type boolean = em.booleanType();
+//	ostringstream oss;
+//	oss << "[ TRUE ]";
+//	propositionExpr[ret] = Expr(em.mkVar(oss.str(), boolean));
+	trueExpr = Expr(em.mkVar(boolean));
+	falseExpr = em.mkExpr(kind::NOT, trueExpr);
+	smt.assertFormula(trueExpr);
 }
 
 
 
-LiftedCVC4Problem::LiftedCVC4Problem (int nVariables, int nProposition, int nAction): smt(&em), nVariables(nVariables), nProposition(nProposition), nAction(nAction) {
-	initialization();
-}
+//LiftedCVC4Problem::LiftedCVC4Problem (int nVariables, int nProposition, int nPartialAction, int nUnificationId): em(), smt(&em), nVariables(nVariables), nPropositions(nProposition), a(nAction){
+//	initialization();
+//}
 
 
 //Start to build new clause for SMT problem
@@ -66,7 +66,7 @@ void LiftedCVC4Problem::startNewClause(){
 
 //By calling this function, you mean the clause is already built and it should be inserted to the SMT problem
 void LiftedCVC4Problem::endClause(){
-	if (ignoreCluase ){
+	if (ignoreCluase){
 		return;
 	}
 	if (buildingClause.size() == 0)
@@ -89,26 +89,24 @@ void LiftedCVC4Problem::endClause(){
 
 
 
-void LiftedCVC4Problem::addLiteral ( polarity plrty, const proposition *prop, FastEnvironment *env, int significantTimePoint){
+void LiftedCVC4Problem::addLiteral ( polarity plrty, const proposition *prop, FastEnvironment *env, int operatorId, int significantTimePoint){
 	Literal lit (prop, env);
 	Literal *lit2 = instantiatedOp::findLiteral(&lit);
 
 	if (!lit2){
-		CANT_HANDLE("Warning: can't find some literal!!!");
-		lit2->write(cerr);
-		ignoreCluase = true;
+		buildingClause.push_back(falseExpr);
 		return;
 	}
 	if (lit2->getStateID() == -1){
 		ignoreCluase = true;
 		return;
 	}
-	addConditionToCluase(lit2->getStateID(), significantTimePoint, (plrty == E_POS));
+	addConditionToCluase(lit2->getStateID(), operatorId, significantTimePoint, (plrty == E_POS));
 }
 
 //Add new boolean condition to the building clause
-void LiftedCVC4Problem::addConditionToCluase(int propostion, int significantTimePoint, bool polarity){
-	int index = getPropositionIndex(propostion, significantTimePoint);
+void LiftedCVC4Problem::addConditionToCluase(int propostionId, int operatorId, int significantTimePoint, bool polarity){
+	int index = getPropositionIndex(propostionId, operatorId, significantTimePoint);
 	if (polarity){
 		buildingClause.push_back(propositionExpr[index]);
 	}else{
@@ -117,8 +115,8 @@ void LiftedCVC4Problem::addConditionToCluase(int propostion, int significantTime
 }
 
 
-void LiftedCVC4Problem::AddConditionToCluase(const MyProposition *myProposition, int significantTimePoint, bool polarity){
-	int index = getPropositionIndex(myProposition->originalLiteral->getStateID(), significantTimePoint);
+void LiftedCVC4Problem::AddConditionToCluase(const MyProposition *myProposition, int operatorId, int significantTimePoint, bool polarity){
+	int index = getPropositionIndex(myProposition->originalLiteral->getStateID(), operatorId, significantTimePoint);
 	if (polarity){
 		buildingClause.push_back(propositionExpr[index]);
 	}else{
@@ -128,19 +126,19 @@ void LiftedCVC4Problem::AddConditionToCluase(const MyProposition *myProposition,
 
 
 
-//Add new action to the building clause
-void LiftedCVC4Problem::addActionToClause (int actionId, int significantTimePoint, bool polarity){
-	int index = getActionIndex(actionId, significantTimePoint);
+
+void LiftedCVC4Problem::addPartialActionToClause (int partialActionId, int significantTimePoint, bool polarity){
+	int index = getPartialActionIndex(partialActionId, significantTimePoint);
 	if (polarity){
-		buildingClause.push_back(actionExpr[index]);
+		buildingClause.push_back(partialActionExpr[index]);
 	}else{
-		buildingClause.push_back(em.mkExpr(kind::NOT, actionExpr[index]));
+		buildingClause.push_back(em.mkExpr(kind::NOT, partialActionExpr[index]));
 	}
 }
 
 //Add new numerical condition to the building clause
-void LiftedCVC4Problem::AddConditionToCluase(const comparison* numericalCondition, FastEnvironment *env, int significantTimePoint){
-	ExpressionConvertor myConvertor(env, this, significantTimePoint);
+void LiftedCVC4Problem::AddConditionToCluase(const comparison* numericalCondition, FastEnvironment *env, int operatorId, int significantTimePoint){
+	ExpressionConvertor myConvertor(env, this, operatorId, significantTimePoint);
 	Expr left = myConvertor.convertExpressionToCVC4Expr(numericalCondition->getLHS());
 	Expr right = myConvertor.convertExpressionToCVC4Expr(numericalCondition->getRHS());
 	Kind operatorKind;
@@ -168,14 +166,14 @@ void LiftedCVC4Problem::AddConditionToCluase(const comparison* numericalConditio
 }
 
 //Add new numerical assignment to the building clause
-void LiftedCVC4Problem::AddConditionToCluase(const assignment* numericalAssignment, FastEnvironment *env, int significantTimePoint){
-	ExpressionConvertor variableConvertor(env, this, significantTimePoint);
+void LiftedCVC4Problem::AddConditionToCluase(const assignment* numericalAssignment, FastEnvironment *env, int operatorId, int significantTimePoint){
+	ExpressionConvertor variableConvertor(env, this, operatorId + 1, significantTimePoint);
 	Expr variable = variableConvertor.convertExpressionToCVC4Expr(numericalAssignment->getFTerm());
 	if (variable.isConst()){
 		//This case is happening just in initial case when initial state determine the value of a static variable
 		return;
 	}
-	ExpressionConvertor expressionConvertor(env, this, significantTimePoint - 1);
+	ExpressionConvertor expressionConvertor(env, this, operatorId, significantTimePoint - 1);
 	Expr result = expressionConvertor.convertExpressionToCVC4Expr(numericalAssignment->getExpr());
 
 	Kind assignmentOperator = kind::EQUAL;
@@ -212,9 +210,9 @@ void LiftedCVC4Problem::AddConditionToCluase(const assignment* numericalAssignme
 	buildingClause.push_back(em.mkExpr(kind::EQUAL, variable, result));
 }
 
-void LiftedCVC4Problem::AddEqualityCondition (int variableId1, int significantTimePoint1, int variableId2, int significantTimePoint2, bool polarity){
-	int variableIndex1 = getVariableIndex(variableId1, significantTimePoint1);
-	int variableIndex2 = getVariableIndex(variableId2, significantTimePoint2);
+void LiftedCVC4Problem::AddEqualityCondition (int variableId1, int operatorId1, int significantTimePoint1, int variableId2, int operatorId2, int significantTimePoint2, bool polarity){
+	int variableIndex1 = getVariableIndex(variableId1, operatorId1, significantTimePoint1);
+	int variableIndex2 = getVariableIndex(variableId2, operatorId2, significantTimePoint2);
 	Kind myKind;
 	if (polarity){
 		myKind = kind::EQUAL;
@@ -225,8 +223,8 @@ void LiftedCVC4Problem::AddEqualityCondition (int variableId1, int significantTi
 	buildingClause.push_back(myCondition);
 }
 
-void LiftedCVC4Problem::AddEqualityCondition (int variableId1, int significantTimePoint1, double value, bool polarity){
-	int variableIndex1 = getVariableIndex(variableId1, significantTimePoint1);
+void LiftedCVC4Problem::AddEqualityCondition (int variableId1, int operatorId, int significantTimePoint1, double value, bool polarity){
+	int variableIndex1 = getVariableIndex(variableId1, operatorId, significantTimePoint1);
 
 	int nominator, denominator;
 	ExpressionConvertor::simpleConvertToRational(value, nominator, denominator);
@@ -242,7 +240,7 @@ void LiftedCVC4Problem::AddEqualityCondition (int variableId1, int significantTi
 }
 
 
-int LiftedCVC4Problem::solve(const Expr &assertExpr){
+bool LiftedCVC4Problem::solve(const Expr &assertExpr){
 
 	// TODO: For now, we don't considered processing time, we should consider it ASAP
 	// TODO: We need statistical information
@@ -263,7 +261,7 @@ int LiftedCVC4Problem::solve(const Expr &assertExpr){
 	switch (result.isSat()){
 	case Result::SAT:
 		cout << "OH yeay!, the problem is solved" << endl;
-		return numeric_limits <int>::max();
+		return true;
 		break;
 	case Result::UNSAT:
 //		cout << "The problem is not satisfiable!!!" << endl;
@@ -272,11 +270,7 @@ int LiftedCVC4Problem::solve(const Expr &assertExpr){
 //		cout << "The result is neither \"SAT\" nor \"UNSAT\"!!" << endl;
 		break;
 	}
-//	cout << "Maximum level: " << smt.getStatistic("sat::sadra_maximum_level").getValue() << endl;
-	istringstream sin (smt.getStatistic("sat::sadra_maximum_level").getValue());
-	int ret;
-	sin >> ret;
-	return ret;
+	return false;
 }
 
 void LiftedCVC4Problem::print(){
@@ -300,19 +294,13 @@ void LiftedCVC4Problem::print(vector <Expr> &expression){
 }
 
 
-bool LiftedCVC4Problem::isActionUsed (int actionId, int significantTimePoint){
-	int actionIndex = getActionIndex(actionId, significantTimePoint);
-	bool isUsed = smt.getValue(actionExpr[actionIndex]).getConst<bool>();
-	return isUsed;
-}
-
-void LiftedCVC4Problem::push(){
-	smt.push();
-}
-
-void LiftedCVC4Problem::pop(){
-	smt.pop();
-}
+//void LiftedCVC4Problem::push(){
+//	smt.push();
+//}
+//
+//void LiftedCVC4Problem::pop(){
+//	smt.pop();
+//}
 
 void LiftedCVC4Problem::insertAssertion(const Expr &e){
 	if (!e.isNull()) {
@@ -350,8 +338,13 @@ LiftedCVC4Problem::~LiftedCVC4Problem(){
 
 
 //find and return the index of corresponding PVariableExpression in the variableExpr array
-int LiftedCVC4Problem::getVariableIndex (int variableStateId, int significantTimePoint){
-	int ret = significantTimePoint * nVariables + variableStateId;
+int LiftedCVC4Problem::getVariableIndex (int variableId, int operatorId, int significantTimePoint){
+	if (operatorId == myProblem.operators.size() || myProblem.variables[variableId].ids[operatorId] == -1){
+		significantTimePoint++;
+		operatorId = 0;
+	}
+
+	int ret = significantTimePoint * nVariables + myProblem.variables[variableId].ids[operatorId];
 	if (variableExpr[ret].isNull()){
 		Type real = em.realType();
 //		ostringstream oss;
@@ -365,8 +358,13 @@ int LiftedCVC4Problem::getVariableIndex (int variableStateId, int significantTim
 }
 
 //find and return the index of corresponding proposition in the propositionExpr array
-inline int LiftedCVC4Problem::getPropositionIndex (int proposition, int significantTimePoint){
-	int ret = significantTimePoint * nProposition + proposition;
+int LiftedCVC4Problem::getPropositionIndex (int propositionId, int operatorId, int significantTimePoint){
+	if (operatorId == myProblem.operators.size() || myProblem.propositions[propositionId].ids[operatorId] == -1){
+		significantTimePoint++;
+		operatorId = 0;
+	}
+
+	int ret = significantTimePoint * nProposition + myProblem.propositions[propositionId].ids[operatorId];
 	if (propositionExpr[ret].isNull()){
 		Type boolean = em.booleanType();
 //		ostringstream oss;
@@ -380,21 +378,35 @@ inline int LiftedCVC4Problem::getPropositionIndex (int proposition, int signific
 }
 
 //find and return the index of corresponding action in the actionExpr array
-inline int LiftedCVC4Problem::getActionIndex (int action, int significantTimePoint){
-	int ret = significantTimePoint * nAction + action;
-	if (actionExpr[ret].isNull()){
+int LiftedCVC4Problem::getPartialActionIndex (int partialActionId, int significantTimePoint){
+	int ret = significantTimePoint * nPartialAction + partialActionId;
+	if (partialActionExpr[ret].isNull()){
 		Type boolean = em.booleanType();
 //		ostringstream oss;
 //		oss << "[";
 //		myProblem.actions[action].write(oss);
 //		oss << ", " << significantTimePoint << "]";
 //		actionExpr[ret] = Expr (em.mkVar (oss.str(), boolean));
-		actionExpr[ret] = Expr (em.mkVar (boolean));
+		partialActionExpr[ret] = Expr (em.mkVar (boolean));
 	}
 	return ret;
 }
 
 
+//find and return the index of corresponding action in the actionExpr array
+int LiftedCVC4Problem::getUnificationIndex (int unificationId, int significantTimePoint){
+	int ret = significantTimePoint * nPartialAction + unificationId;
+	if (unificationExpr[ret].isNull()){
+		Type boolean = em.booleanType();
+//		ostringstream oss;
+//		oss << "[";
+//		myProblem.actions[action].write(oss);
+//		oss << ", " << significantTimePoint << "]";
+//		actionExpr[ret] = Expr (em.mkVar (oss.str(), boolean));
+		unificationId[ret] = Expr (em.mkVar (boolean));
+	}
+	return ret;
+}
 
 
 

@@ -41,37 +41,34 @@ public:
 
 	virtual void endClause();
 
-	void addLiteral ( polarity plrty, const proposition *prop, FastEnvironment *env, int significantTimePoint);
+	void addLiteral ( polarity plrty, const proposition *prop, FastEnvironment *env, int operatorId, int significantTimePoint);
 
-	//Add new action to the building clause
-	void addActionToClause (int actionId, int significantTimePoint, bool polarity);
+	void addPartialActionToClause (int partialActionId, int significantTimePoint, bool polarity);
 
 	//Add new boolean condition to the building clause
-	void addConditionToCluase(int propostion, int significantTimePoint, bool polarity);
+	void addConditionToCluase(int propostion, int operatorId, int significantTimePoint, bool polarity);
 
-	void AddConditionToCluase(const MyProposition *myProposition, int significantTimePoint, bool polarity);
+	void AddConditionToCluase(const MyProposition *myProposition, int operatorId, int significantTimePoint, bool polarity);
 
 	//Add new numerical condition to the building clause
-	void AddConditionToCluase(const comparison* numericalCondition, FastEnvironment *env, int significantTimePoint);
+	void AddConditionToCluase(const comparison* numericalCondition, FastEnvironment *env, int operatorId, int significantTimePoint);
 
 	//Add new numerical assignment to the building clause
-	void AddConditionToCluase(const assignment* numericalAssignment, FastEnvironment *env, int significantTimePoint);
+	void AddConditionToCluase(const assignment* numericalAssignment, FastEnvironment *env, int operatorId, int significantTimePoint);
 
-	void AddEqualityCondition (int variableId1, int significantTimePoint1, int variableId2, int significantTimePoint2, bool polarity);
+	void AddEqualityCondition (int variableId1, int operatorId1, int significantTimePoint1, int variableId2, int operatorId2, int significantTimePoint2, bool polarity);
 
-	void AddEqualityCondition (int variableId1, int significantTimePoint1, double value, bool polarity);
+	void AddEqualityCondition (int variableId1, int operatorId, int significantTimePoint1, double value, bool polarity);
 
-	int solve(const Expr &assertExpr);
+	bool solve(const Expr &assertExpr);
 
 	void print();
 
 	void print(vector <Expr> &expression);
 
-	bool isActionUsed (int actionId, int significantTimePoint);
-
-	void push();
-
-	void pop();
+//	void push();
+//
+//	void pop();
 
 	void insertAssertion (const Expr &e);
 
@@ -99,42 +96,53 @@ public:
 
 private:
 
-	static ExprManager em;
+	ExprManager em;
 	SmtEngine smt;
 
+	int nVariables;
+	int nProposition;
+	int nUnification;
+	int nPartialAction;
 
-	static vector <Expr> variableExpr;
-	static vector <Expr> propositionExpr;
-	static vector <Expr> actionExpr;
-	static unsigned int maximumSignificantTimePoint;
+	vector <Expr> variableExpr;
+	vector <Expr> propositionExpr;
+	vector <Expr> unificationExpr;
+	vector <Expr> partialActionExpr;
+
+	Expr trueExpr;
+	Expr falseExpr;
+
+	unsigned int maximumSignificantTimePoint;
 
 
 	vector <Expr> buildingClause;
 	vector <Expr> assertions;
-	int nVariables;
-	int nProposition;
-	int nAction;
+
 
 	bool ignoreCluase;
 	bool permanentChange;
 
 
 	//find and return the index of corresponding PVariableExpression in the variableExpr array
-	int getVariableIndex (int variableStateId, int significantTimePoint);
+	int getVariableIndex (int variableId, int operatorId, int significantTimePoint);
 
 	//find and return the index of corresponding proposition in the propositionExpr array
-	inline int getPropositionIndex (int proposition, int significantTimePoint);
+	int getPropositionIndex (int propositionId, int operatorId, int significantTimePoint);
 
 	//find and return the index of corresponding action in the actionExpr array
-	inline int getActionIndex (int action, int significantTimePoint);
+	int getPartialActionIndex (int partialAction, int significantTimePoint);
+
+	//find and return the index of corresponding action in the actionExpr array
+	int getUnificationIndex (int unificationId, int significantTimePoint);
 
 
 	class ExpressionConvertor {
 	public:
 		FastEnvironment *env;
-		CVC4Problem *cvc4Problem;
+		LiftedCVC4Problem *liftedCVC4Problem;
+		int operatorId;
 		int significantTimepoint;
-		ExpressionConvertor (FastEnvironment *env, CVC4Problem *cvc4Problem, int significantTime): env(env), cvc4Problem(cvc4Problem), significantTimepoint(significantTime){};
+		ExpressionConvertor (FastEnvironment *env, CVC4Problem *cvc4Problem, int operatorId, int significantTime): env(env), liftedCVC4Problem(cvc4Problem), operatorId(operatorId), significantTimepoint(significantTime){};
 
 		Expr convertExpressionToCVC4Expr (const expression* expr){
 
@@ -155,14 +163,14 @@ private:
 				}
 				Expr left = convertExpressionToCVC4Expr(binary->getLHS());
 				Expr right = convertExpressionToCVC4Expr(binary->getRHS());
-				return cvc4Problem->em.mkExpr(operatorKind, left, right);
+				return liftedCVC4Problem->em.mkExpr(operatorKind, left, right);
 			}
 
 			//Unary Minus
 			const uminus_expression* uMinus = dynamic_cast<const uminus_expression *> (expr);
 			if (uMinus){
 				Expr uMinusExpr = convertExpressionToCVC4Expr(uMinus->getExpr());
-				return cvc4Problem->em.mkExpr(kind::UMINUS, uMinusExpr);
+				return liftedCVC4Problem->em.mkExpr(kind::UMINUS, uMinusExpr);
 			}
 
 			//Constant
@@ -171,7 +179,7 @@ private:
 				long double myDouble = numExpr->double_value();
 				int nominator, denominator;
 				simpleConvertToRational(myDouble, nominator, denominator);
-				return cvc4Problem->em.mkConst(Rational(nominator, denominator));
+				return liftedCVC4Problem->em.mkConst(Rational(nominator, denominator));
 			}
 
 			//Variable
@@ -183,10 +191,10 @@ private:
 					double myDouble = myProblem.initialValue[pne2->getGlobalID()];
 					int nominator, denominator;
 					simpleConvertToRational(myDouble, nominator, denominator);
-					return cvc4Problem->em.mkConst(Rational(nominator, denominator));
+					return liftedCVC4Problem->em.mkConst(Rational(nominator, denominator));
 				}
-				int index = cvc4Problem->getVariableIndex(pne2->getStateID(), significantTimepoint);
-				return cvc4Problem->variableExpr[index];
+				int index = liftedCVC4Problem->getVariableIndex(pne2->getStateID(), operatorId, significantTimepoint);
+				return liftedCVC4Problem->variableExpr[index];
 			}
 			CANT_HANDLE("can't handle One expression in converting to CVC4EXPR");
 			return Expr();

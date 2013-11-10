@@ -114,7 +114,7 @@ void LiftedTranslator::addExplanatoryAxioms (int significantTimePoint){
 			actionItEnd = myProblem.propositions[i].adderActions.end();
 			for (; actionIt != actionItEnd; ++actionIt){
 				if (isVisited((*actionIt)->firstVisitedLayer, significantTimePoint - 1)){
-					smtProblem->addActionToClause((*actionIt)->valAction->getID(), significantTimePoint - 1, true);
+					smtProblem->addPartialActionToClause((*actionIt)->valAction->getID(), significantTimePoint - 1, true);
 				}
 			}
 		}
@@ -132,7 +132,7 @@ void LiftedTranslator::addExplanatoryAxioms (int significantTimePoint){
 		actionItEnd = myProblem.propositions[i].deleterActions.end();
 		for (; actionIt != actionItEnd; ++actionIt){
 			if (isVisited((*actionIt)->firstVisitedLayer, significantTimePoint - 1)){
-				smtProblem->addActionToClause((*actionIt)->valAction->getID(), significantTimePoint - 1, true);
+				smtProblem->addPartialActionToClause((*actionIt)->valAction->getID(), significantTimePoint - 1, true);
 			}
 		}
 		smtProblem->endClause();
@@ -146,7 +146,7 @@ void LiftedTranslator::addExplanatoryAxioms (int significantTimePoint){
 		actionItEnd = myProblem.variables[i].modifierActions.end();
 		for (; actionIt != actionItEnd; ++actionIt){
 			if (isVisited((*actionIt)->firstVisitedLayer, significantTimePoint - 1)){
-				smtProblem->addActionToClause((*actionIt)->valAction->getID(), significantTimePoint - 1, true);
+				smtProblem->addPartialActionToClause((*actionIt)->valAction->getID(), significantTimePoint - 1, true);
 			}
 		}
 		smtProblem->endClause();
@@ -172,8 +172,8 @@ void LiftedTranslator::addActionMutex (int significantTimePoint){
 				continue;
 			}
 			smtProblem->startNewClause();
-			smtProblem->addActionToClause(myProblem.actions[i].valAction->getID(), significantTimePoint, false);
-			smtProblem->addActionToClause((*iter)->valAction->getID(), significantTimePoint, false);
+			smtProblem->addPartialActionToClause(myProblem.actions[i].valAction->getID(), significantTimePoint, false);
+			smtProblem->addPartialActionToClause((*iter)->valAction->getID(), significantTimePoint, false);
 			smtProblem->endClause();
 		}
 	}
@@ -239,7 +239,7 @@ void LiftedTranslator::addSimpleEffectList (polarity plrty, const pc_list<simple
 	for (; it != itEnd; ++it){
 		smtProblem->startNewClause();
 		if (actionID != -1){
-			smtProblem->addActionToClause(actionID, significantTimePoint - 1, false);
+			smtProblem->addPartialActionToClause(actionID, significantTimePoint - 1, false);
 		}
 		smtProblem->addLiteral(plrty, (*it)->prop, env, significantTimePoint);
 		smtProblem->endClause();
@@ -252,7 +252,7 @@ void LiftedTranslator::addAssignmentList (const pc_list <assignment *> &assignme
 	for (; it != itEnd; ++it){
 		smtProblem->startNewClause();
 		if (actionID != -1){
-			smtProblem->addActionToClause(actionID, significantTimePoint - 1, false);
+			smtProblem->addPartialActionToClause(actionID, significantTimePoint - 1, false);
 		}
 		smtProblem->AddConditionToCluase(*it, env, significantTimePoint);
 		smtProblem->endClause();
@@ -273,7 +273,7 @@ void LiftedTranslator::addGoal (const goal *gl, FastEnvironment *env, int signif
 	if (simple){
 		smtProblem->startNewClause();
 		if (actionId != -1){
-			smtProblem->addActionToClause(actionId, significantTimePoint, false);
+			smtProblem->addPartialActionToClause(actionId, significantTimePoint, false);
 		}
 		smtProblem->addLiteral(simple->getPolarity(), simple->getProp(),env, significantTimePoint);
 		smtProblem->endClause();
@@ -283,7 +283,7 @@ void LiftedTranslator::addGoal (const goal *gl, FastEnvironment *env, int signif
 	if (comp){
 		smtProblem->startNewClause();
 		if (actionId != -1){
-			smtProblem->addActionToClause(actionId, significantTimePoint, false);
+			smtProblem->addPartialActionToClause(actionId, significantTimePoint, false);
 		}
 		smtProblem->AddConditionToCluase(comp, env, significantTimePoint);
 		smtProblem->endClause();
