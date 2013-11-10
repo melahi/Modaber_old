@@ -19,9 +19,9 @@ void LiftedCVC4Problem::guaranteeSize (unsigned int nSignificantTimePoint){
 
 	if (maximumSignificantTimePoint < nSignificantTimePoint){
 		variableExpr.resize (nSignificantTimePoint * nVariables);
-		propositionExpr.resize (nSignificantTimePoint * nProposition);
-		partialActionExpr.resize((nSignificantTimePoint - 1) * nPartialAction);
-		unificationExpr.resize((nSignificantTimePoint - 1) * nUnification);
+		propositionExpr.resize (nSignificantTimePoint * nPropositions);
+		partialActionExpr.resize((nSignificantTimePoint - 1) * nPartialActions);
+		unificationExpr.resize((nSignificantTimePoint - 1) * nUnifications);
 		maximumSignificantTimePoint = nSignificantTimePoint;
 	}
 }
@@ -53,9 +53,9 @@ void LiftedCVC4Problem::initialization(){
 
 
 
-//LiftedCVC4Problem::LiftedCVC4Problem (int nVariables, int nProposition, int nPartialAction, int nUnificationId): em(), smt(&em), nVariables(nVariables), nPropositions(nProposition), a(nAction){
-//	initialization();
-//}
+LiftedCVC4Problem::LiftedCVC4Problem (int nVariables, int nPropositions, int nPartialActions, int nUnifications): em(), smt(&em), nVariables(nVariables), nPropositions(nPropositions), nPartialActions(nPartialActions), nUnifications(nUnifications){
+	initialization();
+}
 
 
 //Start to build new clause for SMT problem
@@ -127,8 +127,8 @@ void LiftedCVC4Problem::AddConditionToCluase(const MyProposition *myProposition,
 
 
 
-void LiftedCVC4Problem::addPartialActionToClause (int partialActionId, int significantTimePoint, bool polarity){
-	int index = getPartialActionIndex(partialActionId, significantTimePoint);
+void LiftedCVC4Problem::addPartialActionToClause (MyPartialAction *partialAction, int significantTimePoint, bool polarity){
+	int index = getPartialActionIndex(partialAction, significantTimePoint);
 	if (polarity){
 		buildingClause.push_back(partialActionExpr[index]);
 	}else{
@@ -364,7 +364,7 @@ int LiftedCVC4Problem::getPropositionIndex (int propositionId, int operatorId, i
 		operatorId = 0;
 	}
 
-	int ret = significantTimePoint * nProposition + myProblem.propositions[propositionId].ids[operatorId];
+	int ret = significantTimePoint * nPropositions + myProblem.propositions[propositionId].ids[operatorId];
 	if (propositionExpr[ret].isNull()){
 		Type boolean = em.booleanType();
 //		ostringstream oss;
@@ -378,16 +378,17 @@ int LiftedCVC4Problem::getPropositionIndex (int propositionId, int operatorId, i
 }
 
 //find and return the index of corresponding action in the actionExpr array
-int LiftedCVC4Problem::getPartialActionIndex (int partialActionId, int significantTimePoint){
-	int ret = significantTimePoint * nPartialAction + partialActionId;
+int LiftedCVC4Problem::getPartialActionIndex (MyPartialAction *partialAction, int significantTimePoint){
+	int ret = significantTimePoint * nPartialActions + partialAction->id;
 	if (partialActionExpr[ret].isNull()){
-		Type boolean = em.booleanType();
-//		ostringstream oss;
-//		oss << "[";
-//		myProblem.actions[action].write(oss);
-//		oss << ", " << significantTimePoint << "]";
-//		actionExpr[ret] = Expr (em.mkVar (oss.str(), boolean));
-		partialActionExpr[ret] = Expr (em.mkVar (boolean));
+		vector <Expr> unifications;
+		map <string, int>::iterator it, itEnd;
+		it = partialAction->unificationId.begin();
+		itEnd = partialAction->unificationId.end();
+		for (; it != itEnd; ++it){
+			unifications.push_back(unificationExpr[getUnificationIndex(it->second + partialAction->op->offset[partialAction->partialOperator->placement[it->first]], significantTimePoint)]);
+		}
+		partialActionExpr[ret] = em.mkExpr(kind::AND, unifications);
 	}
 	return ret;
 }
@@ -395,7 +396,7 @@ int LiftedCVC4Problem::getPartialActionIndex (int partialActionId, int significa
 
 //find and return the index of corresponding action in the actionExpr array
 int LiftedCVC4Problem::getUnificationIndex (int unificationId, int significantTimePoint){
-	int ret = significantTimePoint * nPartialAction + unificationId;
+	int ret = significantTimePoint * nPartialActions + unificationId;
 	if (unificationExpr[ret].isNull()){
 		Type boolean = em.booleanType();
 //		ostringstream oss;

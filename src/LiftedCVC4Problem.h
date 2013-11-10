@@ -34,7 +34,7 @@ public:
 
 	void initialization();
 
-	LiftedCVC4Problem (int nVariables, int nProposition, int nAction);
+	LiftedCVC4Problem (int nVariables, int nProposition, int nPartialAction, int nUnificationId);
 
 	//Start to build new clause for SMT problem
 	virtual void startNewClause();
@@ -43,7 +43,7 @@ public:
 
 	void addLiteral ( polarity plrty, const proposition *prop, FastEnvironment *env, int operatorId, int significantTimePoint);
 
-	void addPartialActionToClause (int partialActionId, int significantTimePoint, bool polarity);
+	void addPartialActionToClause (MyPartialAction *partialAction, int significantTimePoint, bool polarity);
 
 	//Add new boolean condition to the building clause
 	void addConditionToCluase(int propostion, int operatorId, int significantTimePoint, bool polarity);
@@ -100,9 +100,10 @@ private:
 	SmtEngine smt;
 
 	int nVariables;
-	int nProposition;
-	int nUnification;
-	int nPartialAction;
+	int nPropositions;
+	int nPartialActions;
+	int nUnifications;
+
 
 	vector <Expr> variableExpr;
 	vector <Expr> propositionExpr;
@@ -130,7 +131,7 @@ private:
 	int getPropositionIndex (int propositionId, int operatorId, int significantTimePoint);
 
 	//find and return the index of corresponding action in the actionExpr array
-	int getPartialActionIndex (int partialAction, int significantTimePoint);
+	int getPartialActionIndex (MyPartialAction *partialAction, int significantTimePoint);
 
 	//find and return the index of corresponding action in the actionExpr array
 	int getUnificationIndex (int unificationId, int significantTimePoint);
