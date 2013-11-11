@@ -10,18 +10,18 @@
 
 #include "Modaber.h"
 #include "LiftedTranslator.h"
-#include "SolutionSimulator.h"
 
 namespace mdbr {
 
 class LiftedModaber: public Modaber {
 private:
 
+	LiftedTranslator *myLiftedTranslator;
+
+	LiftedCVC4Problem *liftedSMTProblem;
+
+
 	int nSignificantTimePoints;
-
-	LiftedTranslator translator;
-
-	SolutionSimulator simulator;
 
 protected:
 

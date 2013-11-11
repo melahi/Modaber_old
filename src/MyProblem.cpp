@@ -322,6 +322,7 @@ void MyProblem::liftedInitializing(){
 	}
 
 	assignIdToPropositions();
+	assignIdToVariables();
 }
 
 

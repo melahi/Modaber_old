@@ -37,7 +37,6 @@ void LiftedTranslator::prepare (int length){
 	liftedSMTProblem->activePermanentChange();
 	for (; translatedLength < length; translatedLength++){
 		addPartialActions(translatedLength - 1);
-		addActionMutex(translatedLength - 1);
 		addExplanatoryAxioms(translatedLength);
 		addAtomMutex(translatedLength);
 	}
@@ -103,11 +102,11 @@ void LiftedTranslator::addPartialActions (int significantTimePoint){
 		}
 		//Creating FastEnvironment;
 		FastEnvironment env(it->objects.size());
-		map <string, MyObject>::iterator objIt, objItEnd;
+		map <string, MyObject *>::iterator objIt, objItEnd;
 		objIt = it->objects.begin();
 		objItEnd = it->objects.end();
 		for (; objIt != objItEnd; ++objIt){
-			env[symbol(objIt->first)] = objIt->second.originalObject;
+			env[&(symbol(objIt->first))] = objIt->second->originalObject;
 		}
 
 		addAssignmentList(it->partialOperator->assignmentEffect, &env, significantTimePoint + 1, &(*it));
@@ -119,138 +118,104 @@ void LiftedTranslator::addPartialActions (int significantTimePoint){
 //Insert Explanatory Axioms which is needed for SMT problem
 void LiftedTranslator::addExplanatoryAxioms (int significantTimePoint){
 
-	list <MyAction *>::iterator actionIt, actionItEnd;
+	list <MyPartialAction* >::iterator pAIt, pAItEnd;
 
-	int nProposition = instantiatedOp::howManyNonStaticLiterals();
-
-
-	for (int i = 0; i < nProposition; i++){
-		liftedSMTProblem->startNewClause();
-		liftedSMTProblem->addConditionToCluase(i, significantTimePoint, false);
-		if (isVisited(myProblem.propositions[i].firstVisitedLayer, significantTimePoint)){
-			liftedSMTProblem->addConditionToCluase(i, significantTimePoint - 1, true);
-			actionIt = myProblem.propositions[i].adderActions.begin();
-			actionItEnd = myProblem.propositions[i].adderActions.end();
-			for (; actionIt != actionItEnd; ++actionIt){
-				if (isVisited((*actionIt)->firstVisitedLayer, significantTimePoint - 1)){
-					liftedSMTProblem->addPartialActionToClause((*actionIt)->valAction->getID(), significantTimePoint - 1, true);
-				}
-			}
-		}
-		liftedSMTProblem->endClause();
-	}
+	int nProposition = myProblem.propositions.size();
+	int nOperators = myProblem.operators.size();
 
 	for (int i = 0; i < nProposition; i++){
-		if (!isVisited(myProblem.propositions[i].firstVisitedLayer, significantTimePoint - 1)){
-			continue;
-		}
-		liftedSMTProblem->startNewClause();
-		liftedSMTProblem->addConditionToCluase(i, significantTimePoint, true);
-		liftedSMTProblem->addConditionToCluase(i, significantTimePoint - 1, false);
-		actionIt = myProblem.propositions[i].deleterActions.begin();
-		actionItEnd = myProblem.propositions[i].deleterActions.end();
-		for (; actionIt != actionItEnd; ++actionIt){
-			if (isVisited((*actionIt)->firstVisitedLayer, significantTimePoint - 1)){
-				liftedSMTProblem->addPartialActionToClause((*actionIt)->valAction->getID(), significantTimePoint - 1, true);
-			}
-		}
-		liftedSMTProblem->endClause();
-	}
 
-	int nVariable = instantiatedOp::howManyNonStaticPNEs();
-	for (int i = 0; i < nVariable; i++){
-		liftedSMTProblem->startNewClause();
-		liftedSMTProblem->AddEqualityCondition(i, significantTimePoint, i, significantTimePoint - 1, true);
-		actionIt = myProblem.variables[i].modifierActions.begin();
-		actionItEnd = myProblem.variables[i].modifierActions.end();
-		for (; actionIt != actionItEnd; ++actionIt){
-			if (isVisited((*actionIt)->firstVisitedLayer, significantTimePoint - 1)){
-				liftedSMTProblem->addPartialActionToClause((*actionIt)->valAction->getID(), significantTimePoint - 1, true);
-			}
+		vector < list<MyPartialAction *> > adder(nOperators);
+		pAIt = myProblem.propositions[i].adder.begin();
+		pAItEnd = myProblem.propositions[i].adder.end();
+		for (; pAIt != pAItEnd; ++pAIt){
+			adder[(*pAIt)->op->id].push_back(*pAIt);
 		}
-		liftedSMTProblem->endClause();
-	}
-}
 
-//Inset action mutex to the SMT problem
-void LiftedTranslator::addActionMutex (int significantTimePoint){
-	int nAction = myProblem.actions.size();
-	for (int i = 0; i < nAction; ++i){
-		if (!isVisited(myProblem.actions[i].firstVisitedLayer, significantTimePoint)){
-			continue;
+		vector < list<MyPartialAction *> > deleter(nOperators);
+		pAIt = myProblem.propositions[i].deleter.begin();
+		pAItEnd = myProblem.propositions[i].deleter.end();
+		for (; pAIt != pAItEnd; ++pAIt){
+			deleter[(*pAIt)->op->id].push_back(*pAIt);
 		}
-		set <MyAction *>::const_iterator iter, iterEnd;
-		iter = myProblem.actions[i].staticMutex.begin();
-		iterEnd = myProblem.actions[i].staticMutex.end();
-		for (; iter != iterEnd; ++iter){
-			if (myProblem.actions[i].valAction->getID() >= (*iter)->valAction->getID()){
-				// Because we want to ensure just one clause for each mutex is inserted so just if the id of first action is less than the second one we inserted the corresponding mutex clause
-				continue;
-			}
-			if (!isVisited((*iter)->firstVisitedLayer, significantTimePoint)){
-				continue;
-			}
-			liftedSMTProblem->startNewClause();
-			liftedSMTProblem->addPartialActionToClause(myProblem.actions[i].valAction->getID(), significantTimePoint, false);
-			liftedSMTProblem->addPartialActionToClause((*iter)->valAction->getID(), significantTimePoint, false);
-			liftedSMTProblem->endClause();
-		}
-	}
-}
 
-void LiftedTranslator::addAtomMutex(int significantTimePoint){
-	// Prepare allFoundedAtoms list
-	list <MyAtom *> allFoundedAtoms;
 
-	int nPropositions = myProblem.propositions.size();
-	for (int i = 0; i < nPropositions; i++){
-		if (isVisited(myProblem.propositions[i].firstVisitedLayer, significantTimePoint)){
-			allFoundedAtoms.push_back(&(myProblem.propositions[i]));
-		}
-	}
+		for (int j = 0; j < nOperators; ++j){
+			if (adder[j].size() || deleter[j].size()){
 
-	int nVariables = myProblem.variables.size();
-	for (int i = 0; i < nVariables; i++){
-		map <double, MyValue>::iterator it, itEnd;
-		it = myProblem.variables[i].domain.begin();
-		itEnd = myProblem.variables[i].domain.end();
-		for (; it != itEnd; ++it){
-			if (isVisited(it->second.firstVisitedLayer, significantTimePoint)){
-				allFoundedAtoms.push_back(&(it->second));
-			}
-		}
-	}
-
-	list <MyAtom*>::iterator it, itEnd, it2;
-	it = allFoundedAtoms.begin();
-	itEnd = allFoundedAtoms.end();
-	for (; it != itEnd; ++it){
-		it2 = allFoundedAtoms.begin();
-		for (; it2 != it; ++it2){
-			if ((*it)->isMutex(significantTimePoint, *it2)){
+				//Deleter actions
 				liftedSMTProblem->startNewClause();
-				liftedSMTProblem->AddConditionToCluase(*it, significantTimePoint, false);
-				liftedSMTProblem->AddConditionToCluase(*it2, significantTimePoint, false);
+				liftedSMTProblem->addConditionToCluase(i, j, significantTimePoint, false);
+				liftedSMTProblem->addConditionToCluase(i, j + 1, significantTimePoint, true);
+				pAIt = deleter[j].begin();
+				pAItEnd = deleter[j].end();
+				for (; pAIt != pAItEnd; ++pAIt){
+					liftedSMTProblem->addPartialActionToClause(*pAIt, significantTimePoint, true);
+				}
+				liftedSMTProblem->endClause();
+
+				//Adder Actions
+				liftedSMTProblem->startNewClause();
+				liftedSMTProblem->addConditionToCluase(i, j, significantTimePoint, true);
+				liftedSMTProblem->addConditionToCluase(i, j + 1, significantTimePoint, false);
+				pAIt = adder[j].begin();
+				pAItEnd = adder[j].end();
+				for (; pAIt != pAItEnd; ++pAIt){
+					liftedSMTProblem->addPartialActionToClause(*pAIt, significantTimePoint, true);
+				}
+				liftedSMTProblem->endClause();
+			}
+		}
+	}
+
+
+
+	int nVariable = myProblem.variables.size();
+	for (int i = 0; i < nVariable; i++){
+		vector < list<MyPartialAction *> > modifier(nOperators);
+		pAIt = myProblem.variables[i].modifier.begin();
+		pAItEnd = myProblem.variables[i].modifier.end();
+		for (; pAIt != pAItEnd; ++pAIt){
+			modifier[(*pAIt)->op->id].push_back(*pAIt);
+		}
+		for (int j = 0; j < nOperators; ++j){
+			if (modifier[j].size()){
+				liftedSMTProblem->startNewClause();
+				liftedSMTProblem->AddEqualityCondition(i, j, significantTimePoint, i, j+1, significantTimePoint, true);
+				pAIt = modifier[j].begin();
+				pAItEnd = modifier[j].end();
+				for (; pAIt != pAItEnd; ++pAIt){
+					liftedSMTProblem->addPartialActionToClause(*pAIt, significantTimePoint, true);
+				}
 				liftedSMTProblem->endClause();
 			}
 		}
 	}
 }
 
-//Insert the sketchy plan to the SMT problem
-void LiftedTranslator::addSkechyPlan(SketchyPlan *sketchyPlan){
-	vector < vector < shared_ptr <goal> > > milestones;
-	sketchyPlan->convertStateValuesToMilestones(milestones);
-	int nStateVariables= milestones.size();
-	FastEnvironment env(0);
-	for (int i = 1; i < nStateVariables; i++){
-		int length = milestones[i].size();
-		for (int j = 1; j < length; j++){
-			addGoal(milestones[i][j].get(), &env, j);
+void LiftedTranslator::addAtomMutex(int significantTimePoint){
+	int nProposition = myProblem.propositions.size();
+	int nOperator = myProblem.operators.size();
+	for (int i = 0; i < nProposition; ++i){
+		for (int j = 0; j < i; ++j){
+			if (myProblem.propositions[i].isMutex ((1 << 20), &(myProblem.propositions[j]))){
+				int lastId1, lastId2;
+				lastId1 = lastId2 = -1;
+				for (int k = 0; k < nOperator; ++k){
+					if (myProblem.propositions[i].ids[k] == lastId1 && myProblem.propositions[j].ids[k]){
+						continue;
+					}
+					liftedSMTProblem->startNewClause();
+					liftedSMTProblem->addConditionToCluase(i, k, significantTimePoint, false);
+					liftedSMTProblem->addConditionToCluase(j, k, significantTimePoint, false);
+					liftedSMTProblem->endClause();
+					lastId1 = myProblem.propositions[i].ids[k];
+					lastId2 = myProblem.propositions[j].ids[k];
+				}
+			}
 		}
 	}
 }
-
 
 void LiftedTranslator::addSimpleEffectList (polarity plrty, const list <MyProposition *> &simpleEffectList, int significantTimePoint, MyPartialAction *partialAction){
 	list <MyProposition*>::const_iterator it = simpleEffectList.begin();
@@ -352,27 +317,9 @@ void LiftedTranslator::addGoalList (const list <MyProposition *> &preconditionLi
 }
 
 
-int LiftedTranslator::solve(SketchyPlan *sketchyPlan){
+bool LiftedTranslator::solve(){
 
-	//create assertions for intermediate and final goals
-
-	liftedSMTProblem->inActivePermanentChange();
-	liftedSMTProblem->clearAssertionList();
-	if (sketchyPlan != NULL){
-		addSkechyPlan(sketchyPlan);
-	}
-	liftedSMTProblem->insertAssertion(goals);
-	Expr translatedGoals = liftedSMTProblem->getAssertions();
 
 	//try to solve the problem
-	return liftedSMTProblem->solve(translatedGoals);
+	return liftedSMTProblem->solve(goals);
 }
-
-bool LiftedTranslator::solve(){
-	double ret = solve(NULL);
-	if (ret == numeric_limits <int>::max()) {
-		return true;
-	}
-	return false;
-}
-

@@ -6,7 +6,7 @@
  */
 
 #include "EvolutionaryModaber.h"
-#include "NumericalPlanningGraph.h"
+#include "PlanningGraph.h"
 
 
 #include <vector>

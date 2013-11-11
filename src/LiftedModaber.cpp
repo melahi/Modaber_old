@@ -1,13 +1,11 @@
+
+
 #include "LiftedModaber.h"
 
 
 #include "VALfiles/TIM.h"
-#include "ProblemPrinter.h"
-#include "Translator.h"
 #include <iostream>
 #include <fstream>
-#include "CVC4Problem.h"
-#include "SketchyPlan.h"
 
 using namespace std;
 using namespace VAL;
@@ -19,10 +17,15 @@ using namespace mdbr;
 void LiftedModaber::initialization (char *domainFilePath, char *problemFilePath, bool usingPlanningGraph){
 	Modaber::initialization(domainFilePath, problemFilePath, usingPlanningGraph, false);
 
+
+
 	if (usingPlanningGraph){
 		nPG->constructingGraph();
 	}
 	myProblem.liftedInitializing();
+
+	liftedSMTProblem = new LiftedCVC4Problem(myProblem.nVariableIDs, myProblem.nPropositionIDs, myProblem.nPartialActions, myProblem.nUnification);
+	myLiftedTranslator = new LiftedTranslator(liftedSMTProblem);
 
 	nSignificantTimePoints = 1;
 
@@ -35,8 +38,8 @@ bool LiftedModaber::tryToSolve(){
 	while (!foundSolution){
 		cout  << "nSignificantTimePoint: " << nSignificantTimePoints << endl;
 		cout << "solving ..." << endl;
-		translator.prepare(myProblem.operators.size(), myProblem.nPropositionIDs, myProblem.nUnification, myProblem.partialAction.size(), myProblem.assignments.size(), myProblem.comparisons.size(), myProblem.nValues);
-		foundSolution = translator.solve(nSignificantTimePoints);
+		myLiftedTranslator->prepare(nSignificantTimePoints);
+		foundSolution = myLiftedTranslator->solve();
 		cout << "end solving" << endl;
 		if (!foundSolution){
 				nSignificantTimePoints += 5;
@@ -53,15 +56,17 @@ LiftedModaber::LiftedModaber(char *domainFilePath, char *problemFilePath, bool u
 	foundSolution = tryToSolve();
 	if (foundSolution){
 		cout << "The plan is: " << endl;
-		translator.printSolution(cout);
+//		translator.printSolution(cout);
 		cout << endl << endl;
 		cout << "Modaber finished his task!!! ;)" << endl;
 		cout << "*******************************" << endl;
 		ofstream fout ("solution");
-		translator.printSolution(fout);
+//		translator.printSolution(fout);
 	}
 }
 
 LiftedModaber::~LiftedModaber() {
+	delete (liftedSMTProblem);
+	delete (myLiftedTranslator);
 }
 

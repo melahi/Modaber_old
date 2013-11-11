@@ -143,7 +143,7 @@ private:
 		LiftedCVC4Problem *liftedCVC4Problem;
 		int operatorId;
 		int significantTimepoint;
-		ExpressionConvertor (FastEnvironment *env, CVC4Problem *cvc4Problem, int operatorId, int significantTime): env(env), liftedCVC4Problem(cvc4Problem), operatorId(operatorId), significantTimepoint(significantTime){};
+		ExpressionConvertor (FastEnvironment *env, LiftedCVC4Problem *cvc4Problem, int operatorId, int significantTime): env(env), liftedCVC4Problem(cvc4Problem), operatorId(operatorId), significantTimepoint(significantTime){};
 
 		Expr convertExpressionToCVC4Expr (const expression* expr){
 

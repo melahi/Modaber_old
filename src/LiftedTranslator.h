@@ -29,23 +29,19 @@ private:
 	void addGoals(int significantTimePoint);
 	void addPartialActions(int significantTimePoint);
 	void addExplanatoryAxioms(int significantTimePoint);
-	void addActionMutex(int significantTimePoint);
 	void addAtomMutex(int significantTimePoint);
-	void addSkechyPlan(SketchyPlan* sketchyPlan);
 
 public:
 	int translatedLength;
 
-	LiftedTranslator(CVC4Problem* smtProblem) :
-		liftedSMTProblem(smtProblem) {
+	LiftedTranslator(LiftedCVC4Problem* liftedSMTProblem) :
+		liftedSMTProblem(liftedSMTProblem) {
 		this->liftedSMTProblem->activePermanentChange();
 		addInitialState();
 		this->liftedSMTProblem->inActivePermanentChange();
 		translatedLength = 1;
 	}
 	void prepare (int length);
-
-	int solve (SketchyPlan *sketchyPlan);
 
 	bool solve ();
 
@@ -61,8 +57,7 @@ private:
 	void addGoal (const goal *gl, FastEnvironment *env, int significantTimePoint, MyPartialAction *partialAction = NULL);
 
 	void addGoalList (const list <const comparison* > &gls, FastEnvironment *env, int significantTimePoint, MyPartialAction *partialAction);
-	void addGoalList (const list <MyProposition *> &simpleEffectList, int significantTimePoint, MyPartialAction *partialAction){
-
+	void addGoalList (const list <MyProposition *> &simpleEffectList, int significantTimePoint, MyPartialAction *partialAction);
 
 };
 

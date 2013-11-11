@@ -399,7 +399,7 @@ int LiftedCVC4Problem::getUnificationIndex (int unificationId, int significantTi
 //		myProblem.actions[action].write(oss);
 //		oss << ", " << significantTimePoint << "]";
 //		actionExpr[ret] = Expr (em.mkVar (oss.str(), boolean));
-		unificationId[ret] = Expr (em.mkVar (boolean));
+		unificationExpr[ret] = Expr (em.mkVar (boolean));
 	}
 	return ret;
 }
