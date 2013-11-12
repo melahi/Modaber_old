@@ -180,38 +180,13 @@ void Translator::addActionMutex (int significantTimePoint){
 }
 
 void Translator::addAtomMutex(int significantTimePoint){
-	// Prepare allFoundedAtoms list
-	list <MyAtom *> allFoundedAtoms;
-
-	int nPropositions = myProblem.propositions.size();
-	for (int i = 0; i < nPropositions; i++){
-		if (isVisited(myProblem.propositions[i].firstVisitedLayer, significantTimePoint)){
-			allFoundedAtoms.push_back(&(myProblem.propositions[i]));
-		}
-	}
-
-	int nVariables = myProblem.variables.size();
-	for (int i = 0; i < nVariables; i++){
-		map <double, MyValue>::iterator it, itEnd;
-		it = myProblem.variables[i].domain.begin();
-		itEnd = myProblem.variables[i].domain.end();
-		for (; it != itEnd; ++it){
-			if (isVisited(it->second.firstVisitedLayer, significantTimePoint)){
-				allFoundedAtoms.push_back(&(it->second));
-			}
-		}
-	}
-
-	list <MyAtom*>::iterator it, itEnd, it2;
-	it = allFoundedAtoms.begin();
-	itEnd = allFoundedAtoms.end();
-	for (; it != itEnd; ++it){
-		it2 = allFoundedAtoms.begin();
-		for (; it2 != it; ++it2){
-			if ((*it)->isMutex(significantTimePoint, *it2)){
+	int nProposition = myProblem.propositions.size();
+	for (int i = 0; i < nProposition; ++i){
+		for (int j = 0; j < i; ++j){
+			if (myProblem.propositions[i].isMutex ((1 << 20), &(myProblem.propositions[j]))){
 				smtProblem->startNewClause();
-				smtProblem->AddConditionToCluase(*it, significantTimePoint, false);
-				smtProblem->AddConditionToCluase(*it2, significantTimePoint, false);
+				smtProblem->addConditionToCluase(i, significantTimePoint, false);
+				smtProblem->addConditionToCluase(j, significantTimePoint, false);
 				smtProblem->endClause();
 			}
 		}

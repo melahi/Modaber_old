@@ -29,6 +29,7 @@ private:
 	void addGoals(int significantTimePoint);
 	void addPartialActions(int significantTimePoint);
 	void addExplanatoryAxioms(int significantTimePoint);
+	void addCompletingAction (int significantTimePoint);
 	void addAtomMutex(int significantTimePoint);
 
 public:
@@ -44,6 +45,8 @@ public:
 	void prepare (int length);
 
 	bool solve ();
+
+	void extractSolution (ostream &cout);
 
 	virtual ~LiftedTranslator(){}
 

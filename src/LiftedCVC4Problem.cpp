@@ -12,6 +12,86 @@ using namespace VAL;
 using namespace std;
 
 
+class ExpressionConvertor {
+public:
+	FastEnvironment *env;
+	LiftedCVC4Problem *liftedCVC4Problem;
+	int operatorId;
+	int significantTimepoint;
+	ExpressionConvertor (FastEnvironment *env, LiftedCVC4Problem *cvc4Problem, int operatorId, int significantTime): env(env), liftedCVC4Problem(cvc4Problem), operatorId(operatorId), significantTimepoint(significantTime){};
+
+	Expr convertExpressionToCVC4Expr (const expression* expr){
+
+		//Binary expression
+		const binary_expression* binary = dynamic_cast <const binary_expression *> (expr);
+		if (binary){
+			Kind operatorKind;
+			if (dynamic_cast <const plus_expression* > (expr)){
+				operatorKind = kind::PLUS;
+			}else if (dynamic_cast<const minus_expression *> (expr)){
+				operatorKind = kind::MINUS;
+			}else if (dynamic_cast<const mul_expression *> (expr)) {
+				operatorKind = kind::MULT;
+			}else if (dynamic_cast<const div_expression *> (expr)){
+				operatorKind = kind::DIVISION;
+			}else{
+				CANT_HANDLE("binary_expression");
+			}
+			Expr left = convertExpressionToCVC4Expr(binary->getLHS());
+			Expr right = convertExpressionToCVC4Expr(binary->getRHS());
+			return liftedCVC4Problem->em.mkExpr(operatorKind, left, right);
+		}
+
+		//Unary Minus
+		const uminus_expression* uMinus = dynamic_cast<const uminus_expression *> (expr);
+		if (uMinus){
+			Expr uMinusExpr = convertExpressionToCVC4Expr(uMinus->getExpr());
+			return liftedCVC4Problem->em.mkExpr(kind::UMINUS, uMinusExpr);
+		}
+
+		//Constant
+		const num_expression* numExpr = dynamic_cast<const num_expression *> (expr);
+		if (numExpr){
+			long double myDouble = numExpr->double_value();
+			int nominator, denominator;
+			simpleConvertToRational(myDouble, nominator, denominator);
+			return liftedCVC4Problem->em.mkConst(Rational(nominator, denominator));
+		}
+
+		//Variable
+		const func_term* functionTerm = dynamic_cast<const func_term *> (expr);
+		if (functionTerm){
+			PNE pne = PNE(functionTerm, env);
+			PNE *pne2 = instantiatedOp::findPNE(&pne);
+			if (pne2->getStateID() == -1){
+				double myDouble = myProblem.initialValue[pne2->getGlobalID()];
+				int nominator, denominator;
+				simpleConvertToRational(myDouble, nominator, denominator);
+				return liftedCVC4Problem->em.mkConst(Rational(nominator, denominator));
+			}
+			int index = liftedCVC4Problem->getVariableIndex(pne2->getStateID(), operatorId, significantTimepoint);
+			return liftedCVC4Problem->variableExpr[index];
+		}
+		CANT_HANDLE("can't handle One expression in converting to CVC4EXPR");
+		return Expr();
+	}
+
+	static void simpleConvertToRational (double input, int &nominator, int &denominator){
+		nominator = (int) input;
+		denominator = 1;
+		double inputFloor = (double) nominator;
+		double epsilon = 1e-9;
+		int MAX_INT = (1 << 30) / 10;
+		while (fabs(input - inputFloor) > epsilon && abs(nominator) < MAX_INT && abs(denominator) < MAX_INT ){
+			denominator *= 10;
+			input *= 10;
+			nominator = (int) input;
+			inputFloor = (double) nominator;
+		}
+		return;
+	}
+
+};
 
 
 
@@ -131,6 +211,16 @@ void LiftedCVC4Problem::addPartialActionToClause (MyPartialAction *partialAction
 	}
 }
 
+
+void LiftedCVC4Problem::addUnificationToClause(int unificationId, int significantTimePoint, bool polarity){
+	int index = getUnificationIndex(unificationId, significantTimePoint);
+	if (polarity){
+		buildingClause.push_back(unificationExpr[index]);
+	}else{
+		buildingClause.push_back(em.mkExpr(kind::NOT, unificationExpr[index]));
+	}
+}
+
 //Add new numerical condition to the building clause
 void LiftedCVC4Problem::AddConditionToCluase(const comparison* numericalCondition, FastEnvironment *env, int operatorId, int significantTimePoint){
 	ExpressionConvertor myConvertor(env, this, operatorId, significantTimePoint);
@@ -162,13 +252,13 @@ void LiftedCVC4Problem::AddConditionToCluase(const comparison* numericalConditio
 
 //Add new numerical assignment to the building clause
 void LiftedCVC4Problem::AddConditionToCluase(const assignment* numericalAssignment, FastEnvironment *env, int operatorId, int significantTimePoint){
-	ExpressionConvertor variableConvertor(env, this, operatorId + 1, significantTimePoint);
+	ExpressionConvertor variableConvertor(env, this, operatorId, significantTimePoint);
 	Expr variable = variableConvertor.convertExpressionToCVC4Expr(numericalAssignment->getFTerm());
 	if (variable.isConst()){
 		//This case is happening just in initial case when initial state determine the value of a static variable
 		return;
 	}
-	ExpressionConvertor expressionConvertor(env, this, operatorId, significantTimePoint - 1);
+	ExpressionConvertor expressionConvertor(env, this, operatorId - 1, significantTimePoint);
 	Expr result = expressionConvertor.convertExpressionToCVC4Expr(numericalAssignment->getExpr());
 
 	Kind assignmentOperator = kind::EQUAL;
@@ -272,10 +362,10 @@ void LiftedCVC4Problem::print(){
 	vector <Expr> assertions = smt.getAssertions();
 	print (assertions);
 }
-int mine = 0;
+//int mine = 0;
 void LiftedCVC4Problem::print(vector <Expr> &expression){
-	mine++;
-	cout << mine << endl;
+//	mine++;
+//	cout << mine << endl;
 	for (size_t i = 0; i < expression.size(); i++){
 		if (expression[i].getKind() == kind::AND){
 			vector <Expr> child = expression[i].getChildren();
@@ -285,7 +375,7 @@ void LiftedCVC4Problem::print(vector <Expr> &expression){
 			cout << endl;
 		}
 	}
-	mine--;
+//	mine--;
 }
 
 
@@ -328,12 +418,18 @@ void LiftedCVC4Problem::clearAssertionList(){
 	assertions.clear();
 }
 
+bool LiftedCVC4Problem::isUnificationUsed (int unificationId, int significantTimePoint){
+	int unificationIndex = getUnificationIndex(unificationId, significantTimePoint);
+	bool isUsed = smt.getValue(unificationExpr[unificationIndex]).getConst<bool>();
+	return isUsed;
+}
+
 LiftedCVC4Problem::~LiftedCVC4Problem(){
 }
 
 
 //find and return the index of corresponding PVariableExpression in the variableExpr array
-int LiftedCVC4Problem::getVariableIndex (int variableId, int operatorId, int significantTimePoint){
+int LiftedCVC4Problem::getVariableIndex (unsigned int variableId, unsigned int operatorId, int significantTimePoint){
 	if (operatorId == myProblem.operators.size() || myProblem.variables[variableId].ids[operatorId] == -1){
 		significantTimePoint++;
 		operatorId = 0;
@@ -353,7 +449,7 @@ int LiftedCVC4Problem::getVariableIndex (int variableId, int operatorId, int sig
 }
 
 //find and return the index of corresponding proposition in the propositionExpr array
-int LiftedCVC4Problem::getPropositionIndex (int propositionId, int operatorId, int significantTimePoint){
+int LiftedCVC4Problem::getPropositionIndex (unsigned int propositionId, unsigned int operatorId, int significantTimePoint){
 	if (operatorId == myProblem.operators.size() || myProblem.propositions[propositionId].ids[operatorId] == -1){
 		significantTimePoint++;
 		operatorId = 0;
@@ -376,14 +472,35 @@ int LiftedCVC4Problem::getPropositionIndex (int propositionId, int operatorId, i
 int LiftedCVC4Problem::getPartialActionIndex (MyPartialAction *partialAction, int significantTimePoint){
 	int ret = significantTimePoint * nPartialActions + partialAction->id;
 	if (partialActionExpr[ret].isNull()){
+		kind::Kind_t myKind;
 		vector <Expr> unifications;
-		map <string, int>::iterator it, itEnd;
-		it = partialAction->unificationId.begin();
-		itEnd = partialAction->unificationId.end();
-		for (; it != itEnd; ++it){
-			unifications.push_back(unificationExpr[getUnificationIndex(it->second + partialAction->op->offset[partialAction->partialOperator->placement[it->first]], significantTimePoint)]);
+		if (partialAction->unificationId.size() != 0){
+			myKind = kind::AND;
+			map <string, int>::iterator it, itEnd;
+			it = partialAction->unificationId.begin();
+			itEnd = partialAction->unificationId.end();
+			for (; it != itEnd; ++it){
+				unifications.push_back(unificationExpr[getUnificationIndex(it->second + partialAction->op->offset[partialAction->partialOperator->placement[it->first]], significantTimePoint)]);
+			}
+		}else{
+			if (partialAction->op->argument.size() == 0){
+				CANT_HANDLE("AN OPERATOR WITH NO ARGUMENT, I DON'T HAVE ANY PLAN FOR IT!!!");
+				exit(1);
+			}
+			myKind = kind::OR;
+			int unificationId = partialAction->op->offset[0];
+			int endingUnificationID = partialAction->op->argument[0]->objects.size() + unificationId;
+			for (; unificationId < endingUnificationID; ++unificationId){
+				unifications.push_back(unificationExpr[getUnificationIndex(unificationId, significantTimePoint)]);
+			}
 		}
-		partialActionExpr[ret] = em.mkExpr(kind::AND, unifications);
+		if (unifications.size() == 0){
+			partialActionExpr[ret] = falseExpr;
+		}else if (unifications.size() == 1){
+			partialActionExpr[ret] = unifications[0];
+		}else{
+			partialActionExpr[ret] = em.mkExpr(myKind, unifications);
+		}
 	}
 	return ret;
 }
@@ -391,7 +508,7 @@ int LiftedCVC4Problem::getPartialActionIndex (MyPartialAction *partialAction, in
 
 //find and return the index of corresponding action in the actionExpr array
 int LiftedCVC4Problem::getUnificationIndex (int unificationId, int significantTimePoint){
-	int ret = significantTimePoint * nPartialActions + unificationId;
+	int ret = significantTimePoint * nUnifications + unificationId;
 	if (unificationExpr[ret].isNull()){
 		Type boolean = em.booleanType();
 //		ostringstream oss;

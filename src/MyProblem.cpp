@@ -174,6 +174,7 @@ void MyProblem::updateGoalValues (goal *the_goal, FastEnvironment *env){
 }
 
 void MyProblem::updateInitialLayer(){
+
 	//Find initial value for variables
 	pc_list<assignment*>::const_iterator it = current_analysis->the_problem->initial_state->assign_effects.begin();
 	pc_list<assignment*>::const_iterator itEnd = current_analysis->the_problem->initial_state->assign_effects.end();
@@ -188,7 +189,9 @@ void MyProblem::updateInitialLayer(){
 		if (pne2 && numExpr && (*it)->getOp() == E_ASSIGN){
 			double theInitialValue = numExpr->double_value();
 			initialValue[pne2->getGlobalID()] = theInitialValue;
-			variables[pne2->getStateID()].initialValue = theInitialValue;
+			if (pne2->getStateID() != -1){
+				variables[pne2->getStateID()].initialValue = theInitialValue;
+			}
 		}else{
 			CANT_HANDLE("Can't find Some Initial Value ");
 		}
@@ -197,7 +200,6 @@ void MyProblem::updateInitialLayer(){
 	//Find initial value for propositions
 	pc_list<simple_effect*>::const_iterator it1 = current_analysis->the_problem->initial_state->add_effects.begin();
 	pc_list<simple_effect*>::const_iterator it1End = current_analysis->the_problem->initial_state->add_effects.end();
-	FastEnvironment env(0);
 
 	for (; it1 != it1End; it1++){
 		Literal lit ((*it1)->prop, &env);
@@ -237,12 +239,14 @@ void MyProblem::initializing(bool usingSASPlus){
 
 	updateInitialLayer();
 
-	//Preparing actions
 	int nAction = instantiatedOp::howMany();
-	actions.resize(nAction);
+	actions.resize(nAction, MyAction());
+
+	//Preparing actions
 	for (int i = 0; i < nAction; i++){
 		actions[i].initialize(instantiatedOp::getInstOp(i));
 	}
+
 
 	filterVariables();
 

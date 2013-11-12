@@ -24,7 +24,6 @@ using namespace mdbr;
 
 
 
-
 MyAction::MyAction(): valAction(NULL), firstVisitedLayer(-1) {}
 
 bool MyAction::isPreconditionSatisfied(goal *precondition, FastEnvironment *env, int layerNumber){
@@ -342,7 +341,5 @@ void MyAction::write(ostream &sout){
 }
 
 
-MyAction::~MyAction() {
-	// TODO Auto-generated destructor stub
-}
+MyAction::~MyAction() {}
 

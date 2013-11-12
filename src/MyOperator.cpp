@@ -61,9 +61,10 @@ void MyOperator::prepareSimpleEffect(pc_list<simple_effect*> &valEffectList, boo
 		MyPartialOperator *a = new MyPartialOperator();
 		a->prepare(this, (*it)->prop);
 		list <MyPartialOperator *>::iterator it2 = findPartialOperator(a);
-		if (a == partialOperator.end()){
+		if (it2 == partialOperator.end()){
 			partialOperator.push_back(a);
-			it2 = partialOperator.rbegin();
+			it2 = partialOperator.end();
+			it2--;
 		}else{
 			delete (a);
 		}
@@ -83,9 +84,10 @@ void MyOperator::prepareAssignment(pc_list <assignment *> &assignmentList){
 		MyPartialOperator *a = new MyPartialOperator();
 		a->prepare(this, *it);
 		list <MyPartialOperator *>::iterator it2 = findPartialOperator(a);
-		if (a == partialOperator.end()){
+		if (it2 == partialOperator.end()){
 			partialOperator.push_back(a);
-			it2 = partialOperator.rbegin();
+			it2 = partialOperator.end();
+			it2--;
 		}else{
 			delete (a);
 		}
@@ -99,9 +101,10 @@ void MyOperator::preparePreconditions(goal *gl){
 		MyPartialOperator *a = new MyPartialOperator();
 		a->prepare(this, simple->getProp());
 		list <MyPartialOperator *>::iterator it2 = findPartialOperator(a);
-		if (a == partialOperator.end()){
+		if (it2 == partialOperator.end()){
 			partialOperator.push_back(a);
-			it2 = partialOperator.rbegin();
+			it2 = partialOperator.end();
+			it2--;
 		}else{
 			delete (a);
 		}
@@ -113,9 +116,10 @@ void MyOperator::preparePreconditions(goal *gl){
 		MyPartialOperator *a = new MyPartialOperator();
 		a->prepare(this, comp);
 		list <MyPartialOperator *>::iterator it2 = findPartialOperator(a);
-		if (a == partialOperator.end()){
+		if (it2 == partialOperator.end()){
 			partialOperator.push_back(a);
-			it2 = partialOperator.rbegin();
+			it2 = partialOperator.end();
+			it2--;
 		}else{
 			delete (a);
 		}

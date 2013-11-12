@@ -37,8 +37,9 @@ void LiftedTranslator::prepare (int length){
 	liftedSMTProblem->activePermanentChange();
 	for (; translatedLength < length; translatedLength++){
 		addPartialActions(translatedLength - 1);
-		addExplanatoryAxioms(translatedLength);
-		addAtomMutex(translatedLength);
+		addCompletingAction(translatedLength - 1);
+		addExplanatoryAxioms(translatedLength - 1);
+		addAtomMutex(translatedLength - 1);
 	}
 	liftedSMTProblem->inActivePermanentChange();
 
@@ -93,8 +94,8 @@ void LiftedTranslator::addPartialActions (int significantTimePoint){
 			continue;
 		}
 
-		addSimpleEffectList(E_POS, it->addEffect, significantTimePoint + 1, &(*it));
-		addSimpleEffectList(E_NEG, it->deleteEffect, significantTimePoint + 1, &(*it));
+		addSimpleEffectList(E_POS, it->addEffect, significantTimePoint, &(*it));
+		addSimpleEffectList(E_NEG, it->deleteEffect, significantTimePoint, &(*it));
 		addGoalList(it->precondition, significantTimePoint, &(*it));
 
 		if (it->partialOperator->comparisonPrecondition.size() == 0 && it->partialOperator->assignmentEffect.size() == 0){
@@ -102,14 +103,17 @@ void LiftedTranslator::addPartialActions (int significantTimePoint){
 		}
 		//Creating FastEnvironment;
 		FastEnvironment env(it->objects.size());
-		map <string, MyObject *>::iterator objIt, objItEnd;
-		objIt = it->objects.begin();
-		objItEnd = it->objects.end();
-		for (; objIt != objItEnd; ++objIt){
-			env[&(symbol(objIt->first))] = objIt->second->originalObject;
-		}
 
-		addAssignmentList(it->partialOperator->assignmentEffect, &env, significantTimePoint + 1, &(*it));
+		var_symbol_list::iterator varIt, varItEnd;
+		varIt = it->op->originalOperator->parameters->begin();
+		varItEnd = it->op->originalOperator->parameters->end();
+
+		for (; varIt != varItEnd; ++varIt){
+			if (it->objects.find((*varIt)->getName()) != it->objects.end()){
+				env[*varIt] = it->objects[(*varIt)->getName()]->originalObject;
+			}
+		}
+		addAssignmentList(it->partialOperator->assignmentEffect, &env, significantTimePoint, &(*it));
 		addGoalList(it->partialOperator->comparisonPrecondition, &env, significantTimePoint, &(*it));
 	}
 }
@@ -193,6 +197,31 @@ void LiftedTranslator::addExplanatoryAxioms (int significantTimePoint){
 	}
 }
 
+void LiftedTranslator::addCompletingAction (int significantTimePoint){
+	int nOperators = myProblem.operators.size();
+	for (int i = 0; i < nOperators; ++i){
+		int nArguments = myProblem.operators[i]->argument.size();
+		if (nArguments <= 1){
+			continue;
+		}
+		for (int j = 0; j < nArguments; ++j){
+			int starting1, starting2, ending1, ending2;
+			starting1 = myProblem.operators[i]->offset[j];
+			ending1 = starting1 + myProblem.operators[i]->argument[j]->objects.size();
+			starting2 = myProblem.operators[i]->offset[(j + 1) % nArguments];
+			ending2 = starting2 + myProblem.operators[i]->argument[(j + 1) % nArguments]->objects.size();
+			for (int k = starting1; k < ending1; ++k){
+				liftedSMTProblem->startNewClause();
+				liftedSMTProblem->addUnificationToClause(k, significantTimePoint, false);
+				for (int l = starting2; l < ending2; ++l){
+					liftedSMTProblem->addUnificationToClause(l, significantTimePoint, true);
+				}
+				liftedSMTProblem->endClause();
+			}
+		}
+	}
+}
+
 void LiftedTranslator::addAtomMutex(int significantTimePoint){
 	int nProposition = myProblem.propositions.size();
 	int nOperator = myProblem.operators.size();
@@ -222,8 +251,8 @@ void LiftedTranslator::addSimpleEffectList (polarity plrty, const list <MyPropos
 	list <MyProposition*>::const_iterator itEnd = simpleEffectList.end();
 	for (; it != itEnd; ++it){
 		liftedSMTProblem->startNewClause();
-		liftedSMTProblem->addPartialActionToClause(partialAction, significantTimePoint - 1, false);
-		liftedSMTProblem->AddConditionToCluase(*it, partialAction->op->id, significantTimePoint, (plrty == E_POS));
+		liftedSMTProblem->addPartialActionToClause(partialAction, significantTimePoint, false);
+		liftedSMTProblem->AddConditionToCluase(*it, partialAction->op->id + 1, significantTimePoint, (plrty == E_POS));
 		liftedSMTProblem->endClause();
 	}
 }
@@ -235,7 +264,7 @@ void LiftedTranslator::addAssignmentList (const pc_list <assignment *> &assignme
 		liftedSMTProblem->startNewClause();
 		if (partialAction){
 			liftedSMTProblem->addPartialActionToClause(partialAction, significantTimePoint - 1, false);
-			liftedSMTProblem->AddConditionToCluase(*it, env, partialAction->op->id, significantTimePoint);
+			liftedSMTProblem->AddConditionToCluase(*it, env, partialAction->op->id + 1, significantTimePoint);
 		}else{
 			liftedSMTProblem->AddConditionToCluase(*it, env, 0, significantTimePoint);
 		}
@@ -249,8 +278,8 @@ void LiftedTranslator::addAssignmentList (const list <const assignment *> &assig
 	list <const assignment*>::const_iterator itEnd = assignmentEffects.end();
 	for (; it != itEnd; ++it){
 		liftedSMTProblem->startNewClause();
-		liftedSMTProblem->addPartialActionToClause(partialAction, significantTimePoint - 1, false);
-		liftedSMTProblem->AddConditionToCluase(*it, env, partialAction->op->id, significantTimePoint);
+		liftedSMTProblem->addPartialActionToClause(partialAction, significantTimePoint, false);
+		liftedSMTProblem->AddConditionToCluase(*it, env, partialAction->op->id + 1, significantTimePoint);
 		liftedSMTProblem->endClause();
 	}
 }
@@ -322,4 +351,34 @@ bool LiftedTranslator::solve(){
 
 	//try to solve the problem
 	return liftedSMTProblem->solve(goals);
+}
+
+
+void LiftedTranslator::extractSolution (ostream &sout){
+	int nOperator = myProblem.operators.size();
+	for (int i = 0; i < translatedLength - 1; ++i){
+		for (int j = 0; j < nOperator; ++j){
+			int nArgument = myProblem.operators[j]->argument.size();
+			for (int k = 0; k < nArgument; ++k){
+				int offset = myProblem.operators[j]->offset[k];
+				int nUnification = myProblem.operators[j]->argument[k]->objects.size();
+				int objectId;
+				for (objectId = 0; objectId < nUnification; ++objectId){
+					if (liftedSMTProblem->isUnificationUsed(offset + objectId, i)){
+						break;
+					}
+				}
+				if (k == 0){
+					if (objectId == nUnification){
+						break;
+					}
+					sout << "(" << myProblem.operators[j]->originalOperator->name->getName();
+				}
+				sout << " " << myProblem.operators[j]->argument[k]->objects[objectId]->originalObject->getName();
+				if (k == nArgument - 1){
+					sout << ")" << endl;
+				}
+			}
+		}
+	}
 }

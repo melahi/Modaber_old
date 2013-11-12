@@ -73,7 +73,7 @@ public:
 	list <MyProposition *> addEffect;
 	list <MyProposition *> deleteEffect;
 
-	map <func_term *, Inst::PNE *> variables;
+	map <const func_term *, Inst::PNE *> variables;
 
 
 	MyPartialOperator *partialOperator;

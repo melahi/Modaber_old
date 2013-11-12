@@ -87,7 +87,6 @@ public:
 
 	void write (ostream &sout);
 
-
 	MyAction();
 	virtual ~MyAction();
 };

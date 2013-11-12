@@ -120,12 +120,12 @@ bool MyPartialOperator::operator == (const MyPartialOperator &a) const{
 	if (op != a.op) return false;
 	if (argument.size() != a.argument.size()) return false;
 
-	map <string, MyType *>::iterator it1, itEnd, it2;
+	map <string, MyType *>::const_iterator it1, itEnd, it2;
 	it1 = argument.begin();
 	it2 = a.argument.begin();
 	itEnd = argument.end();
 	for (; it1 != itEnd; ++it1, ++it2){
-		if (it1->second != it2->second) return false;
+		if (it1->first != it2->first) return false;
 	}
 	return true;
 }
@@ -226,8 +226,17 @@ void MyPartialAction::preparePropositionList (list <const proposition *> &lifted
 		it = (*lftIt)->args->begin();
 		itEnd = (*lftIt)->args->end();
 
+
 		for (; it != itEnd; ++it){
-			parameters->push_back(objects[(*it)->getName()]->originalObject);
+			if (objects.find((*it)->getName()) != objects.end()){
+				parameters->push_back(objects[(*it)->getName()]->originalObject);
+			}else{
+				cout << "NOOOOOOOOO" << endl;
+				map <string, MyObject *>::iterator alakiIt;
+				for (alakiIt = objects.begin(); alakiIt != objects.end(); ++alakiIt){
+					cout << alakiIt->first << "==>" << alakiIt->second->originalObject->getName() << endl;
+				}
+			}
 		}
 
 		proposition prop((*lftIt)->head, parameters);

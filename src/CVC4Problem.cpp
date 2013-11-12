@@ -283,10 +283,10 @@ void CVC4Problem::print(){
 	vector <Expr> assertions = smt.getAssertions();
 	print (assertions);
 }
-int mine = 0;
+//int mine = 0;
 void CVC4Problem::print(vector <Expr> &expression){
-	mine++;
-	cout << mine << endl;
+//	mine++;
+//	cout << mine << endl;
 	for (size_t i = 0; i < expression.size(); i++){
 		if (expression[i].getKind() == kind::AND){
 			vector <Expr> child = expression[i].getChildren();
@@ -296,7 +296,7 @@ void CVC4Problem::print(vector <Expr> &expression){
 			cout << endl;
 		}
 	}
-	mine--;
+//	mine--;
 }
 
 

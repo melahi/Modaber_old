@@ -56,12 +56,12 @@ LiftedModaber::LiftedModaber(char *domainFilePath, char *problemFilePath, bool u
 	foundSolution = tryToSolve();
 	if (foundSolution){
 		cout << "The plan is: " << endl;
-//		translator.printSolution(cout);
+		myLiftedTranslator->extractSolution(cout);
 		cout << endl << endl;
 		cout << "Modaber finished his task!!! ;)" << endl;
 		cout << "*******************************" << endl;
 		ofstream fout ("solution");
-//		translator.printSolution(fout);
+		myLiftedTranslator->extractSolution(fout);
 	}
 }
 
