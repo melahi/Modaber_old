@@ -145,7 +145,7 @@ void LiftedTranslator::addExplanatoryAxioms (int significantTimePoint){
 
 
 		for (int j = 0; j < nOperators; ++j){
-			if (adder[j].size() || deleter[j].size()){
+			if (adder[j].size() || deleter[j].size() || (j == 0 && myProblem.propositions[i].adder.size() + myProblem.propositions[i].deleter.size() == 0)){
 
 				//Deleter actions
 				liftedSMTProblem->startNewClause();
@@ -183,7 +183,7 @@ void LiftedTranslator::addExplanatoryAxioms (int significantTimePoint){
 			modifier[(*pAIt)->op->id].push_back(*pAIt);
 		}
 		for (int j = 0; j < nOperators; ++j){
-			if (modifier[j].size()){
+			if (modifier[j].size() || (j == 0 && myProblem.variables[i].modifier.size() == 0)){
 				liftedSMTProblem->startNewClause();
 				liftedSMTProblem->AddEqualityCondition(i, j, significantTimePoint, i, j+1, significantTimePoint, true);
 				pAIt = modifier[j].begin();
@@ -210,6 +210,8 @@ void LiftedTranslator::addCompletingAction (int significantTimePoint){
 			ending1 = starting1 + myProblem.operators[i]->argument[j]->objects.size();
 			starting2 = myProblem.operators[i]->offset[(j + 1) % nArguments];
 			ending2 = starting2 + myProblem.operators[i]->argument[(j + 1) % nArguments]->objects.size();
+
+			//If a unification for an argument is true then at least one unification for the next argument is also should be true
 			for (int k = starting1; k < ending1; ++k){
 				liftedSMTProblem->startNewClause();
 				liftedSMTProblem->addUnificationToClause(k, significantTimePoint, false);
@@ -217,6 +219,16 @@ void LiftedTranslator::addCompletingAction (int significantTimePoint){
 					liftedSMTProblem->addUnificationToClause(l, significantTimePoint, true);
 				}
 				liftedSMTProblem->endClause();
+			}
+
+			//At most on unification for each argument should be true
+			for (int k = starting1; k < ending1; ++k){
+				for (int l = starting1; l < k; ++ l){
+					liftedSMTProblem->startNewClause();
+					liftedSMTProblem->addUnificationToClause(k, significantTimePoint, false);
+					liftedSMTProblem->addUnificationToClause(l, significantTimePoint, false);
+					liftedSMTProblem->endClause();
+				}
 			}
 		}
 	}

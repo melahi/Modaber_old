@@ -364,11 +364,7 @@ void MyProblem::assignIdToPropositions(){
 				break;
 			}
 		}
-		if (lastModifierOperator == -1){
-			CANT_HANDLE("Technically this proposition should not be static, but there is no action which affect on it");
-		}else{
-			it->ids[0] = nPropositionIDs++;
-		}
+		it->ids[0] = nPropositionIDs++;
 		for (int i = 1; i < nOperators; ++i){
 			if (i > lastModifierOperator){
 				it->ids[i] = -1;
@@ -412,11 +408,7 @@ void MyProblem::assignIdToVariables(){
 				break;
 			}
 		}
-		if (lastModifierOperator == -1){
-			CANT_HANDLE("Technically this proposition should not be static, but there is no action which affect on it");
-		}else{
-			it->ids[0] = nVariableIDs++;
-		}
+		it->ids[0] = nVariableIDs++;
 		for (int i = 1; i < nOperators; ++i){
 			if (i > lastModifierOperator){
 				it->ids[i] = -1;
