@@ -48,7 +48,7 @@ bool LiftedModaber::tryToSolve(){
 		foundSolution = translator.solve(nSignificantTimePoints);
 		cout << "end solving" << endl;
 		if (!foundSolution){
-			nSignificantTimePoints += 1;
+			nSignificantTimePoints += 5;
 		}else{
 			vector <pair <operator_ *, FastEnvironment> > solution;
 			translator.getSolution(solution);
