@@ -11,6 +11,12 @@ Planner="LiftedRangedModaber"
 Domain=( 'Depots' 'ZenoTravel' 'DriverLog' 'Rovers');
 DomainFile=( 'DepotsNum.pddl' 'zenonumeric.pddl' 'driverlogNumeric.pddl' 'NumRover.pddl');
 
+Domain=( 'Satellite');
+DomainFile=( 'metricSat.pddl' );
+
+Domain=( 'market');
+DomainFile=( 'domain.pddl' );
+
 
 
 #Set maximum memory limit
@@ -21,7 +27,7 @@ for (( j = 0; j < ${#Domain[*]} ; j++)) {
 	mkdir -p "${Planner}Results/${Domain[$j]}"
 }
 
-for (( i = 1; i <= 20; i++)) {
+for (( i = 1; i <= 9; i++)) {
 #Depots domain has 22 problems but we just try for first 20 problems of it; so we should try for other 2 problem later!
 	for (( j = 0; j < ${#Domain[*]} ; j++)) {
 		TheDomainFile="../../Problem/ipc2002/Tests1/${Domain[$j]}/Numeric/${DomainFile[$j]}"

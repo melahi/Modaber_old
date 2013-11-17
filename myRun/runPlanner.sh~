@@ -11,6 +11,9 @@ Planner="LiftedRangedModaber"
 Domain=( 'Depots' 'ZenoTravel' 'DriverLog' 'Rovers');
 DomainFile=( 'DepotsNum.pddl' 'zenonumeric.pddl' 'driverlogNumeric.pddl' 'NumRover.pddl');
 
+Domain=( 'Satellite');
+DomainFile=( 'metricSat.pddl' );
+
 
 
 #Set maximum memory limit
