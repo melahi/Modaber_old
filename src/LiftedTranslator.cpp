@@ -147,17 +147,17 @@ void LiftedTranslator::addPartialActions (int significantTimePoint){
 			continue;
 		}
 		//Creating FastEnvironment;
-		FastEnvironment env(it->objects.size());
+		FastEnvironment env(it->op->originalOperator->parameters->size());
 
 		var_symbol_list::iterator varIt, varItEnd;
 		varIt = it->op->originalOperator->parameters->begin();
 		varItEnd = it->op->originalOperator->parameters->end();
-
 		for (; varIt != varItEnd; ++varIt){
 			if (it->objects.find((*varIt)->getName()) != it->objects.end()){
 				env[*varIt] = it->objects[(*varIt)->getName()]->originalObject;
 			}
 		}
+
 		addAssignmentList(it->partialOperator->assignmentEffect, &env, significantTimePoint, &(*it));
 		addGoalList(it->partialOperator->comparisonPrecondition, &env, significantTimePoint, &(*it));
 	}

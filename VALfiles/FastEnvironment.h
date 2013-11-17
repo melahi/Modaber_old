@@ -29,7 +29,6 @@
 
 #include <vector>
 using std::vector;
-
 #include <list>
 #include <iterator>
 
@@ -109,6 +108,7 @@ public:
 	FastEnvironment(const FastEnvironment & other) : syms(other.syms) {};
 
 	FastEnvironment(int x) : syms(x,static_cast<const_symbol*>(0)) {};
+	~FastEnvironment() {}
 
 	void extend(int x)
 	{
