@@ -362,10 +362,7 @@ void LiftedCVC4Problem::print(){
 	vector <Expr> assertions = smt.getAssertions();
 	print (assertions);
 }
-//int mine = 0;
 void LiftedCVC4Problem::print(vector <Expr> &expression){
-//	mine++;
-//	cout << mine << endl;
 	for (size_t i = 0; i < expression.size(); i++){
 		if (expression[i].getKind() == kind::AND){
 			vector <Expr> child = expression[i].getChildren();
@@ -375,7 +372,6 @@ void LiftedCVC4Problem::print(vector <Expr> &expression){
 			cout << endl;
 		}
 	}
-//	mine--;
 }
 
 
@@ -438,12 +434,12 @@ int LiftedCVC4Problem::getVariableIndex (unsigned int variableId, unsigned int o
 	int ret = significantTimePoint * nVariables + myProblem.variables[variableId].ids[operatorId];
 	if (variableExpr[ret].isNull()){
 		Type real = em.realType();
-//		ostringstream oss;
-//		oss << "[";
-//		myProblem.variables[variableStateId].write(oss);
-//		oss << ", " << significantTimePoint << "]";
-//		variableExpr[ret] = Expr(em.mkVar(oss.str(),real));
-		variableExpr[ret] = Expr(em.mkVar(real));
+		ostringstream oss;
+		oss << "[";
+		myProblem.variables[variableId].originalPNE->write(oss);
+		oss << ", " << significantTimePoint << "]";
+		variableExpr[ret] = Expr(em.mkVar(oss.str(),real));
+//		variableExpr[ret] = Expr(em.mkVar(real));
 	}
 	return ret;
 }
@@ -458,12 +454,12 @@ int LiftedCVC4Problem::getPropositionIndex (unsigned int propositionId, unsigned
 	int ret = significantTimePoint * nPropositions + myProblem.propositions[propositionId].ids[operatorId];
 	if (propositionExpr[ret].isNull()){
 		Type boolean = em.booleanType();
-//		ostringstream oss;
-//		oss << "[";
-//		myProblem.propositions[proposition].write(oss);
-//		oss << ", " << significantTimePoint << "]";
-//		propositionExpr[ret] = Expr(em.mkVar(oss.str(), boolean));
-		propositionExpr[ret] = Expr(em.mkVar(boolean));
+		ostringstream oss;
+		oss << "[";
+		myProblem.propositions[propositionId].write(oss);
+		oss << ", " << significantTimePoint << "]";
+		propositionExpr[ret] = Expr(em.mkVar(oss.str(), boolean));
+//		propositionExpr[ret] = Expr(em.mkVar(boolean));
 	}
 	return ret;
 }
@@ -472,35 +468,22 @@ int LiftedCVC4Problem::getPropositionIndex (unsigned int propositionId, unsigned
 int LiftedCVC4Problem::getPartialActionIndex (MyPartialAction *partialAction, int significantTimePoint){
 	int ret = significantTimePoint * nPartialActions + partialAction->id;
 	if (partialActionExpr[ret].isNull()){
-		kind::Kind_t myKind;
-		vector <Expr> unifications;
-		if (partialAction->unificationId.size() != 0){
-			myKind = kind::AND;
-			map <string, int>::iterator it, itEnd;
-			it = partialAction->unificationId.begin();
-			itEnd = partialAction->unificationId.end();
-			for (; it != itEnd; ++it){
-				unifications.push_back(unificationExpr[getUnificationIndex(it->second + partialAction->op->offset[partialAction->partialOperator->placement[it->first]], significantTimePoint)]);
-			}
-		}else{
-			if (partialAction->op->argument.size() == 0){
-				CANT_HANDLE("AN OPERATOR WITH NO ARGUMENT, I DON'T HAVE ANY PLAN FOR IT!!!");
-				exit(1);
-			}
-			myKind = kind::OR;
-			int unificationId = partialAction->op->offset[0];
-			int endingUnificationID = partialAction->op->argument[0]->objects.size() + unificationId;
-			for (; unificationId < endingUnificationID; ++unificationId){
-				unifications.push_back(unificationExpr[getUnificationIndex(unificationId, significantTimePoint)]);
-			}
+		Type boolean = em.booleanType();
+		map <string, int>::iterator it, itEnd;
+		it = partialAction->unificationId.begin();
+		itEnd = partialAction->unificationId.end();
+		ostringstream oss;
+		oss << "[";
+		oss << "(" << partialAction->op->originalOperator->name->getName();
+		for (; it != itEnd; ++it){
+			int unificationIndex = it->second + partialAction->op->offset[partialAction->partialOperator->placement[it->first]];
+			oss << ' ' << partialAction->partialOperator->argument[it->first]->objects[it->second]->originalObject->getName() << ":" << unificationIndex;
 		}
-		if (unifications.size() == 0){
-			partialActionExpr[ret] = falseExpr;
-		}else if (unifications.size() == 1){
-			partialActionExpr[ret] = unifications[0];
-		}else{
-			partialActionExpr[ret] = em.mkExpr(myKind, unifications);
-		}
+		oss << ")";
+		oss << ", " << significantTimePoint << "]";
+		partialActionExpr[ret] = Expr(em.mkVar(oss.str(), boolean));
+//		partialActionExpr[ret] = Expr(em.mkVar(boolean));
+
 	}
 	return ret;
 }
@@ -511,12 +494,10 @@ int LiftedCVC4Problem::getUnificationIndex (int unificationId, int significantTi
 	int ret = significantTimePoint * nUnifications + unificationId;
 	if (unificationExpr[ret].isNull()){
 		Type boolean = em.booleanType();
-//		ostringstream oss;
-//		oss << "[";
-//		myProblem.actions[action].write(oss);
-//		oss << ", " << significantTimePoint << "]";
-//		actionExpr[ret] = Expr (em.mkVar (oss.str(), boolean));
-		unificationExpr[ret] = Expr (em.mkVar (boolean));
+		ostringstream oss;
+		oss << "[" << unificationId << ", " << significantTimePoint << "]";
+		unificationExpr[ret] = Expr (em.mkVar (oss.str(), boolean));
+//		unificationExpr[ret] = Expr (em.mkVar (boolean));
 	}
 	return ret;
 }

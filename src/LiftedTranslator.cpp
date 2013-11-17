@@ -87,6 +87,51 @@ void LiftedTranslator::addPartialActions (int significantTimePoint){
 	it = myProblem.partialAction.begin();
 	itEnd = myProblem.partialAction.end();
 	for (; it != itEnd; ++it){
+
+		if (it->unificationId.size() != 0){
+			map <string, int>::iterator it1, it1End;
+			it1 = it->unificationId.begin();
+			it1End = it->unificationId.end();
+			liftedSMTProblem->startNewClause();
+			for (; it1 != it1End; ++it1){
+				liftedSMTProblem->addUnificationToClause(it1->second + it->op->offset[it->partialOperator->placement[it1->first]], significantTimePoint, false);
+			}
+			liftedSMTProblem->addPartialActionToClause(&(*it), significantTimePoint, true);
+			liftedSMTProblem->endClause();
+
+			it1 = it->unificationId.begin();
+			for (; it1 != it1End; ++it1){
+				liftedSMTProblem->startNewClause();
+				liftedSMTProblem->addPartialActionToClause(&(*it), significantTimePoint, false);
+				liftedSMTProblem->addUnificationToClause(it1->second + it->op->offset[it->partialOperator->placement[it1->first]], significantTimePoint, true);
+				liftedSMTProblem->endClause();
+			}
+		}else{
+			if (it->op->argument.size() == 0){
+				CANT_HANDLE("AN OPERATOR WITH NO ARGUMENT, I DON'T HAVE ANY PLAN FOR IT!!!");
+				exit(1);
+			}
+			int unificationId = it->op->offset[0];
+			int endingUnificationID = it->op->argument[0]->objects.size() + unificationId;
+			for (; unificationId < endingUnificationID; ++unificationId){
+				liftedSMTProblem->startNewClause();
+				liftedSMTProblem->addUnificationToClause(unificationId, significantTimePoint, false);
+				liftedSMTProblem->addPartialActionToClause(&(*it), significantTimePoint, true);
+				liftedSMTProblem->endClause();
+			}
+
+
+			liftedSMTProblem->startNewClause();
+			unificationId = it->op->offset[0];
+			liftedSMTProblem->addPartialActionToClause(&(*it), significantTimePoint, false);
+			for (; unificationId < endingUnificationID; ++unificationId){
+				liftedSMTProblem->addUnificationToClause(unificationId, significantTimePoint, true);
+			}
+			liftedSMTProblem->endClause();
+		}
+
+
+
 		if (it->isValid == false){
 			liftedSMTProblem->startNewClause();
 			liftedSMTProblem->addPartialActionToClause(&(*it), significantTimePoint, false);
