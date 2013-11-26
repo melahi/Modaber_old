@@ -3,8 +3,8 @@
 #In the name of God
 
 
-Algorithm="Simple"
 Algorithm="Lifted"
+Algorithm="Simple"
 NPG="1"
 
 #Set maximum memory limit

@@ -62,6 +62,7 @@ CVC4Problem::CVC4Problem (int nVariables, int nProposition, int nAction): smt(&e
 void CVC4Problem::startNewClause(){
 	buildingClause.clear();
 	ignoreCluase = false;
+	notValid = false;
 }
 
 //By calling this function, you mean the clause is already built and it should be inserted to the SMT problem
@@ -171,6 +172,9 @@ void CVC4Problem::AddConditionToCluase(const comparison* numericalCondition, Fas
 		CANT_HANDLE ("We don't know the operator kind of numerical condition!!!");
 		exit(0);
 	}
+	if (notValid){
+		return;
+	}
 	buildingClause.push_back(em.mkExpr (operatorKind, left, right));
 }
 
@@ -210,7 +214,9 @@ void CVC4Problem::AddConditionToCluase(const assignment* numericalAssignment, Fa
 		cerr << "I think the program should never reach at this line, BTW we just was processing a numerical assignment!" << endl;
 		exit (1);
 	}
-
+	if (notValid){
+		return;
+	}
 	if (assignmentOperator != kind::EQUAL){
 		Expr variableInPreviousTime = expressionConvertor.convertExpressionToCVC4Expr(numericalAssignment->getFTerm());
 		result = em.mkExpr(assignmentOperator, variableInPreviousTime, result);

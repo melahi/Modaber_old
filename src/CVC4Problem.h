@@ -101,6 +101,9 @@ public:
 	void inActivePermanentChange() { permanentChange = false;}
 	virtual ~CVC4Problem();
 
+	bool ignoreCluase;
+	bool notValid;
+
 private:
 
 	static ExprManager em;
@@ -119,7 +122,6 @@ private:
 	int nProposition;
 	int nAction;
 
-	bool ignoreCluase;
 	bool permanentChange;
 
 
@@ -183,6 +185,10 @@ private:
 			if (functionTerm){
 				PNE pne = PNE(functionTerm, env);
 				PNE *pne2 = instantiatedOp::findPNE(&pne);
+				if (!pne2){
+					cvc4Problem->notValid = true;
+					return Expr();
+				}
 				if (pne2->getStateID() == -1){
 					double myDouble = myProblem.initialValue[pne2->getGlobalID()];
 					int nominator, denominator;
