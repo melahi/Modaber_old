@@ -13,9 +13,7 @@
 #include <map>
 #include <set>
 #include <iostream>
-#include "MyAction.h"
 #include "MyPartialAction.h"
-#include "MyStateVariable.h"
 #include "VALfiles/instantiation.h"
 
 
@@ -29,52 +27,24 @@ namespace mdbr{
 class MyVariable;
 class MyProposition;
 
-class MyAction;
 
 class MyPartialAction;
 
-class MyStateVariable;
-class MyStateValue;
 
 
 
 class MyProposition {
 public:
 
-	int firstVisitedLayer;
-
-	map <MyProposition *, int> lastLayerMutexivity;
-
-	list <MyAction *> provider;
-
-	bool checkMutex (int layerNumber, MyProposition *otherProposition);
-
-	bool isMutex (int layerNumber, MyProposition *otherProposition);
-
-	void insertMutex (int layerNumber, MyProposition *otherProposition);
-
-	void visiting (int layerNumber, MyAction *action);
-
-
 	Literal *originalLiteral;
 
-	MyStateValue *stateValue;
-
-	list <MyAction *> adderActions;
-	list <MyAction *> deleterActions;
-	list <MyAction *> userActions;    //The actions which need this proposition as their precondition
-
-
-
 	vector <int> ids;  //id [i] means the id of proposition before execution of operator i
-
-	bool initialValue;
 
 	list <MyPartialAction *> adder;
 	list <MyPartialAction *> deleter;
 
-	MyProposition(Literal *originalLiteral):firstVisitedLayer(-1), originalLiteral(originalLiteral), stateValue(0), ids(current_analysis->the_domain->ops->size(), -2), initialValue(false){}
-	MyProposition():firstVisitedLayer(-1), originalLiteral(0), stateValue(0), ids(current_analysis->the_domain->ops->size(), -2), initialValue(false) {}
+	MyProposition(Literal *originalLiteral):originalLiteral(originalLiteral), ids(current_analysis->the_domain->ops->size(), -2){}
+	MyProposition():originalLiteral(0), ids(current_analysis->the_domain->ops->size(), -2) {}
 
 	virtual void write (ostream &sout);
 
@@ -88,9 +58,6 @@ public:
 
 	PNE *originalPNE;
 
-	list <MyAction *> modifierActions;
-	list <MyAction *> userActions;
-
 
 	list <MyPartialAction *> modifier;
 
@@ -99,12 +66,9 @@ public:
 	 * assignment and the assignee be an important one, then the variable is also should
 	 * count as important variable!
 	 */
-	bool visitInPrecondition;
 
-	double initialValue;
-
-	MyVariable (PNE *originalPNE): ids(current_analysis->the_domain->ops->size(), -2), originalPNE(originalPNE), visitInPrecondition(false), initialValue(0){}
-	MyVariable (): ids(current_analysis->the_domain->ops->size(), -2), originalPNE(0), visitInPrecondition(false), initialValue(0){}
+	MyVariable (PNE *originalPNE): ids(current_analysis->the_domain->ops->size(), -2), originalPNE(originalPNE){}
+	MyVariable (): ids(current_analysis->the_domain->ops->size(), -2), originalPNE(0) {}
 
 	~MyVariable () { }
 

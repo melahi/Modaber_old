@@ -3,11 +3,8 @@
 #include "Modaber.h"
 #include "VALfiles/TIM.h"
 #include "ProblemPrinter.h"
-#include "Translator.h"
 #include <iostream>
 #include <fstream>
-#include "CVC4Problem.h"
-#include "PlanningGraph.h"
 #include "MyProblem.h"
 
 using namespace std;
@@ -50,18 +47,12 @@ void Modaber::instantiation(char *domainFile, char *problemFile){
 //	myPrinter.printProblem();
 }
 
-void Modaber::initialization(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph, bool usingSASPlus){
+void Modaber::initialization(char *domainFilePath, char *problemFilePath){
 	instantiation(domainFilePath, problemFilePath);
-	myProblem.initializing(usingSASPlus);
-	nPG = new PlanningGraph();
-	this->usingPlanningGraph = usingPlanningGraph;
-	if (!usingPlanningGraph){
-		nPG->ignoreGraph();
-	}
+	myProblem.initializing();
 }
 
 
 Modaber::~Modaber(){
-	delete (nPG);
 }
 

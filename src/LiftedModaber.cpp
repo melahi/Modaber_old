@@ -14,14 +14,11 @@ using namespace Inst;
 
 using namespace mdbr;
 
-void LiftedModaber::initialization (char *domainFilePath, char *problemFilePath, bool usingPlanningGraph){
-	Modaber::initialization(domainFilePath, problemFilePath, usingPlanningGraph, false);
+void LiftedModaber::initialization (char *domainFilePath, char *problemFilePath){
+	Modaber::initialization(domainFilePath, problemFilePath);
 
 
 
-	if (usingPlanningGraph){
-		nPG->constructingGraph();
-	}
 	myProblem.liftedInitializing();
 
 	liftedSMTProblem = new LiftedCVC4Problem(myProblem.nVariableIDs, myProblem.nPropositionIDs, myProblem.nPartialActions, myProblem.nUnification);
@@ -50,8 +47,8 @@ bool LiftedModaber::tryToSolve(){
 
 
 
-LiftedModaber::LiftedModaber(char *domainFilePath, char *problemFilePath, bool usingPlanningGraph) {
-	initialization(domainFilePath, problemFilePath, usingPlanningGraph);
+LiftedModaber::LiftedModaber(char *domainFilePath, char *problemFilePath) {
+	initialization(domainFilePath, problemFilePath);
 	bool foundSolution;
 	foundSolution = tryToSolve();
 	if (foundSolution){

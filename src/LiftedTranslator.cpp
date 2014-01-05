@@ -39,7 +39,6 @@ void LiftedTranslator::prepare (int length){
 		addPartialActions(translatedLength - 1);
 		addCompletingAction(translatedLength - 1);
 		addExplanatoryAxioms(translatedLength - 1);
-		addAtomMutex(translatedLength - 1);
 	}
 	liftedSMTProblem->inActivePermanentChange();
 
@@ -279,29 +278,6 @@ void LiftedTranslator::addCompletingAction (int significantTimePoint){
 	}
 }
 
-void LiftedTranslator::addAtomMutex(int significantTimePoint){
-	int nProposition = myProblem.propositions.size();
-	int nOperator = myProblem.operators.size();
-	for (int i = 0; i < nProposition; ++i){
-		for (int j = 0; j < i; ++j){
-			if (myProblem.propositions[i].isMutex ((1 << 20), &(myProblem.propositions[j]))){
-				int lastId1, lastId2;
-				lastId1 = lastId2 = -1;
-				for (int k = 0; k < nOperator; ++k){
-					if (myProblem.propositions[i].ids[k] == lastId1 && myProblem.propositions[j].ids[k]){
-						continue;
-					}
-					liftedSMTProblem->startNewClause();
-					liftedSMTProblem->addConditionToCluase(i, k, significantTimePoint, false);
-					liftedSMTProblem->addConditionToCluase(j, k, significantTimePoint, false);
-					liftedSMTProblem->endClause();
-					lastId1 = myProblem.propositions[i].ids[k];
-					lastId2 = myProblem.propositions[j].ids[k];
-				}
-			}
-		}
-	}
-}
 
 void LiftedTranslator::addSimpleEffectList (polarity plrty, const list <MyProposition *> &simpleEffectList, int significantTimePoint, MyPartialAction *partialAction){
 	list <MyProposition*>::const_iterator it = simpleEffectList.begin();

@@ -1,7 +1,6 @@
 //In the name of God
 
 
-#include "SimpleModaber.h"
 #include "LiftedModaber.h"
 #include <iostream>
 #include <string>
@@ -9,19 +8,19 @@
 using namespace std;
 using namespace mdbr;
 
-enum algorithm {SimpleAlgorithm, LiftedAlgorithm};
+//enum algorithm {SimpleAlgorithm, LiftedAlgorithm};
 
 
 int main (int argc, char * argv[]){
-	bool usingPlanningGraph = true;
+//	bool usingPlanningGraph = true;
 	int domainFileIndex = -1;
 	int problemFileIndex = -1;
-	algorithm alg = LiftedAlgorithm;
+//	algorithm alg = LiftedAlgorithm;
 
 
 	//Parsing arguments
 	for (int i = 1; i < argc; ++i){
-		if (argv[i][0] == '-' && argv[i][1] == '-'){
+/*		if (argv[i][0] == '-' && argv[i][1] == '-'){
 			//This argument is a parameter
 			if ( strcmp(argv[i], "--algorithm") == 0){
 				++i;
@@ -30,11 +29,11 @@ int main (int argc, char * argv[]){
 				}else if (strcmp (argv[i], "Lifted") == 0){
 					alg = LiftedAlgorithm;
 				}
-/*
+
 				else if ( strcmp (argv[++i], "Evolutionary") == 0){
 					alg = EvolutionaryAlgorithm;
 				}
-*/
+
 				else  {
 					cerr << "undefined algorithm: " << argv[i] << endl;
 					exit (0);
@@ -51,7 +50,8 @@ int main (int argc, char * argv[]){
 			}else {
 				cerr << "undefined parameter: " << argv[i] << endl;
 			}
-		}else if (domainFileIndex == -1){
+		}else{
+*/			if (domainFileIndex == -1){
 			domainFileIndex = i;
 		}else{
 			problemFileIndex = i;
@@ -66,6 +66,7 @@ int main (int argc, char * argv[]){
 	//Print input information
 	cout << "Domain: " << argv[domainFileIndex] << endl;
 	cout << "Problem: " << argv[problemFileIndex] << endl;
+/*
 	cout << "Using Planning Graph: " << (usingPlanningGraph ? "Yes" : "No") << endl;
 	cout << "Algorithm: ";
 	if (alg == SimpleAlgorithm){
@@ -73,14 +74,15 @@ int main (int argc, char * argv[]){
 	}else if (alg == LiftedAlgorithm) {
 		cout << "Lifted Algorithm" << endl;
 	}
+*/
 
 
-	//Running planner
-	if (alg == SimpleAlgorithm){
-		SimpleModaber simpleModaber (argv[domainFileIndex], argv[problemFileIndex], usingPlanningGraph);
-	}else {
-		LiftedModaber liftedModaber (argv[domainFileIndex], argv[problemFileIndex], usingPlanningGraph);
-	}
+//	//Running planner
+//	if (alg == SimpleAlgorithm){
+//		SimpleModaber simpleModaber (argv[domainFileIndex], argv[problemFileIndex], usingPlanningGraph);
+//	}else {
+		LiftedModaber liftedModaber (argv[domainFileIndex], argv[problemFileIndex]);
+//	}
 /*
 	else{
 		EvolutionaryModaber evolutionaryModaber(argv[domainFileIndex], argv[problemFileIndex], usingPlanningGraph);

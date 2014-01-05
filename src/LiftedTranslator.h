@@ -6,7 +6,6 @@
 #include "LiftedCVC4Problem.h"
 #include "VALfiles/instantiation.h"
 #include "VALfiles/FastEnvironment.h"
-#include "SketchyPlan.h"
 #include "MyTimer.h"
 #include <ptree.h>
 #include "Utilities.h"
@@ -30,7 +29,6 @@ private:
 	void addPartialActions(int significantTimePoint);
 	void addExplanatoryAxioms(int significantTimePoint);
 	void addCompletingAction (int significantTimePoint);
-	void addAtomMutex(int significantTimePoint);
 
 public:
 	int translatedLength;

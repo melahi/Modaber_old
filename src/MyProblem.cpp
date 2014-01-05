@@ -18,161 +18,6 @@ namespace mdbr {
 
 MyProblem myProblem;
 
-
-void MyProblem::filterVariables(){
-	int nVariables = variables.size();
-
-	for (int i = 0; i < nVariables; i++){
-
-		if (variables[i].visitInPrecondition == true){
-			continue;
-		}
-
-		list <MyAction *>::iterator it, itEnd;
-		it = variables[i].userActions.begin();
-		itEnd = variables[i].userActions.end();
-		for (; it != itEnd; ++it){
-			(*it)->variableNeeded.erase(&variables[i]);
-		}
-		it = variables[i].modifierActions.begin();
-		itEnd = variables[i].modifierActions.end();
-		for (; it != itEnd; ++it){
-			(*it)->modifyingVariable.erase(&variables[i]);
-		}
-	}
-}
-
-void MyProblem::buildingDTG(){
-	int nActions = actions.size();
-	for (int i = 0; i < nActions; i++){
-		vector <int> deleteStateValue (stateVariables.size(), -1);
-		vector <int> addStateValue (stateVariables.size(), -1);
-		set <MyProposition*>::iterator it1, itEnd1;
-		list <MyProposition*>::iterator it2, itEnd2;
-		itEnd1 = actions[i].deleteList.end();
-		itEnd2 = actions[i].addList.end();
-		for (it1 = actions[i].deleteList.begin(); it1 != itEnd1; ++it1){
-			if ((*it1)->stateValue != NULL){
-				deleteStateValue[ (*it1)->stateValue->theStateVariable->variableId ] = (*it1)->stateValue->valueId;
-			}
-		}
-		for (it2 = actions[i].addList.begin(); it2 != itEnd2; ++it2){
-			if ((*it2)->stateValue != NULL){
-				addStateValue[ (*it2)->stateValue->theStateVariable->variableId ] = (*it2)->stateValue->valueId;
-			}
-		}
-		int nStateVariables = stateVariables.size();
-		for (int j = 0; j < nStateVariables; j++){
-			if (deleteStateValue[j] != -1){
-				if (addStateValue[j] != -1){
-					stateVariables[j].domain[addStateValue[j]].providers[deleteStateValue[j]].push_back(&actions[i]);
-					if (!isVisited(stateVariables[j].domain[addStateValue[j]].firstVisitedLayer, actions[i].firstVisitedLayer + 1)){
-						stateVariables[j].domain[addStateValue[j]].firstVisitedLayer = actions[i].firstVisitedLayer + 1;
-					}
-				}else { /* if addStateValue[j] == -1 means the action change the corresponding state value to the "<none of those>" state value */
-					stateVariables[j].domain[stateVariables[j].domain.size() - 1].providers[deleteStateValue[j]].push_back(&actions[i]);
-					if (!isVisited(stateVariables[j].domain[stateVariables[j].domain.size() - 1].firstVisitedLayer, actions[i].firstVisitedLayer + 1)){
-						stateVariables[j].domain[addStateValue[j]].firstVisitedLayer = actions[i].firstVisitedLayer + 1;
-					}
-				}
-			}else if (addStateValue[j] != -1){
-				stateVariables[j].domain[addStateValue[j]].providers[stateVariables[j].domain.size() - 1].push_back(&actions[i]);
-				if (!isVisited(stateVariables[j].domain[addStateValue[j]].firstVisitedLayer, actions[i].firstVisitedLayer + 1)){
-					stateVariables[j].domain[addStateValue[j]].firstVisitedLayer = actions[i].firstVisitedLayer + 1;
-				}
-			}
-		}
-	}
-}
-
-
-void MyProblem::readingSASPlusFile(){
-	map <string, MyProposition*> propositionName;
-	int propositionsSize = propositions.size();
-	for (int i = 0; i < propositionsSize; i++){
-		ostringstream sout;
-		propositions[i].originalLiteral->myWrite(sout);
-		propositionName [sout.str()] = &(propositions[i]);
-	}
-
-
-	fstream fin ("test.groups");
-
-	int nStateVariables;
-	fin >> nStateVariables;
-
-	string line;
-	getline(fin, line);
-
-	stateVariables.resize(nStateVariables);
-	for (int i = 0; i < nStateVariables; i++){
-		getline(fin, line);
-		int domainSize;
-		fin >> domainSize;
-		stateVariables[i].domain.resize(domainSize);
-		stateVariables[i].variableId = i;
-		getline(fin, line);
-		for (int j = 0; j < domainSize; j++){
-			getline(fin, line);
-			size_t index = line.find("Atom ");
-			if (index != string::npos){
-				index += 5;   /* strlen("Atom "); */
-				string theName = line.substr(index);
-				stateVariables[i].domain[j].initialize(j, propositionName[theName], &(stateVariables[i]));
-			}else{
-				index = line.find ("<none of those>");
-				if (index != string::npos){
-					stateVariables[i].domain[j].initialize(j, NULL, &(stateVariables[i]));
-				}else{
-					CANT_HANDLE("can't handle some state value!!!!");
-				}
-			}
-		}
-	}
-}
-
-void MyProblem::updateGoalValues (){
-
-	goalValue.resize(stateVariables.size(), NULL);
-
-	FastEnvironment env(0);
-	updateGoalValues(current_analysis->the_problem->the_goal, &env);
-
-}
-void MyProblem::updateGoalValues (goal *the_goal, FastEnvironment *env){
-	const simple_goal *simple = dynamic_cast<const simple_goal *>(the_goal);
-	if (simple){
-
-		Literal lit (simple->getProp(), env);
-		Literal *lit2 = instantiatedOp::findLiteral(&lit);
-
-		if (!lit2){
-			CANT_HANDLE("Warning: can't find some literal in creating state values!!!");
-			lit2->write(cerr);
-			return;
-		}
-
-		if (lit2->getStateID() == -1){
-			return;
-		}
-
-		MyStateValue *stateValue = myProblem.propositions[lit2->getStateID()].stateValue;
-		goalValue[stateValue->theStateVariable->variableId] = stateValue;
-		return;
-	}
-	const conj_goal *conjunctive = dynamic_cast<const conj_goal *>(the_goal);
-	if (conjunctive){
-		const goal_list *goalList = conjunctive->getGoals();
-		goal_list::const_iterator it = goalList->begin();
-		goal_list::const_iterator itEnd = goalList->end();
-		for (; it != itEnd; it++){
-			updateGoalValues(*it, env);
-		}
-		return;
-	}
-	CANT_HANDLE("Can't create some state value from some goals!!!");
-}
-
 void MyProblem::updateInitialLayer(){
 
 	//Find initial value for variables
@@ -189,29 +34,13 @@ void MyProblem::updateInitialLayer(){
 		if (pne2 && numExpr && (*it)->getOp() == E_ASSIGN){
 			double theInitialValue = numExpr->double_value();
 			initialValue[pne2->getGlobalID()] = theInitialValue;
-			if (pne2->getStateID() != -1){
-				variables[pne2->getStateID()].initialValue = theInitialValue;
-			}
 		}else{
 			CANT_HANDLE("Can't find Some Initial Value ");
 		}
 	}
-
-	//Find initial value for propositions
-	pc_list<simple_effect*>::const_iterator it1 = current_analysis->the_problem->initial_state->add_effects.begin();
-	pc_list<simple_effect*>::const_iterator it1End = current_analysis->the_problem->initial_state->add_effects.end();
-
-	for (; it1 != it1End; it1++){
-		Literal lit ((*it1)->prop, &env);
-		Literal *lit2 = instantiatedOp::findLiteral(&lit);
-		if (lit2->getStateID() != -1){
-			propositions[lit2->getStateID()].initialValue = true;
-		}
-	}
-
 }
 
-void MyProblem::initializing(bool usingSASPlus){
+void MyProblem::initializing(){
 
 	//Preparing propositions
 	int nPropositions = instantiatedOp::howManyNonStaticLiterals();
@@ -238,28 +67,6 @@ void MyProblem::initializing(bool usingSASPlus){
 	}
 
 	updateInitialLayer();
-
-	int nAction = instantiatedOp::howMany();
-	actions.resize(nAction, MyAction());
-
-	//Preparing actions
-	for (int i = 0; i < nAction; i++){
-		actions[i].initialize(instantiatedOp::getInstOp(i));
-	}
-
-
-	filterVariables();
-
-	for (int i = 0; i < nAction; i++){
-		actions[i].computeStaticMutex();
-	}
-
-	this->usingSASPlus = usingSASPlus;
-	if (usingSASPlus){
-		readingSASPlusFile();
-		buildingDTG();
-		updateGoalValues();
-	}
 
 //	write(cout);
 }
@@ -433,25 +240,12 @@ void MyProblem::write(ostream &sout){
 		sout << endl;
 	}
 
-	sout << "State variables: " << stateVariables.size() << endl;
-	for (unsigned int i = 0; i < stateVariables.size(); i++){
-		stateVariables[i].write(sout);
-		sout << endl;
-	}
-
 	sout << "Variables: " << instantiatedOp::howManyNonStaticPNEs() << endl;
 	for (unsigned int i = 0; i < variables.size(); i++){
 		sout << i << ' ' << variables[i].originalPNE->getStateID() << ' ';
 		variables[i].originalPNE->write(sout);
 		sout << endl;
 	}
-	sout << "Actions: " << instantiatedOp::howMany() << endl;
-	for (unsigned int i = 0; i < actions.size(); i++){
-		sout << i << ' ' << actions[i].valAction->getID() << ' ';
-		actions[i].valAction->write(sout);
-		sout << endl;
-	}
-
 
 	//Printing Types
 	map <VAL::pddl_type *, MyType>::iterator typeIt, typeItEnd;
@@ -485,25 +279,5 @@ void MyProblem::writeType (ostream &sout, MyType *type, int indent){
 	}
 }
 
-void MyProblem::writeDTG(ostream &sout){
-	int nStateVariables = stateVariables.size();
-	for (int i = 0; i < nStateVariables; ++i){
-		int domainSize = stateVariables[i].domain.size();
-		sout << "Variable: " << i << endl;
-		for (int j = 0; j < domainSize; ++j){
-			for (int k = 0; k < domainSize; ++k){
-				sout << "(" << j << ',' << k << ")  ==>  ";
-				list <MyAction*>::iterator it, itEnd;
-				it = stateVariables[i].domain[j].providers[k].begin();
-				itEnd = stateVariables[i].domain[j].providers[k].end();
-				for (; it != itEnd; ++it){
-					(*it)->write(sout);
-				}
-				sout << endl;
-			}
-		}
-		sout << "--------------------------------------------------------" << endl;
-	}
-}
 
 } /* namespace mdbr */
