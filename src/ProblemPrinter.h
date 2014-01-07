@@ -82,6 +82,12 @@ public:
 			for_each(goalList->begin(), goalList->end(), *this);
 			return;
 		}
+		const preference *thePreference = dynamic_cast <const preference *> (gl);
+		if (thePreference){
+			cout << "--- Preference: " << thePreference->getName() << " ---"<< endl;
+			(*this)(thePreference->getGoal());
+			return;
+		}
 		CANT_HANDLE("GOAL");
 	}
 

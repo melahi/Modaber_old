@@ -11,8 +11,9 @@
 using namespace VAL;
 using namespace Inst;
 
-
 using namespace mdbr;
+
+
 
 
 void LiftedTranslator::prepareGoals() {
@@ -278,6 +279,18 @@ void LiftedTranslator::addCompletingAction (int significantTimePoint){
 	}
 }
 
+void LiftedTranslator::addMetric (double bound, int significantTimePoint){
+	comparison_op compOp;
+	if (current_analysis->the_problem->metric->opt == E_MINIMIZE){
+		compOp = E_LESS;
+	}else{
+		compOp = E_GREATER;
+	}
+	FastEnvironment env(0);
+	liftedSMTProblem->startNewClause();
+	liftedSMTProblem->AddConditionToCluase(current_analysis->the_problem->metric->expr, &env, 0, compOp, bound, significantTimePoint);
+	liftedSMTProblem->endClause();
+}
 
 void LiftedTranslator::addSimpleEffectList (polarity plrty, const list <MyProposition *> &simpleEffectList, int significantTimePoint, MyPartialAction *partialAction){
 	list <MyProposition*>::const_iterator it = simpleEffectList.begin();
@@ -352,6 +365,31 @@ void LiftedTranslator::addGoal (const goal *gl, FastEnvironment *env, int signif
 		}
 		return;
 	}
+	const preference *thePreference = dynamic_cast <const preference *> (gl);
+	return;
+	if (thePreference){
+		list <const simple_goal *> softGoals;
+		findGoalList(thePreference->getGoal(), softGoals);
+		list <const simple_goal *>::iterator it, itEnd;
+		itEnd = softGoals.end();
+		Expr preferenceExpr = liftedSMTProblem->getPreferenceExpr(thePreference->getName());
+		it = softGoals.begin();
+		liftedSMTProblem->startNewClause();
+		for (; it != itEnd; ++it){
+			liftedSMTProblem->addLiteral((((*it)->getPolarity() == E_POS) ? E_NEG : E_POS), (*it)->getProp(), env, 0, significantTimePoint);
+		}
+		liftedSMTProblem->AddEqualityCondition(preferenceExpr, 0);
+		liftedSMTProblem->endClause();
+		it = softGoals.begin();
+		for (; it != itEnd; ++it){
+			liftedSMTProblem->startNewClause();
+			liftedSMTProblem->addLiteral((*it)->getPolarity(), (*it)->getProp(), env, 0, significantTimePoint);
+			liftedSMTProblem->AddEqualityCondition(preferenceExpr, 1);
+			liftedSMTProblem->endClause();
+		}
+		return;
+	}
+
 	CANT_HANDLE("can't translate some GOAL");
 }
 
@@ -378,12 +416,32 @@ void LiftedTranslator::addGoalList (const list <MyProposition *> &preconditionLi
 	}
 }
 
+void LiftedTranslator::findGoalList (const goal *gl, list <const simple_goal *> &returningList){
+	const simple_goal *simple = dynamic_cast<const simple_goal *>(gl);
+	if (simple){
+		returningList.push_back(simple);
+		return;
+	}
+	const conj_goal *conjunctive = dynamic_cast<const conj_goal *>(gl);
+	if (conjunctive){
+		const goal_list *goalList = conjunctive->getGoals();
+		goal_list::const_iterator it = goalList->begin();
+		goal_list::const_iterator itEnd = goalList->end();
+		for (; it != itEnd; it++){
+			findGoalList(*it, returningList);
+		}
+		return;
+	}
+	CANT_HANDLE("can't handle some goal in findingGoalList");
+}
+
 
 bool LiftedTranslator::solve(){
 
 
 	//try to solve the problem
 	return liftedSMTProblem->solve(goals);
+	return true;
 }
 
 

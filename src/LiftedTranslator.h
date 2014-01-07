@@ -29,6 +29,7 @@ private:
 	void addPartialActions(int significantTimePoint);
 	void addExplanatoryAxioms(int significantTimePoint);
 	void addCompletingAction (int significantTimePoint);
+	void addMetric (double bound, int significantTimePoint);
 
 public:
 	int translatedLength;
@@ -59,6 +60,7 @@ private:
 
 	void addGoalList (const list <const comparison* > &gls, FastEnvironment *env, int significantTimePoint, MyPartialAction *partialAction);
 	void addGoalList (const list <MyProposition *> &simpleEffectList, int significantTimePoint, MyPartialAction *partialAction);
+	void findGoalList (const goal *gl, list <const simple_goal *> &returningList);
 
 };
 

@@ -54,9 +54,12 @@ public:
 
 	//Add new numerical condition to the building clause
 	void AddConditionToCluase(const comparison* numericalCondition, FastEnvironment *env, int operatorId, int significantTimePoint);
+	void AddConditionToCluase(const expression *leftExpression, FastEnvironment *env, int operatorId, comparison_op compOp, double rightValue, int significantTimePoint);
 
 	//Add new numerical assignment to the building clause
 	void AddConditionToCluase(const assignment* numericalAssignment, FastEnvironment *env, int operatorId, int significantTimePoint);
+
+	void AddEqualityCondition (Expr expr, double value);
 
 	void AddEqualityCondition (int variableId1, int operatorId1, int significantTimePoint1, int variableId2, int operatorId2, int significantTimePoint2, bool polarity);
 
@@ -108,6 +111,7 @@ public:
 	int nUnifications;
 
 
+	map <string, Expr> preferenceExpr;
 	vector <Expr> variableExpr;
 	vector <Expr> propositionExpr;
 	vector <Expr> unificationExpr;
@@ -130,6 +134,9 @@ public:
 	//find and return the index of corresponding PVariableExpression in the variableExpr array
 	int getVariableIndex (unsigned int variableId, unsigned int operatorId, int significantTimePoint);
 
+	Expr getPreferenceExpr (string name);
+
+
 	//find and return the index of corresponding proposition in the propositionExpr array
 	int getPropositionIndex (unsigned int propositionId, unsigned int operatorId, int significantTimePoint);
 
@@ -138,6 +145,7 @@ public:
 
 	//find and return the index of corresponding action in the actionExpr array
 	int getUnificationIndex (int unificationId, int significantTimePoint);
+
 
 };
 
