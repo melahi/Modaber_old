@@ -19,6 +19,7 @@ using namespace std;
 #define isVisited(firstVisitedLayer, layerNumber) (firstVisitedLayer != -1 && firstVisitedLayer <= layerNumber)
 
 extern const double undefinedValue;
+extern const double infinite;
 
 
 /*

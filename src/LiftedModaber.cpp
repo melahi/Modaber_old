@@ -6,6 +6,7 @@
 #include "VALfiles/TIM.h"
 #include <iostream>
 #include <fstream>
+#include <stdio.h>
 
 using namespace std;
 using namespace VAL;
@@ -45,20 +46,32 @@ bool LiftedModaber::tryToSolve(){
 	return foundSolution;
 }
 
-
+double LiftedModaber::findPlanValue (const char *domainFile, const char *problemFile, const char *solutionFile){
+	char myCommand [10000];
+	sprintf(myCommand, "./validate %s %s %s | grep \"Final value: \"", domainFile, problemFile, solutionFile);
+	FILE *file = popen(myCommand, "r");
+	double planValue;
+	if ( feof(file) || 	fscanf(file, "Final value: %lf", &planValue) != 1){
+		return infinite;
+	}
+	cout << "Plan Value is: " << planValue << endl;
+	return planValue;
+}
 
 LiftedModaber::LiftedModaber(char *domainFilePath, char *problemFilePath) {
 	initialization(domainFilePath, problemFilePath);
+	char solutionFile [1000] = "solution";
 	bool foundSolution;
-	foundSolution = tryToSolve();
-	if (foundSolution){
-		cout << "The plan is: " << endl;
-		myLiftedTranslator->extractSolution(cout);
-		cout << endl << endl;
-		cout << "Modaber finished his task!!! ;)" << endl;
-		cout << "*******************************" << endl;
-		ofstream fout ("solution");
-		myLiftedTranslator->extractSolution(fout);
+	while (true){
+		foundSolution = tryToSolve();
+		if (foundSolution){
+			cout << "The plan is: " << endl;
+			myLiftedTranslator->extractSolution(cout);
+			ofstream fout (solutionFile);
+			myLiftedTranslator->extractSolution(fout);
+			findPlanValue(domainFilePath, problemFilePath, solutionFile);
+			break;
+		}
 	}
 }
 

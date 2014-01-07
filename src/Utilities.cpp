@@ -7,6 +7,7 @@
 using namespace std;
 
 const double undefinedValue = numeric_limits <double>::min();
+const double infinite = (1.0 / 0.0);
 
 
 

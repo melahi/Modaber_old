@@ -29,6 +29,8 @@ protected:
 
 	virtual bool tryToSolve();
 
+	double findPlanValue (const char *domainFile, const char *problemFile, const char *solutionFile);
+
 public:
 	LiftedModaber(char *domainFilePath, char *problemFilePath);
 	virtual ~LiftedModaber();
