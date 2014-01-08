@@ -3,9 +3,6 @@
 #In the name of God
 
 
-Algorithm="Simple"
-Algorithm="Lifted"
-NPG="1"
 
 #Set maximum memory limit
 #MaximumMemoryLimit=$((1 * 1024 * 1024))
@@ -14,6 +11,6 @@ NPG="1"
 
 
 
-time ./Modaber $1 $2 --algorithm "$Algorithm" --NPG "$NPG"
+time ./Modaber $1 $2 $3
 echo "*******************************"
-./validate $1 $2 solution
+./validate $1 $2 $3
