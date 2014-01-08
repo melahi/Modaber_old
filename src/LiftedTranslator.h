@@ -23,7 +23,7 @@ class LiftedTranslator {
 private:
 	LiftedCVC4Problem *liftedSMTProblem;
 	Expr goals;
-	void prepareGoals();
+	void prepareGoals(double bound);
 	void addInitialState();
 	void addGoals(int significantTimePoint);
 	void addPartialActions(int significantTimePoint);
@@ -41,7 +41,7 @@ public:
 		this->liftedSMTProblem->inActivePermanentChange();
 		translatedLength = 1;
 	}
-	void prepare (int length);
+	void prepare (int length, double bound);
 
 	bool solve ();
 

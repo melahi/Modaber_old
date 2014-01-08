@@ -16,21 +16,29 @@ using namespace mdbr;
 
 
 
-void LiftedTranslator::prepareGoals() {
+void LiftedTranslator::prepareGoals(double bound) {
 	liftedSMTProblem->inActivePermanentChange();
 	liftedSMTProblem->clearAssertionList();
 	addGoals(translatedLength - 1);
+	if (bound != infinite){
+		addMetric(bound, translatedLength - 1);
+	}
 	goals = liftedSMTProblem->getAssertions();
 }
 
-void LiftedTranslator::prepare (int length){
+void LiftedTranslator::prepare (int length, double bound){
 	if (length == 1 && translatedLength == 1) {
-		prepareGoals();
+		prepareGoals(bound);
 		return;
 	}
 
-	if (translatedLength >= length){
+	if (translatedLength > length){
 		CANT_HANDLE("prepare function is called with the smaller number of length than it is translated");
+		return;
+	}
+
+	if (translatedLength == length){
+		prepareGoals(bound);
 		return;
 	}
 
@@ -44,7 +52,7 @@ void LiftedTranslator::prepare (int length){
 	liftedSMTProblem->inActivePermanentChange();
 
 	//Find goals expression
-	prepareGoals();
+	prepareGoals(bound);
 }
 
 
@@ -366,7 +374,6 @@ void LiftedTranslator::addGoal (const goal *gl, FastEnvironment *env, int signif
 		return;
 	}
 	const preference *thePreference = dynamic_cast <const preference *> (gl);
-	return;
 	if (thePreference){
 		list <const simple_goal *> softGoals;
 		findGoalList(thePreference->getGoal(), softGoals);

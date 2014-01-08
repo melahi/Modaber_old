@@ -28,6 +28,7 @@ protected:
 	virtual void initialization(char *domainFilePath, char *problemFilePath);
 
 	virtual bool tryToSolve();
+	virtual bool tryToSolve(double bound);
 
 	double findPlanValue (const char *domainFile, const char *problemFile, const char *solutionFile);
 
