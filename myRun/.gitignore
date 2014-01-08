@@ -1,4 +1,5 @@
-solution
+solution*
+*.tmp
 colin-clp
 optic-clp
 Mp

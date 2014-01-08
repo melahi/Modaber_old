@@ -11,6 +11,6 @@
 
 
 
-time ./Modaber $1 $2 
+time ./Modaber $1 $2 $3
 echo "*******************************"
-./validate $1 $2 solution
+./validate $1 $2 $3
