@@ -379,6 +379,13 @@ void LiftedCVC4Problem::AddEqualityCondition (Expr expr, double value){
 	buildingClause.push_back(myCondtion);
 }
 
+double LiftedCVC4Problem::getExpressionValue (const expression *valExpr, FastEnvironment *env, int operatorId, int significantTimePoint){
+	ExpressionConvertor myConvertor(env, this, operatorId, significantTimePoint);
+	Expr cvc4Expr = myConvertor.convertExpressionToCVC4Expr(valExpr);
+	Rational rational = smt.getValue(cvc4Expr).getConst<Rational>();
+	return rational.getDouble();
+}
+
 bool LiftedCVC4Problem::solve(const Expr &assertExpr){
 
 	// TODO: For now, we don't considered processing time, we should consider it ASAP

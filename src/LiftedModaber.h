@@ -30,7 +30,7 @@ protected:
 	virtual bool tryToSolve();
 	virtual bool tryToSolve(double bound);
 
-	double findPlanValue (const char *domainFile, const char *problemFile, const char *solutionFile);
+	double findPlanValue ();
 
 public:
 	LiftedModaber(char *domainFilePath, char *problemFilePath, char *solutionFilePath);

@@ -166,7 +166,7 @@ void performTIMAnalysis(char * argv[])
     try {
         domainOkay = theTC->typecheckDomain();
     }
-    catch (std::exception e) {
+    catch (std::exception &e) {
     }
     
     if (!domainOkay) {
@@ -178,7 +178,7 @@ void performTIMAnalysis(char * argv[])
         try {
             theTC->typecheckDomain();
         }
-        catch (std::exception e) {
+        catch (std::exception &e) {
         }        
 		exit(1);
 	}
@@ -188,7 +188,7 @@ void performTIMAnalysis(char * argv[])
     try {
         problemOkay = theTC->typecheckProblem();
     }
-    catch (std::exception e) {
+    catch (std::exception &e) {
     }
             
 	if (!problemOkay) {
@@ -200,7 +200,7 @@ void performTIMAnalysis(char * argv[])
         try {
             theTC->typecheckProblem();
         }
-        catch (std::exception e) {
+        catch (std::exception &e) {
         }
                     
 		exit(1);

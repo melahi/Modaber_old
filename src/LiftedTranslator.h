@@ -47,6 +47,8 @@ public:
 
 	void extractSolution (ostream &cout);
 
+	double getMetricValue ();
+
 	virtual ~LiftedTranslator(){}
 
 private:

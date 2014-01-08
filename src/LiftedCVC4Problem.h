@@ -65,6 +65,9 @@ public:
 
 	void AddEqualityCondition (int variableId1, int operatorId, int significantTimePoint1, double value, bool polarity);
 
+
+	double getExpressionValue (const expression *valExpr, FastEnvironment *env, int operatorId, int significantTimePoint);
+
 	bool solve(const Expr &assertExpr);
 
 	void print();

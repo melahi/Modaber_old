@@ -64,16 +64,8 @@ bool LiftedModaber::tryToSolve(double bound){
 }
 
 
-double LiftedModaber::findPlanValue (const char *domainFile, const char *problemFile, const char *solutionFile){
-	char myCommand [10000];
-	sprintf(myCommand, "./validate %s %s %s | grep \"Final value: \"", domainFile, problemFile, solutionFile);
-	FILE *file = popen(myCommand, "r");
-	double planValue;
-	if ( feof(file) || 	fscanf(file, "Final value: %lf", &planValue) != 1){
-		return infinite;
-	}
-	cout << "Plan Value is: " << planValue << endl;
-	return planValue;
+double LiftedModaber::findPlanValue (){
+	return myLiftedTranslator->getMetricValue();
 }
 
 int copyFile (const char *source, const char *destination){
@@ -97,7 +89,8 @@ LiftedModaber::LiftedModaber(char *domainFilePath, char *problemFilePath, char *
 		myLiftedTranslator->extractSolution(cout);
 		ofstream fout (tempSolution.c_str());
 		myLiftedTranslator->extractSolution(fout);
-		double temp = findPlanValue(domainFilePath, problemFilePath, tempSolution.c_str());
+		double temp = findPlanValue();
+		cout << "Metric value is: " << temp << endl;
 		if ((current_analysis->the_problem->metric->opt == E_MINIMIZE && temp >= bound) || (current_analysis->the_problem->metric->opt == E_MAXIMIZE && temp <= bound)){
 			cout << temp << ' ' << bound << current_analysis->the_problem->metric->opt << endl;
 			CANT_HANDLE("INCREMENTAL IMPORVEMING, CAN'T IMPROVE THE METRIC FUNCTION!!!");

@@ -451,6 +451,11 @@ bool LiftedTranslator::solve(){
 	return true;
 }
 
+double LiftedTranslator::getMetricValue(){
+	FastEnvironment env (0);
+	return liftedSMTProblem->getExpressionValue(current_analysis->the_problem->metric->expr, &env, 0, translatedLength - 1);
+}
+
 
 void LiftedTranslator::extractSolution (ostream &sout){
 	int nOperator = myProblem.operators.size();
