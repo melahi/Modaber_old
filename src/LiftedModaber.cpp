@@ -68,26 +68,21 @@ double LiftedModaber::findPlanValue (){
 	return myLiftedTranslator->getMetricValue();
 }
 
-int copyFile (const char *source, const char *destination){
-	char myCommand [10000];
-	sprintf (myCommand, "cp -f %s %s ", source, destination);
-	return system(myCommand);
-}
 
 LiftedModaber::LiftedModaber(char *domainFilePath, char *problemFilePath, char *solutionFilePath) {
 	initialization(domainFilePath, problemFilePath);
-	string tempSolution = solutionFilePath;
-	tempSolution += ".tmp";
-
+	char outputFile [1000];
 	double bound = infinite;
 	if (current_analysis->the_problem->metric->opt == E_MAXIMIZE){
 		bound = -infinite;
 	}
+	int lastIndex = 1;
 	while (true){
 		tryToSolve(bound);
 		cout << "The plan is: " << endl;
 		myLiftedTranslator->extractSolution(cout);
-		ofstream fout (tempSolution.c_str());
+		sprintf(outputFile, "%s.%d", solutionFilePath, lastIndex++);
+		ofstream fout (outputFile);
 		myLiftedTranslator->extractSolution(fout);
 		double temp = findPlanValue();
 		cout << "Metric value is: " << temp << endl;
@@ -97,7 +92,6 @@ LiftedModaber::LiftedModaber(char *domainFilePath, char *problemFilePath, char *
 			break;
 		}else{
 			bound = temp;
-			copyFile(tempSolution.c_str(), solutionFilePath);
 		}
 	}
 }
