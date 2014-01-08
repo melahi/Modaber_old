@@ -33,7 +33,7 @@ protected:
 	double findPlanValue (const char *domainFile, const char *problemFile, const char *solutionFile);
 
 public:
-	LiftedModaber(char *domainFilePath, char *problemFilePath);
+	LiftedModaber(char *domainFilePath, char *problemFilePath, char *solutionFilePath);
 	virtual ~LiftedModaber();
 };
 

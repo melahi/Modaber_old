@@ -76,17 +76,31 @@ double LiftedModaber::findPlanValue (const char *domainFile, const char *problem
 	return planValue;
 }
 
-LiftedModaber::LiftedModaber(char *domainFilePath, char *problemFilePath) {
+void copyFile (const char *source, const char *destination){
+	char myCommand [10000];
+	sprintf (myCommand, "cp -f %s %s ", source, destination);
+	system(myCommand);
+}
+
+LiftedModaber::LiftedModaber(char *domainFilePath, char *problemFilePath, char *solutionFilePath) {
 	initialization(domainFilePath, problemFilePath);
-	char solutionFile [1000] = "solution";
+	string tempSolution = solutionFilePath;
+	tempSolution += ".tmp";
+
 	double bound = infinite;
 	while (true){
 		tryToSolve(bound);
 		cout << "The plan is: " << endl;
 		myLiftedTranslator->extractSolution(cout);
-		ofstream fout (solutionFile);
+		ofstream fout (tempSolution);
 		myLiftedTranslator->extractSolution(fout);
-		bound = findPlanValue(domainFilePath, problemFilePath, solutionFile);
+		double temp = findPlanValue(domainFilePath, problemFilePath, tempSolution.c_str());
+		if ((current_analysis->the_problem->metric->opt == E_MINIMIZE && temp >= bound) || (current_analysis->the_problem->metric->opt == E_MAXIMIZE && temp <= bound)){
+			CANT_HANDLE("INCREMENTAL IMPORVEMING, CAN'T IMPROVE THE METRIC FUNCTION!!!");
+			break;
+		}else{
+			copyFile(tempSolution.c_str(), solutionFilePath);
+		}
 	}
 }
 
