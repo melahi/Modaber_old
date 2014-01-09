@@ -13,14 +13,21 @@ namespace mdbr {
 
 
 
-list <MyPartialOperator *>::iterator MyOperator::findPartialOperator (const MyPartialOperator *a){
+list <MyPartialOperator *>::iterator MyOperator::findPartialOperator (MyPartialOperator *a){
 	list <MyPartialOperator *>::iterator ret, pAEnd;
 	ret = partialOperator.begin();
 	pAEnd = partialOperator.end();
 
-	for (; ret != pAEnd; ++ret){
-		if (**ret == *a){
+	while (ret != pAEnd){
+		if ((*ret)->isSubPartialOperator(*a)){
+			(*ret)->mergSubPartialOperator(*a);
 			break;
+		}else if (a->isSubPartialOperator(**ret)){
+			a->mergSubPartialOperator(**ret);
+			delete(*ret);
+			ret = partialOperator.erase(ret);
+		}else{
+			++ret;
 		}
 	}
 	return ret;

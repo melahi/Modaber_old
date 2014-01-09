@@ -116,20 +116,36 @@ void MyPartialOperator::grounding(map <string, MyType *>::iterator it){
 	}
 }
 
-bool MyPartialOperator::operator == (const MyPartialOperator &a) const{
-	if (op != a.op) return false;
-	if (argument.size() != a.argument.size()) return false;
+bool MyPartialOperator::isSubPartialOperator (const MyPartialOperator &subPartialOperator){
+	if (op != subPartialOperator.op) return false;
+	if (argument.size() < subPartialOperator.argument.size()) return false;
 
-	map <string, MyType *>::const_iterator it1, itEnd, it2;
-	it1 = argument.begin();
-	it2 = a.argument.begin();
-	itEnd = argument.end();
-	for (; it1 != itEnd; ++it1, ++it2){
-		if (it1->first != it2->first) return false;
+	map <string, MyType *>::const_iterator it, itEnd, it2;
+	it = subPartialOperator.argument.begin();
+	itEnd = subPartialOperator.argument.end();
+	for (; it != itEnd; ++it){
+		if (argument.find(it->first) == argument.end()) return false;
 	}
 	return true;
 }
 
+template <class T>
+void appendList (list <T> &destination, const list <T> &source){
+	typename list <T>::const_iterator sIt, sItEnd;
+	sIt = source.begin();
+	sItEnd = source.end();
+	for (; sIt != sItEnd; ++sIt){
+		destination.push_back(*sIt);
+	}
+}
+
+void MyPartialOperator::mergSubPartialOperator (const MyPartialOperator &subPartialOperator){
+	appendList <const proposition *> (precondition, subPartialOperator.precondition);
+	appendList <const proposition *> (addEffect, subPartialOperator.addEffect);
+	appendList <const proposition *> (deleteEffect, subPartialOperator.deleteEffect);
+	appendList <const comparison *> (comparisonPrecondition, subPartialOperator.comparisonPrecondition);
+	appendList <const assignment *> (assignmentEffect, subPartialOperator.assignmentEffect);
+}
 
 void MyPartialAction::prepare (MyOperator *op, MyPartialOperator *partialOperator, map <string, MyObject*> &objects, map <string, int> &unificationId, int id){
 	this->id = id;
@@ -216,6 +232,9 @@ void MyPartialAction::prepareComparisonList (list <const comparison *> &comparis
 }
 
 void MyPartialAction::preparePropositionList (list <const proposition *> &liftedList, list <MyProposition *> &instantiatedList, propositionKind kind){
+	/* IMPORTANT: This function should first called by add effects then called by delete effects,
+	 * 			  because we do some refinement for delete effects base on add effects!!!
+	 */
 	list <const proposition* >::iterator lftIt, lftItEnd;
 	lftIt = liftedList.begin();
 	lftItEnd = liftedList.end();
@@ -231,10 +250,15 @@ void MyPartialAction::preparePropositionList (list <const proposition *> &lifted
 			if (objects.find((*it)->getName()) != objects.end()){
 				parameters->push_back(objects[(*it)->getName()]->originalObject);
 			}else{
-				cout << "NOOOOOOOOO" << endl;
-				map <string, MyObject *>::iterator alakiIt;
-				for (alakiIt = objects.begin(); alakiIt != objects.end(); ++alakiIt){
-					cout << alakiIt->first << "==>" << alakiIt->second->originalObject->getName() << endl;
+				VAL::const_symbol *constSymbol = dynamic_cast <VAL::const_symbol *> ((*it));
+				if (constSymbol){
+					parameters->push_back(constSymbol);
+				}else{
+					cout << "NOOOOOOOOO: an object with the name of \"" << (*it)->getName() << "\" is not found" << endl;
+					map <string, MyObject *>::iterator alakiIt;
+					for (alakiIt = objects.begin(); alakiIt != objects.end(); ++alakiIt){
+						cout << alakiIt->first << "==>" << alakiIt->second->originalObject->getName() << endl;
+					}
 				}
 			}
 		}
@@ -247,6 +271,7 @@ void MyPartialAction::preparePropositionList (list <const proposition *> &lifted
 			isValid = false;
 			return;
 		}
+
 		if (lit2->getStateID() != -1){
 			instantiatedList.push_back(&(myProblem.propositions[lit2->getStateID()]));
 			if (kind == E_PRECONDITION){
@@ -258,6 +283,7 @@ void MyPartialAction::preparePropositionList (list <const proposition *> &lifted
 			}
 		}
 	}
+
 }
 
 

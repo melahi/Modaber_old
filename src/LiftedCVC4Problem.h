@@ -94,6 +94,7 @@ public:
 	void assertFormula  (const Expr &expr) { smt.assertFormula (expr);}
 
 	bool isUnificationUsed (int unificationId, int significantTimePoint);
+	bool isPartialActionUsed(MyPartialAction *partialAction, int significantTimePoint);
 
 
 	/* I don't know how to implement following function, perhaps it's not bad to learn it!

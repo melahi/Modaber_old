@@ -55,7 +55,9 @@ public:
 	void grounding();
 	void grounding (map <string, MyType *>::iterator it);
 
-	bool operator == (const MyPartialOperator &a) const;
+	bool isSubPartialOperator (const MyPartialOperator &subPartialOperator);
+
+	void mergSubPartialOperator (const MyPartialOperator &subPartialOperator);
 
 };
 

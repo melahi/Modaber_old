@@ -116,26 +116,44 @@ void LiftedTranslator::addPartialActions (int significantTimePoint){
 			}
 		}else{
 			if (it->op->argument.size() == 0){
-				CANT_HANDLE("AN OPERATOR WITH NO ARGUMENT, I DON'T HAVE ANY PLAN FOR IT!!!");
-				exit(1);
-			}
-			int unificationId = it->op->offset[0];
-			int endingUnificationID = it->op->argument[0]->objects.size() + unificationId;
-			for (; unificationId < endingUnificationID; ++unificationId){
+				//In this case we don't need to insert any clause for handling unification
+			}else{
+
+				/*
+				 * An example of this case is:
+				 * 	operator a( ?x, ?y)
+				 * 		precondition:
+				 * 			proposition1, proposition2(?x, ?y)
+				 * 		effect:
+				 * 			~proposition1
+				 *
+				 *
+				 * Which a partial action is:
+				 *  partial action a
+				 * 	  	precondition:
+				 * 	  		precondition1
+				 * 	  	effect:
+				 * 	  		~precondition1
+				 */
+
+				int unificationId = it->op->offset[0];
+				int endingUnificationID = it->op->argument[0]->objects.size() + unificationId;
+				for (; unificationId < endingUnificationID; ++unificationId){
+					liftedSMTProblem->startNewClause();
+					liftedSMTProblem->addUnificationToClause(unificationId, significantTimePoint, false);
+					liftedSMTProblem->addPartialActionToClause(&(*it), significantTimePoint, true);
+					liftedSMTProblem->endClause();
+				}
+
+
 				liftedSMTProblem->startNewClause();
-				liftedSMTProblem->addUnificationToClause(unificationId, significantTimePoint, false);
-				liftedSMTProblem->addPartialActionToClause(&(*it), significantTimePoint, true);
+				unificationId = it->op->offset[0];
+				liftedSMTProblem->addPartialActionToClause(&(*it), significantTimePoint, false);
+				for (; unificationId < endingUnificationID; ++unificationId){
+					liftedSMTProblem->addUnificationToClause(unificationId, significantTimePoint, true);
+				}
 				liftedSMTProblem->endClause();
 			}
-
-
-			liftedSMTProblem->startNewClause();
-			unificationId = it->op->offset[0];
-			liftedSMTProblem->addPartialActionToClause(&(*it), significantTimePoint, false);
-			for (; unificationId < endingUnificationID; ++unificationId){
-				liftedSMTProblem->addUnificationToClause(unificationId, significantTimePoint, true);
-			}
-			liftedSMTProblem->endClause();
 		}
 
 
@@ -462,24 +480,37 @@ void LiftedTranslator::extractSolution (ostream &sout){
 	for (int i = 0; i < translatedLength - 1; ++i){
 		for (int j = 0; j < nOperator; ++j){
 			int nArgument = myProblem.operators[j]->argument.size();
-			for (int k = 0; k < nArgument; ++k){
-				int offset = myProblem.operators[j]->offset[k];
-				int nUnification = myProblem.operators[j]->argument[k]->objects.size();
-				int objectId;
-				for (objectId = 0; objectId < nUnification; ++objectId){
-					if (liftedSMTProblem->isUnificationUsed(offset + objectId, i)){
-						break;
+			if (nArgument == 0){
+				list <MyPartialAction>::iterator it, itEnd;
+				it = myProblem.partialAction.begin();
+				itEnd = myProblem.partialAction.end();
+				for (; it != itEnd; ++it){
+					if (it->op->originalOperator == myProblem.operators[j]->originalOperator){
+						if (liftedSMTProblem->isPartialActionUsed(&(*it), i)){
+							sout << "(" << myProblem.operators[j]->originalOperator->name->getName() << ")" << endl;
+						}
 					}
 				}
-				if (k == 0){
-					if (objectId == nUnification){
-						break;
+			}else{
+				for (int k = 0; k < nArgument; ++k){
+					int offset = myProblem.operators[j]->offset[k];
+					int nUnification = myProblem.operators[j]->argument[k]->objects.size();
+					int objectId;
+					for (objectId = 0; objectId < nUnification; ++objectId){
+						if (liftedSMTProblem->isUnificationUsed(offset + objectId, i)){
+							break;
+						}
 					}
-					sout << "(" << myProblem.operators[j]->originalOperator->name->getName();
-				}
-				sout << " " << myProblem.operators[j]->argument[k]->objects[objectId]->originalObject->getName();
-				if (k == nArgument - 1){
-					sout << ")" << endl;
+					if (k == 0){
+						if (objectId == nUnification){
+							break;
+						}
+						sout << "(" << myProblem.operators[j]->originalOperator->name->getName();
+					}
+					sout << " " << myProblem.operators[j]->argument[k]->objects[objectId]->originalObject->getName();
+					if (k == nArgument - 1){
+						sout << ")" << endl;
+					}
 				}
 			}
 		}

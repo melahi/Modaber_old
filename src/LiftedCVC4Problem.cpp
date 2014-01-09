@@ -11,7 +11,7 @@
 using namespace VAL;
 using namespace std;
 
-//#define PRINT_FORMULA
+#define PRINT_FORMULA
 
 
 class ExpressionConvertor {
@@ -407,9 +407,6 @@ bool LiftedCVC4Problem::solve(const Expr &assertExpr){
 	switch (result.isSat()){
 	case Result::SAT:
 		cout << "OH yeay!, the problem is solved" << endl;
-#ifdef PRINT_FORMULA
-		print();
-#endif
 		return true;
 		break;
 	case Result::UNSAT:
@@ -484,6 +481,12 @@ bool LiftedCVC4Problem::isUnificationUsed (int unificationId, int significantTim
 	return isUsed;
 }
 
+bool LiftedCVC4Problem::isPartialActionUsed(MyPartialAction *partialAction, int significantTimePoint){
+	int partialActionIndex = getPartialActionIndex(partialAction, significantTimePoint);
+	bool isUsed = smt.getValue(partialActionExpr[partialActionIndex]).getConst<bool>();
+	return isUsed;
+}
+
 LiftedCVC4Problem::~LiftedCVC4Problem(){
 }
 
@@ -502,7 +505,7 @@ int LiftedCVC4Problem::getVariableIndex (unsigned int variableId, unsigned int o
 		ostringstream oss;
 		oss << "[";
 		myProblem.variables[variableId].originalPNE->write(oss);
-		oss << ", " << significantTimePoint << "]";
+		oss << ", " << significantTimePoint << ":" << operatorId << "]";
 		variableExpr[ret] = Expr(em.mkVar(oss.str(),real));
 #else
 		variableExpr[ret] = Expr(em.mkVar(real));
@@ -543,7 +546,7 @@ int LiftedCVC4Problem::getPropositionIndex (unsigned int propositionId, unsigned
 		ostringstream oss;
 		oss << "[";
 		myProblem.propositions[propositionId].write(oss);
-		oss << ", " << significantTimePoint << "]";
+		oss << ", " << significantTimePoint << ":" << operatorId << "]";
 		propositionExpr[ret] = Expr(em.mkVar(oss.str(), boolean));
 #else
 		propositionExpr[ret] = Expr(em.mkVar(boolean));

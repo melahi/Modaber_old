@@ -73,7 +73,8 @@ LiftedModaber::LiftedModaber(char *domainFilePath, char *problemFilePath, char *
 	initialization(domainFilePath, problemFilePath);
 	char outputFile [1000];
 	double bound = infinite;
-	if (current_analysis->the_problem->metric->opt == E_MAXIMIZE){
+	bool hasMetricFunction = (current_analysis->the_problem->metric != NULL);
+	if (hasMetricFunction && current_analysis->the_problem->metric->opt == E_MAXIMIZE){
 		bound = -infinite;
 	}
 	int lastIndex = 1;
@@ -84,6 +85,9 @@ LiftedModaber::LiftedModaber(char *domainFilePath, char *problemFilePath, char *
 		sprintf(outputFile, "%s.%d", solutionFilePath, lastIndex++);
 		ofstream fout (outputFile);
 		myLiftedTranslator->extractSolution(fout);
+		if (!hasMetricFunction){
+			break;
+		}
 		double temp = findPlanValue();
 		cout << "Metric value is: " << temp << endl;
 		if ((current_analysis->the_problem->metric->opt == E_MINIMIZE && temp >= bound) || (current_analysis->the_problem->metric->opt == E_MAXIMIZE && temp <= bound)){

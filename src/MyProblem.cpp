@@ -101,7 +101,23 @@ void MyProblem::liftedInitializing(){
 			types[(*objIt)->type].objects.push_back(myObject);
 			myObject->type = &types[(*objIt)->type];
 		}else {
-			CANT_HANDLE("We don't support for No Type or Either Type!!!");
+			CANT_HANDLE("We don't support  \"No Type\" or \"Either Type\"!!!");
+		}
+	}
+	//Also we should consider constants
+	if (current_analysis->the_domain->constants){
+		objIt = current_analysis->the_domain->constants->begin();
+		objItEnd = current_analysis->the_domain->constants->end();
+
+		for (; objIt != objItEnd; ++objIt){
+			objects[(*objIt)].originalObject = (*objIt);
+			MyObject *myObject = (&objects[(*objIt)]);
+			if ((*objIt)->type){
+				types[(*objIt)->type].objects.push_back(myObject);
+				myObject->type = &types[(*objIt)->type];
+			}else {
+				CANT_HANDLE("We don't support  \"No Type\" or \"Either Type\"!!!");
+			}
 		}
 	}
 

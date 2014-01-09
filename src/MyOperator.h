@@ -25,7 +25,7 @@ class MyLiftedComparison;
 
 class MyOperator {
 private:
-	list <MyPartialOperator *>::iterator findPartialOperator (const MyPartialOperator *a);
+	list <MyPartialOperator *>::iterator findPartialOperator (MyPartialOperator *a);
 public:
 
 	operator_ *originalOperator;
