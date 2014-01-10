@@ -68,6 +68,28 @@ void MyProblem::initializing(){
 		}
 	}
 
+	//Preparing actions
+	int nAction = instantiatedOp::howMany();
+	map <string, int> operatorMap;
+
+	operator_list::iterator opIt, opItEnd;
+
+	opIt = current_analysis->the_domain->ops->begin();
+	opItEnd = current_analysis->the_domain->ops->end();
+
+	int nOperator;
+	for (nOperator = 0; opIt != opItEnd; ++opIt, ++nOperator){
+		operatorMap[ (*opIt)->name->getName() ] = nOperator;
+	}
+
+	actions.resize(nOperator);
+	for (int i = 0; i < nAction; i++){
+		instantiatedOp *valAction = instantiatedOp::getInstOp(i);
+		actions[operatorMap[valAction->getHead()->getName()]].push_back(MyAction());
+		actions[operatorMap[valAction->getHead()->getName()]].rbegin()->initialize(valAction);
+	}
+
+
 	updateInitialLayer();
 
 //	write(cout);

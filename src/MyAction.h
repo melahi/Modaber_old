@@ -33,7 +33,9 @@ class MyGroundedAction;
 class MyAction {
 private:
 
-	bool isPreconditionSatisfied(goal *precondition, FastEnvironment *env, int layerNumber);
+//	bool isPreconditionSatisfied(goal *precondition, FastEnvironment *env, int layerNumber);
+
+	void findPrecondition (const goal *gl);
 
 
 public:
@@ -42,27 +44,13 @@ public:
 
 	int firstVisitedLayer;
 
-	map <MyAction*, int > lastLayerMutexivity;
 	map <MyProposition*, int > lastLayerPropositionMutexivity;
 
-
-
-	set < MyAction * > staticMutex;
-
-	//deleteList and variableModifier are used for finding static propositional mutex so we are keeping them in set container
-	set < MyProposition *> deleteList;
-	set < MyVariable *> modifyingVariable;
-
-	//Perhaps we need a variable more than one in some precondition so we should consider variableNeeded as a set
-	set < MyVariable *> variableNeeded;
-
-	list < MyProposition *> addList;
-	list < MyProposition *> propositionPrecondition;
+	list < MyProposition *> deleteList;
+	list < MyProposition *> preconditionList;
 
 	void initialize (instantiatedOp *valAction);
 
-	void computeStaticMutex();
-	bool isStaticallyMutex(MyAction *otherAction);
 	bool isPropositionStaticallyMutex (MyProposition *otherProposition);
 
 	bool isApplicable (int layerNumber);
@@ -73,16 +61,10 @@ public:
 
 
 
-	bool isDynamicallyMutex(int layerNumber, MyAction *otherAction);
-	bool isMutex (int layerNumber, MyAction *otherAction);
-
 	bool isPropositionDynamicallyMutex (int layerNumber, MyProposition *otherProposition);
 	bool isPropositionMutex (int layerNumber, MyProposition *otherProposition);
-
-	bool checkDynamicMutex (int layerNumber, MyAction *otherAction);
 	bool checkDynamicPropositionMutex (int layerNumber, MyProposition *otherProposition);
 
-	void insertMutex (int layerNumber, MyAction *otherAciton);
 	void insertPropositionMutex (int layerNumber, MyProposition *otherProposition);
 
 	void write (ostream &sout);

@@ -8,6 +8,8 @@
 #ifndef MYPROBLEM_H_
 #define MYPROBLEM_H_
 
+
+#include "MyAction.h"
 #include "MyAtom.h"
 #include "MyObject.h"
 #include "MyOperator.h"
@@ -34,6 +36,7 @@ private:
 
 public:
 
+	vector <vector <MyAction> >actions;
 	vector <MyProposition> propositions;
 	vector <MyVariable> variables;
 

@@ -10,6 +10,7 @@
 
 #include "Modaber.h"
 #include "LiftedTranslator.h"
+#include "PlanningGraph.h"
 
 namespace mdbr {
 
@@ -20,6 +21,7 @@ private:
 
 	LiftedCVC4Problem *liftedSMTProblem;
 
+	PlanningGraph *planGraph;
 
 	int nSignificantTimePoints;
 

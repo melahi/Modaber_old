@@ -13,6 +13,7 @@
 #include <map>
 #include <set>
 #include <iostream>
+#include "MyAction.h"
 #include "MyPartialAction.h"
 #include "VALfiles/instantiation.h"
 
@@ -27,24 +28,40 @@ namespace mdbr{
 class MyVariable;
 class MyProposition;
 
+class MyAction;
 
 class MyPartialAction;
-
 
 
 
 class MyProposition {
 public:
 
+	int firstVisitedLayer;
+
+	map <MyProposition *, int> lastLayerMutexivity;
+
+	list <MyAction *> provider;  //In graph plan (provider of this proposition in graphpaln)
+
+	bool checkMutex (int layerNumber, MyProposition *otherProposition);
+
+	bool isMutex (int layerNumber, MyProposition *otherProposition);
+
+	void insertMutex (int layerNumber, MyProposition *otherProposition);
+
+	void visiting (int layerNumber, MyAction *action);
+
+
 	Literal *originalLiteral;
 
 	vector <int> ids;  //id [i] means the id of proposition before execution of operator i
 
+
 	list <MyPartialAction *> adder;
 	list <MyPartialAction *> deleter;
 
-	MyProposition(Literal *originalLiteral):originalLiteral(originalLiteral), ids(current_analysis->the_domain->ops->size(), -2){}
-	MyProposition():originalLiteral(0), ids(current_analysis->the_domain->ops->size(), -2) {}
+	MyProposition(Literal *originalLiteral):firstVisitedLayer(-1), originalLiteral(originalLiteral), ids(current_analysis->the_domain->ops->size(), -2) {}
+	MyProposition():firstVisitedLayer(-1), originalLiteral(0), ids(current_analysis->the_domain->ops->size(), -2) {}
 
 	virtual void write (ostream &sout);
 
@@ -66,9 +83,11 @@ public:
 	 * assignment and the assignee be an important one, then the variable is also should
 	 * count as important variable!
 	 */
+	bool visitInPrecondition;
 
-	MyVariable (PNE *originalPNE): ids(current_analysis->the_domain->ops->size(), -2), originalPNE(originalPNE){}
-	MyVariable (): ids(current_analysis->the_domain->ops->size(), -2), originalPNE(0) {}
+
+	MyVariable (PNE *originalPNE): ids(current_analysis->the_domain->ops->size(), -2), originalPNE(originalPNE), visitInPrecondition(false) {}
+	MyVariable (): ids(current_analysis->the_domain->ops->size(), -2), originalPNE(0), visitInPrecondition(false) {}
 
 	~MyVariable () { }
 

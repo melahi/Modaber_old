@@ -30,6 +30,7 @@ private:
 	void addExplanatoryAxioms(int significantTimePoint);
 	void addCompletingAction (int significantTimePoint);
 	void addMetric (double bound, int significantTimePoint);
+	void addAtomMutex(int significantTimePoint);
 
 public:
 	int translatedLength;

@@ -18,7 +18,7 @@ using namespace mdbr;
 void LiftedModaber::initialization (char *domainFilePath, char *problemFilePath){
 	Modaber::initialization(domainFilePath, problemFilePath);
 
-
+	planGraph = new PlanningGraph();
 
 	myProblem.liftedInitializing();
 
@@ -30,20 +30,11 @@ void LiftedModaber::initialization (char *domainFilePath, char *problemFilePath)
 }
 
 bool LiftedModaber::tryToSolve(){
-
-	bool foundSolution = false;
-
-	while (!foundSolution){
-		cout  << "nSignificantTimePoint: " << nSignificantTimePoints << endl;
-		cout << "solving ..." << endl;
-		myLiftedTranslator->prepare(nSignificantTimePoints, infinite);
-		foundSolution = myLiftedTranslator->solve();
-		cout << "end solving" << endl;
-		if (!foundSolution){
-				nSignificantTimePoints += 5;
-		}
+	double bound = infinite;
+	if (current_analysis->the_problem->metric->opt == E_MAXIMIZE){
+		bound = -infinite;
 	}
-	return foundSolution;
+	return tryToSolve(bound);
 }
 
 bool LiftedModaber::tryToSolve(double bound){
@@ -52,6 +43,8 @@ bool LiftedModaber::tryToSolve(double bound){
 
 	while (!foundSolution){
 		cout  << "nSignificantTimePoint: " << nSignificantTimePoints << endl;
+		cout << "Extending my graph" << endl;
+		planGraph->constructingGraph(nSignificantTimePoints);
 		cout << "solving ..." << endl;
 		myLiftedTranslator->prepare(nSignificantTimePoints, bound);
 		foundSolution = myLiftedTranslator->solve();
@@ -103,5 +96,6 @@ LiftedModaber::LiftedModaber(char *domainFilePath, char *problemFilePath, char *
 LiftedModaber::~LiftedModaber() {
 	delete (myLiftedTranslator);
 	delete (liftedSMTProblem);
+	delete (planGraph);
 }
 
