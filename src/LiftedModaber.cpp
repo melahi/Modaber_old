@@ -4,6 +4,7 @@
 
 
 #include "VALfiles/TIM.h"
+#include "UnrelatedFilter.h"
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
@@ -18,9 +19,11 @@ using namespace mdbr;
 void LiftedModaber::initialization (char *domainFilePath, char *problemFilePath){
 	Modaber::initialization(domainFilePath, problemFilePath);
 
+	myProblem.liftedInitializing();
+
+	UnrelatedFilter filterAllUnrelateActionsAndProposition;
 	planGraph = new PlanningGraph();
 
-	myProblem.liftedInitializing();
 
 	liftedSMTProblem = new LiftedCVC4Problem(myProblem.nVariableIDs, myProblem.nPropositionIDs, myProblem.nPartialActions, myProblem.nUnification);
 	myLiftedTranslator = new LiftedTranslator(liftedSMTProblem);

@@ -43,6 +43,7 @@ public:
 	instantiatedOp *valAction;
 
 	int firstVisitedLayer;
+	bool possibleEffective;
 
 	map <MyProposition*, int > lastLayerPropositionMutexivity;
 

@@ -16,7 +16,6 @@ using namespace Inst;
 using namespace std;
 using namespace mdbr;
 
-
 void PlanningGraph::ignoreGraph(){
 	/* If this function called, Numerical Planning Graph won't constructed */
 	int nOperator = myProblem.operators.size();
@@ -94,6 +93,9 @@ bool PlanningGraph::extendOneLayer(){
 
 
 		for (int j = 0; j < nActions; j++){
+			if (!myProblem.actions[i][j].possibleEffective){
+				continue;
+			}
 			if (!isVisited(myProblem.actions[i][j].firstVisitedLayer, lastLayer)){
 				if (myProblem.actions[i][j].isApplicable(lastLayer)){
 					myProblem.actions[i][j].applyAction(lastLayer);
@@ -109,6 +111,9 @@ bool PlanningGraph::extendOneLayer(){
 		list <MyProposition *> oldPropositions;
 		int nPropositions = myProblem.propositions.size();
 		for (int j = 0; j < nPropositions; ++j){
+			if (!myProblem.propositions[j].possibleEffective){
+				continue;
+			}
 			if (isVisited(myProblem.propositions[j].firstVisitedLayer, lastLayer)){
 				oldPropositions.push_back(&(myProblem.propositions[j]));
 			}else if (myProblem.propositions[j].firstVisitedLayer == lastLayer + 1){

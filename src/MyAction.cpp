@@ -24,7 +24,7 @@ using namespace mdbr;
 
 
 
-MyAction::MyAction(): valAction(NULL), firstVisitedLayer(-1) {}
+MyAction::MyAction(): valAction(NULL), firstVisitedLayer(-1), possibleEffective(false) {}
 
 //bool MyAction::isPreconditionSatisfied(goal *precondition, FastEnvironment *env, int layerNumber){
 //	const simple_goal *simple = dynamic_cast<const simple_goal *>(precondition);

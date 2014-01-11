@@ -25,6 +25,7 @@ public:
 	int numberOfDynamicMutexesInLastLayer;
 	bool levelOff;
 
+
 	PlanningGraph();
 
 	void ignoreGraph();

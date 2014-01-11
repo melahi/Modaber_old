@@ -39,6 +39,8 @@ public:
 
 	int firstVisitedLayer;
 
+	bool possibleEffective;
+
 	map <MyProposition *, int> lastLayerMutexivity;
 
 	list <MyAction *> provider;  //In graph plan (provider of this proposition in graphpaln)
@@ -60,8 +62,8 @@ public:
 	list <MyPartialAction *> adder;
 	list <MyPartialAction *> deleter;
 
-	MyProposition(Literal *originalLiteral):firstVisitedLayer(-1), originalLiteral(originalLiteral), ids(current_analysis->the_domain->ops->size(), -2) {}
-	MyProposition():firstVisitedLayer(-1), originalLiteral(0), ids(current_analysis->the_domain->ops->size(), -2) {}
+	MyProposition(Literal *originalLiteral):firstVisitedLayer(-1), possibleEffective(false), originalLiteral(originalLiteral), ids(current_analysis->the_domain->ops->size(), -2) {}
+	MyProposition():firstVisitedLayer(-1), possibleEffective (false), originalLiteral(0), ids(current_analysis->the_domain->ops->size(), -2) {}
 
 	virtual void write (ostream &sout);
 
