@@ -96,79 +96,30 @@ void MyProblem::initializing(){
 }
 
 void MyProblem::liftedInitializing(){
-	//Preparing types;
-	types.clear();
-	typed_symbol_list<VAL::pddl_type>::iterator typeIt, typeItEnd;
-	typeIt = current_analysis->the_domain->types->begin();
-	typeItEnd = current_analysis->the_domain->types->end();
-	for (; typeIt != typeItEnd; ++typeIt){
-		types[(*typeIt)].originalType = (*typeIt);
-		if ((*typeIt)->type){
-			types[(*typeIt)->type].originalType = (*typeIt)->type;
-			types[(*typeIt)->type].children.push_back(&types[(*typeIt)]);
-		}
-		if ((*typeIt)->either_types){
-			CANT_HANDLE("I don't know what does either types means in type class!!!");
-		}
-	}
-
-
-	//Preparing object
-	const_symbol_list::iterator objIt, objItEnd;
-	objIt = current_analysis->the_problem->objects->begin();
-	objItEnd = current_analysis->the_problem->objects->end();
-
-	for (; objIt != objItEnd; ++objIt){
-		objects[(*objIt)].originalObject = (*objIt);
-		MyObject *myObject = (&objects[(*objIt)]);
-		if ((*objIt)->type){
-			types[(*objIt)->type].objects.push_back(myObject);
-			myObject->type = &types[(*objIt)->type];
-		}else {
-			CANT_HANDLE("We don't support  \"No Type\" or \"Either Type\"!!!");
-		}
-	}
-	//Also we should consider constants
-	if (current_analysis->the_domain->constants){
-		objIt = current_analysis->the_domain->constants->begin();
-		objItEnd = current_analysis->the_domain->constants->end();
-
-		for (; objIt != objItEnd; ++objIt){
-			objects[(*objIt)].originalObject = (*objIt);
-			MyObject *myObject = (&objects[(*objIt)]);
-			if ((*objIt)->type){
-				types[(*objIt)->type].objects.push_back(myObject);
-				myObject->type = &types[(*objIt)->type];
-			}else {
-				CANT_HANDLE("We don't support  \"No Type\" or \"Either Type\"!!!");
-			}
-		}
-	}
-
-
-	//completing objects of each type;
-	map<VAL::pddl_type *, MyType>::iterator myTypeIt, myTypeItEnd;
-	myTypeIt = types.begin();
-	myTypeItEnd = types.end();
-
-	for (; myTypeIt != myTypeItEnd; ++myTypeIt){
-		myTypeIt->second.completingChildren();
-	}
-
 
 	//preparing operators
 	nPartialActions = 0;
-	operators.resize(current_analysis->the_domain->ops->size());
+	int nOperators = current_analysis->the_domain->ops->size();
+	operators.resize(nOperators);
 	operator_list::iterator opIt, opItEnd;
 	opIt = current_analysis->the_domain->ops->begin();
 	opItEnd = current_analysis->the_domain->ops->end();
-	nUnification = 0;
 	for (int i = 0; opIt != opItEnd; ++opIt, ++i){
 		operators[i] = new MyOperator();
 		operators[i]->prepare(*opIt, i);
-		for (unsigned int j = 0; j < operators[i]->offset.size(); ++j){
-			operators[i]->offset[j] = nUnification;
-			nUnification += operators[i]->argument[j]->objects.size();
+	}
+
+	//preparing partial actions
+	OpStore::iterator actionIt, actionItEnd;
+	actionIt = instantiatedOp::opsBegin();
+	actionItEnd = instantiatedOp::opsEnd();
+
+	for (; actionIt != actionItEnd; ++actionIt){
+		string opName = (*actionIt)->getHead()->getName();
+		for (int i = 0; i < nOperators; ++i){
+			if (opName == operators[i]->originalOperator->name->getName()){
+				operators[i]->consideringAction(*actionIt);
+			}
 		}
 	}
 
@@ -195,13 +146,13 @@ void MyProblem::assignIdToPropositions(){
 		paIt = it->adder.begin();
 		paItEnd = it->adder.end();
 		for (; paIt != paItEnd; ++paIt){
-			possibleModificationByOperator[(*paIt)->op->id] = true;
+			possibleModificationByOperator[(*paIt)->partialOperator->op->id] = true;
 		}
 
 		paIt = it->deleter.begin();
 		paItEnd = it->deleter.end();
 		for (; paIt != paItEnd; ++paIt){
-			possibleModificationByOperator[(*paIt)->op->id] = true;
+			possibleModificationByOperator[(*paIt)->partialOperator->op->id] = true;
 		}
 
 		//assigning id
@@ -245,7 +196,7 @@ void MyProblem::assignIdToVariables(){
 		paIt = it->modifier.begin();
 		paItEnd = it->modifier.end();
 		for (; paIt != paItEnd; ++paIt){
-			possibleModificationByOperator[(*paIt)->op->id] = true;
+			possibleModificationByOperator[(*paIt)->partialOperator->op->id] = true;
 		}
 
 		//assigning id
@@ -285,14 +236,6 @@ void MyProblem::write(ostream &sout){
 		sout << i << ' ' << variables[i].originalPNE->getStateID() << ' ';
 		variables[i].originalPNE->write(sout);
 		sout << endl;
-	}
-
-	//Printing Types
-	map <VAL::pddl_type *, MyType>::iterator typeIt, typeItEnd;
-	typeIt = types.begin();
-	typeItEnd = types.end();
-	for (; typeIt != typeItEnd; ++typeIt){
-		writeType(sout, &(typeIt->second), 0);
 	}
 }
 

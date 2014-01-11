@@ -14,10 +14,14 @@
 #include "MyAtom.h"
 #include "MyObject.h"
 
+
+
 #include <vector>
 #include <string>
-using namespace std;
+#include <set>
 
+using namespace std;
+using namespace Inst;
 
 
 namespace mdbr {
@@ -27,17 +31,19 @@ class MyProposition;
 
 class MyPartialOperator{
 private:
-	map <string, MyObject*> selectedObject;  //A temporary vector used in grounding
-	map <string, int> unificationId;  //A temporary vector used in grounding
 
 	void findTypes(const VAL::expression *exp);
+
+	void findArgument (const parameter_symbol_list *parameter);
+
+	bool isMatchingArgument (MyPartialAction *child, FastEnvironment *env);
 
 public:
 
 	MyOperator *op;
-	map <string, MyType *> argument;
-	map <string, int> placement;
+	set <const VAL::symbol *> argument;
 
+	vector <MyPartialAction *> child;
 
 
 	list <const proposition *> precondition;
@@ -46,18 +52,16 @@ public:
 	list <const assignment *> assignmentEffect;
 	list <const comparison *> comparisonPrecondition;
 
-
-
 	MyPartialOperator(): op(NULL) {}
 	void prepare (MyOperator *op, const proposition *prop);
 	void prepare (MyOperator *op, const assignment *asgn);
 	void prepare (MyOperator *op, const comparison *cmp);
-	void grounding();
-	void grounding (map <string, MyType *>::iterator it);
 
 	bool isSubPartialOperator (const MyPartialOperator &subPartialOperator);
 
 	void mergSubPartialOperator (const MyPartialOperator &subPartialOperator);
+
+	void consideringAnAction (instantiatedOp *action);
 
 };
 
@@ -75,23 +79,14 @@ public:
 	list <MyProposition *> addEffect;
 	list <MyProposition *> deleteEffect;
 
-	map <const func_term *, Inst::PNE *> variables;
-
+	FastEnvironment *env;
 
 	MyPartialOperator *partialOperator;
 
-	MyOperator *op;
+	MyPartialAction():isValid(true), id (-2), partialOperator(NULL){}
 
-	map <string, MyObject *> objects;
-	map <string, int> unificationId;
-
-	MyPartialAction():isValid(true), id (-2), partialOperator(NULL), op(NULL) {}
-
-	void prepare (MyOperator *op, MyPartialOperator *partialOperator, map <string, MyObject*> &objects, map <string, int> &unificationId, int id);
+	void prepare (MyPartialOperator *partialOperator, FastEnvironment *env, int id);
 	void preparePropositionList (list <const proposition *> &liftedList, list <MyProposition *> &instantiatedList, propositionKind kind);
-	void prepareAssignmentList (list <const assignment *> &assignmentList);
-	void prepareComparisonList (list <const comparison *> &comparisonList);
-	void findVariables(const expression *exp);
 
 	virtual ~MyPartialAction();
 };

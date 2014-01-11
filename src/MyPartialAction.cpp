@@ -12,8 +12,33 @@
 #include <vector>
 using namespace std;
 
-namespace mdbr {
+using namespace VAL;
 
+namespace mdbr {
+void MyPartialOperator::findArgument (const parameter_symbol_list *parameter){
+
+	parameter_symbol_list::iterator pIt, pItEnd;
+	pIt = parameter->begin();
+	pItEnd = parameter->end();
+	for (int i = 0; pIt != pItEnd; ++pIt, ++i){
+		const VAL::const_symbol *constSymbol = dynamic_cast <const VAL::const_symbol *> ((*pIt));
+		if (constSymbol){
+			var_symbol_list::iterator oIt, oItEnd;
+			oIt = op->originalOperator->parameters->begin();
+			oItEnd = op->originalOperator->parameters->end();
+			for (; oIt != oItEnd; ++oIt){
+				if ((*pIt)->type && (*pIt)->type == (*oIt)->type){
+					argument.insert((*oIt));
+					break;
+				}
+			}
+		}else{
+			argument.insert((*pIt));
+			cout << "DON'T FORGET TO TEST FINDING CONST SYMBOLS" << endl;
+		}
+	}
+
+}
 
 void MyPartialOperator::findTypes(const expression *exp){
 	const binary_expression *binary = dynamic_cast <const binary_expression *>(exp);
@@ -32,20 +57,7 @@ void MyPartialOperator::findTypes(const expression *exp){
 	const func_term *function = dynamic_cast <const func_term *> (exp);
 	if (function){
 		parameter_symbol_list::const_iterator it, itEnd;
-		it = function->getArgs()->begin();
-		itEnd = function->getArgs()->end();
-		for (; it != itEnd; ++it){
-			var_symbol_list::iterator argIt, argItEnd;
-			argIt = op->originalOperator->parameters->begin();
-			argItEnd = op->originalOperator->parameters->end();
-			for (int j = 0; argIt != argItEnd; ++argIt, ++j){
-				if ((*argIt)->getName() == (*it)->getName()){
-					placement[(*it)->getName()] = j;
-					argument[(*it)->getName()] = &(myProblem.types[(*it)->type]);
-					break;
-				}
-			}
-		}
+		findArgument(function->getArgs());
 		return;
 	}
 
@@ -58,24 +70,22 @@ void MyPartialOperator::findTypes(const expression *exp){
 	return;
 }
 
+bool MyPartialOperator::isMatchingArgument (MyPartialAction *child, FastEnvironment *env){
+	set <const string>::const_iterator it, itEnd;
+	it = argument.begin();
+	itEnd = argument.end();
+	for (; it != itEnd; ++it){
+		if ((*(child->env))[*it] != (*env)[*it]){
+			return false;
+		}
+	}
+	return true;
+}
+
 
 void MyPartialOperator::prepare(MyOperator *op, const proposition *prop){
 	this->op =  op;
-	parameter_symbol_list::iterator pIt, pItEnd;
-	pIt = prop->args->begin();
-	pItEnd = prop->args->end();
-	for (int i = 0; pIt != pItEnd; ++pIt, ++i){
-		var_symbol_list::iterator it, itEnd;
-		it = op->originalOperator->parameters->begin();
-		itEnd = op->originalOperator->parameters->end();
-		for (int j = 0; it != itEnd; ++it, ++j){
-			if ((*it)->getName() == (*pIt)->getName()){
-				placement[(*it)->getName()] = j;
-				argument[(*it)->getName()] = &(myProblem.types[(*it)->type]);
-				break;
-			}
-		}
-	}
+	findArgument(prop->args);
 }
 
 void MyPartialOperator::prepare (MyOperator *op, const assignment *asgn){
@@ -92,39 +102,15 @@ void MyPartialOperator::prepare (MyOperator *op, const comparison *cmp){
 
 
 
-void MyPartialOperator::grounding() {
-	selectedObject.clear();
-	unificationId.clear();
-	grounding(argument.begin());
-}
-
-void MyPartialOperator::grounding(map <string, MyType *>::iterator it){
-	if (it == argument.end()){
-		int partialActionId = myProblem.nPartialActions ++;
-		myProblem.partialAction.push_back(MyPartialAction());
-		myProblem.partialAction.rbegin()->prepare(op, this, selectedObject, unificationId, partialActionId);
-		return;
-	}
-	map <string, MyType *>::iterator nextIt;
-	nextIt = it;
-	++nextIt;
-	int nObjects = it->second->objects.size();
-	for (int i = 0; i < nObjects; ++i){
-		selectedObject[it->first] = it->second->objects[i];
-		unificationId [it->first] = i;
-		grounding(nextIt);
-	}
-}
-
 bool MyPartialOperator::isSubPartialOperator (const MyPartialOperator &subPartialOperator){
 	if (op != subPartialOperator.op) return false;
 	if (argument.size() < subPartialOperator.argument.size()) return false;
 
-	map <string, MyType *>::const_iterator it, itEnd, it2;
+	set <const VAL::symbol *>::const_iterator it, itEnd, it2;
 	it = subPartialOperator.argument.begin();
 	itEnd = subPartialOperator.argument.end();
 	for (; it != itEnd; ++it){
-		if (argument.find(it->first) == argument.end()) return false;
+		if (argument.find(*it) == argument.end()) return false;
 	}
 	return true;
 }
@@ -147,88 +133,29 @@ void MyPartialOperator::mergSubPartialOperator (const MyPartialOperator &subPart
 	appendList <const assignment *> (assignmentEffect, subPartialOperator.assignmentEffect);
 }
 
-void MyPartialAction::prepare (MyOperator *op, MyPartialOperator *partialOperator, map <string, MyObject*> &objects, map <string, int> &unificationId, int id){
+void MyPartialOperator::consideringAnAction (instantiatedOp *action){
+	int childrenSize = child.size();
+	FastEnvironment *env = action->getEnv();
+	for (int i = 0; i < childrenSize; ++i){
+		if (isMatchingArgument(child[i], env)){
+			return;
+		}
+	}
+	int partialActionId = myProblem.nPartialActions;
+	myProblem.nPartialActions++;
+	myProblem.partialAction.push_back(MyPartialAction());
+	myProblem.partialAction.rbegin()->prepare(this, env, partialActionId);
+	child.push_back(&(*myProblem.partialAction.rbegin()));
+}
+
+void MyPartialAction::prepare (MyPartialOperator *partialOperator, FastEnvironment *env, int id){
 	this->id = id;
-	this->op = op;
 	this->partialOperator = partialOperator;
-	this->objects = objects;
-	this->unificationId = unificationId;
 	this->isValid = true;
+	this->env = env;
 	preparePropositionList(partialOperator->precondition, precondition, E_PRECONDITION);
 	preparePropositionList(partialOperator->addEffect, addEffect, E_ADD_EFFECT);
 	preparePropositionList(partialOperator->deleteEffect, deleteEffect, E_DELETE_EFFECT);
-	prepareComparisonList(partialOperator->comparisonPrecondition);
-	prepareAssignmentList(partialOperator->assignmentEffect);
-}
-
-
-void MyPartialAction::findVariables(const expression *exp){
-	const binary_expression *binary = dynamic_cast <const binary_expression *>(exp);
-	if (binary){
-		findVariables(binary->getRHS());
-		findVariables(binary->getLHS());
-		return;
-	}
-
-	const uminus_expression *uMinus = dynamic_cast <const uminus_expression *> (exp);
-	if (uMinus){
-		findVariables(uMinus->getExpr());
-		return;
-	}
-
-	const func_term *function = dynamic_cast <const func_term *> (exp);
-	if (function){
-		parameter_symbol_list *arguments = new parameter_symbol_list();
-		parameter_symbol_list::const_iterator it, itEnd;
-		it = function->getArgs()->begin();
-		itEnd = function->getArgs()->end();
-		for (; it != itEnd; ++it){
-			arguments->push_back(objects[(*it)->getName()]->originalObject);
-		}
-		func_term func(const_cast <func_symbol *> (function->getFunction()), arguments);
-
-		FastEnvironment env(0);
-		PNE pne(&func, &env);
-
-		PNE *pne2 = instantiatedOp::findPNE(&pne);
-		if (!pne2){
-			isValid = false;
-			return;
-		}
-		variables[function] = pne2;
-		return;
-	}
-
-	const num_expression *number = dynamic_cast <const num_expression *> (exp);
-	if (number){
-		return;
-	}
-
-	CANT_HANDLE("some expression can not be handled!!!");
-	return;
-
-}
-
-void MyPartialAction::prepareAssignmentList (list <const assignment *> &assignmentList){
-	list <const assignment *>::iterator it, itEnd;
-	it = assignmentList.begin();
-	itEnd = assignmentList.end();
-	for (; it != itEnd; ++it){
-		findVariables((*it)->getExpr());
-		findVariables((*it)->getFTerm());
-		Inst::PNE *pne = variables[(*it)->getFTerm()];
-		myProblem.variables[pne->getStateID()].modifier.push_back(this);
-	}
-}
-
-void MyPartialAction::prepareComparisonList (list <const comparison *> &comparisonList){
-	list <const comparison *>::iterator it, itEnd;
-	it = comparisonList.begin();
-	itEnd = comparisonList.end();
-	for (; it != itEnd; ++it){
-		findVariables((*it)->getLHS());
-		findVariables((*it)->getRHS());
-	}
 }
 
 void MyPartialAction::preparePropositionList (list <const proposition *> &liftedList, list <MyProposition *> &instantiatedList, propositionKind kind){
@@ -239,38 +166,13 @@ void MyPartialAction::preparePropositionList (list <const proposition *> &lifted
 	lftIt = liftedList.begin();
 	lftItEnd = liftedList.end();
 	for (; lftIt != lftItEnd; ++lftIt){
-
-		parameter_symbol_list *parameters = new parameter_symbol_list;
-		parameter_symbol_list::const_iterator it, itEnd;
-		it = (*lftIt)->args->begin();
-		itEnd = (*lftIt)->args->end();
-
-
-		for (; it != itEnd; ++it){
-			if (objects.find((*it)->getName()) != objects.end()){
-				parameters->push_back(objects[(*it)->getName()]->originalObject);
-			}else{
-				VAL::const_symbol *constSymbol = dynamic_cast <VAL::const_symbol *> ((*it));
-				if (constSymbol){
-					parameters->push_back(constSymbol);
-				}else{
-					cout << "NOOOOOOOOO: an object with the name of \"" << (*it)->getName() << "\" is not found" << endl;
-					map <string, MyObject *>::iterator alakiIt;
-					for (alakiIt = objects.begin(); alakiIt != objects.end(); ++alakiIt){
-						cout << alakiIt->first << "==>" << alakiIt->second->originalObject->getName() << endl;
-					}
-				}
-			}
-		}
-
-		proposition prop((*lftIt)->head, parameters);
-		FastEnvironment env(0);
-		Literal lit(&prop, &env);
+		Literal lit(*lftIt, env);
 		Literal *lit2 = instantiatedOp::findLiteral(&lit);
 		if (lit2 == NULL){
 			isValid = false;
 			return;
 		}
+
 
 		if (lit2->getStateID() != -1){
 			instantiatedList.push_back(&(myProblem.propositions[lit2->getStateID()]));
@@ -279,7 +181,27 @@ void MyPartialAction::preparePropositionList (list <const proposition *> &lifted
 			}else if (kind == E_ADD_EFFECT){
 				myProblem.propositions[lit2->getStateID()].adder.push_back(this);
 			}else{
-				myProblem.propositions[lit2->getStateID()].deleter.push_back(this);
+
+				/*
+				 * If an action adds some proposition and deletes the same proposition
+				 * we don't considering the deleting effect!
+				 * According to the Robinson's Thesis (first paragraph of page 26)
+				 */
+				bool isAddedBefore = false;
+
+				list <MyProposition *>::iterator addIt, addItEnd;
+				addIt = addEffect.begin();
+				addItEnd = addEffect.end();
+				for (; addIt != addItEnd; ++addIt){
+					if ((*addIt)->originalLiteral->getStateID() == lit2->getStateID()){
+						isAddedBefore = true;
+						break;
+					}
+				}
+
+				if (isAddedBefore == false){
+					myProblem.propositions[lit2->getStateID()].deleter.push_back(this);
+				}
 			}
 		}
 	}

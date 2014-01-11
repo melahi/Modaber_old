@@ -13,8 +13,8 @@ namespace mdbr {
 
 
 
-list <MyPartialOperator *>::iterator MyOperator::findPartialOperator (MyPartialOperator *a){
-	list <MyPartialOperator *>::iterator ret, pAEnd;
+vector <MyPartialOperator *>::iterator MyOperator::findPartialOperator (MyPartialOperator *a){
+	vector <MyPartialOperator *>::iterator ret, pAEnd;
 	ret = partialOperator.begin();
 	pAEnd = partialOperator.end();
 
@@ -36,27 +36,12 @@ list <MyPartialOperator *>::iterator MyOperator::findPartialOperator (MyPartialO
 void MyOperator::prepare (operator_ *originalOperator, int id){
 	this->id = id;
 	this->originalOperator = originalOperator;
-	var_symbol_list::iterator it, itEnd;
-	it = originalOperator->parameters->begin();
-	itEnd = originalOperator->parameters->end();
-	int nArgument = originalOperator->parameters->size();
-	offset.resize(nArgument);
-	argument.resize(nArgument);
-	for (int i = 0; it != itEnd; ++it, ++i){
-		argument[i] = &(myProblem.types[(*it)->type]);
-	}
 
 	preparePreconditions(originalOperator->precondition);
 	prepareSimpleEffect(originalOperator->effects->add_effects, true);
 	prepareSimpleEffect(originalOperator->effects->del_effects, false);
 	prepareAssignment(originalOperator->effects->assign_effects);
 
-	list <MyPartialOperator *>::iterator opIt, opItEnd;
-	opIt = partialOperator.begin();
-	opItEnd = partialOperator.end();
-	for (; opIt != opItEnd; ++opIt){
-		(*opIt)->grounding();
-	}
 }
 
 
@@ -67,7 +52,7 @@ void MyOperator::prepareSimpleEffect(pc_list<simple_effect*> &valEffectList, boo
 	for (int i = 0; it != itEnd; ++it, ++i){
 		MyPartialOperator *a = new MyPartialOperator();
 		a->prepare(this, (*it)->prop);
-		list <MyPartialOperator *>::iterator it2 = findPartialOperator(a);
+		vector <MyPartialOperator *>::iterator it2 = findPartialOperator(a);
 		if (it2 == partialOperator.end()){
 			partialOperator.push_back(a);
 			it2 = partialOperator.end();
@@ -90,7 +75,7 @@ void MyOperator::prepareAssignment(pc_list <assignment *> &assignmentList){
 	for (int i = 0; it != itEnd; ++it, ++i){
 		MyPartialOperator *a = new MyPartialOperator();
 		a->prepare(this, *it);
-		list <MyPartialOperator *>::iterator it2 = findPartialOperator(a);
+		vector <MyPartialOperator *>::iterator it2 = findPartialOperator(a);
 		if (it2 == partialOperator.end()){
 			partialOperator.push_back(a);
 			it2 = partialOperator.end();
@@ -107,7 +92,7 @@ void MyOperator::preparePreconditions(goal *gl){
 	if (simple){
 		MyPartialOperator *a = new MyPartialOperator();
 		a->prepare(this, simple->getProp());
-		list <MyPartialOperator *>::iterator it2 = findPartialOperator(a);
+		vector <MyPartialOperator *>::iterator it2 = findPartialOperator(a);
 		if (it2 == partialOperator.end()){
 			partialOperator.push_back(a);
 			it2 = partialOperator.end();
@@ -122,7 +107,7 @@ void MyOperator::preparePreconditions(goal *gl){
 	if (comp){
 		MyPartialOperator *a = new MyPartialOperator();
 		a->prepare(this, comp);
-		list <MyPartialOperator *>::iterator it2 = findPartialOperator(a);
+		vector <MyPartialOperator *>::iterator it2 = findPartialOperator(a);
 		if (it2 == partialOperator.end()){
 			partialOperator.push_back(a);
 			it2 = partialOperator.end();
@@ -147,9 +132,16 @@ void MyOperator::preparePreconditions(goal *gl){
 	return;
 }
 
+void MyOperator::consideringAction(instantiatedOp *action){
+	int nPartialOperator = partialOperator.size();
+	for (int i = 0; i < nPartialOperator; ++i){
+		partialOperator[i]->consideringAnAction(action);
+	}
+}
+
 
 MyOperator::~MyOperator() {
-	list <MyPartialOperator *>::iterator it, itEnd;
+	vector <MyPartialOperator *>::iterator it, itEnd;
 	it = partialOperator.begin();
 	itEnd = partialOperator.end();
 	for (; it != itEnd; ++it){

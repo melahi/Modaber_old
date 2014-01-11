@@ -9,13 +9,14 @@
 #define MYOPERATOR_H_
 
 #include "VALfiles/parsing/ptree.h"
-#include "MyObject.h"
+#include "VALfiles/instantiation.h"
 
 #include <list>
 #include <vector>
 
 using namespace VAL;
 using namespace std;
+using namespace Inst;
 
 namespace mdbr {
 
@@ -25,16 +26,13 @@ class MyLiftedComparison;
 
 class MyOperator {
 private:
-	list <MyPartialOperator *>::iterator findPartialOperator (MyPartialOperator *a);
+	vector <MyPartialOperator *>::iterator findPartialOperator (MyPartialOperator *a);
 public:
 
 	operator_ *originalOperator;
 	int id;
 
-	vector <MyType *> argument;
-	vector <int> offset;      							//The offset used for unifications
-
-	list <MyPartialOperator *> partialOperator;
+	vector <MyPartialOperator *> partialOperator;
 
 
 	MyOperator(): originalOperator(NULL), id (-2) {}
@@ -45,6 +43,7 @@ public:
 	void prepareAssignment (pc_list <assignment *> &assignmentList);
 	void preparePreconditions (goal *gl);
 
+	void consideringAction (instantiatedOp *action);
 
 	virtual ~MyOperator();
 };
