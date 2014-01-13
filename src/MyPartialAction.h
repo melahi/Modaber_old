@@ -12,7 +12,7 @@
 #include "VALfiles/parsing/ptree.h"
 #include "VALfiles/instantiation.h"
 #include "MyAtom.h"
-#include "MyObject.h"
+
 
 
 
@@ -27,11 +27,12 @@ using namespace Inst;
 namespace mdbr {
 
 class MyProposition;
+class MyPartialAction;
+class MyOperator;
 
 
 class MyPartialOperator{
 private:
-
 	void findTypes(const VAL::expression *exp);
 
 	void findArgument (const parameter_symbol_list *parameter);
@@ -59,15 +60,21 @@ public:
 
 	bool isSubPartialOperator (const MyPartialOperator &subPartialOperator);
 
-	void mergSubPartialOperator (const MyPartialOperator &subPartialOperator);
+	void mergSubPartialOperator ( MyPartialOperator &subPartialOperator);
 
 	void consideringAnAction (instantiatedOp *action);
+
+	void write (ostream &sout);
 
 };
 
 
 
 class MyPartialAction {
+private:
+
+	bool isArgumentsConflicted (MyPartialAction *otherAction, const VAL::symbol *commonSymbol);
+
 public:
 
 	bool isValid;
@@ -83,10 +90,19 @@ public:
 
 	MyPartialOperator *partialOperator;
 
+
+	list <MyPartialAction *> conflictingPartialAction;
+
 	MyPartialAction():isValid(true), id (-2), partialOperator(NULL){}
 
 	void prepare (MyPartialOperator *partialOperator, FastEnvironment *env, int id);
 	void preparePropositionList (list <const proposition *> &liftedList, list <MyProposition *> &instantiatedList, propositionKind kind);
+
+	void findModifyingVariable();
+
+	void FindConflictingPartialActions ();
+
+	void write (ostream &sout);
 
 	virtual ~MyPartialAction();
 };

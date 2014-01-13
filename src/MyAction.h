@@ -7,6 +7,7 @@
 #include <map>
 #include <iostream>
 #include "MyAtom.h"
+#include "MyAction.h"
 #include "Utilities.h"
 #include "VALfiles/instantiation.h"
 #include "VALfiles/parsing/ptree.h"
@@ -24,11 +25,9 @@ namespace mdbr{
 
 class MyAtom;
 class   MyProposition;
-class   MyValue;
-class MyVariable;
+class   MyVariable;
 
 class MyAction;
-class MyGroundedAction;
 
 class MyAction {
 private:

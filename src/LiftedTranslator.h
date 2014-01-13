@@ -56,12 +56,12 @@ private:
 
 	void addSimpleEffectList (polarity plrty, const list <MyProposition *> &simpleEffectList, int significantTimePoint, MyPartialAction *partialAction);
 
-	void addAssignmentList (const pc_list <assignment *> &assignmentEffects, FastEnvironment *env, int significantTimePoint, MyPartialAction *partialAction = NULL);
-	void addAssignmentList (const list <const assignment *> &assignmentEffects, FastEnvironment *env, int significantTimePoint, MyPartialAction *partialAction);
+	void addAssignmentList (const pc_list <assignment *> &assignmentEffects, int significantTimePoint, MyPartialAction *partialAction = NULL);
+	void addAssignmentList (const list <const assignment *> &assignmentEffects, int significantTimePoint, MyPartialAction *partialAction);
 
 	void addGoal (const goal *gl, FastEnvironment *env, int significantTimePoint, MyPartialAction *partialAction = NULL);
 
-	void addGoalList (const list <const comparison* > &gls, FastEnvironment *env, int significantTimePoint, MyPartialAction *partialAction);
+	void addGoalList (const list <const comparison* > &gls, int significantTimePoint, MyPartialAction *partialAction);
 	void addGoalList (const list <MyProposition *> &simpleEffectList, int significantTimePoint, MyPartialAction *partialAction);
 	void findGoalList (const goal *gl, list <const simple_goal *> &returningList);
 

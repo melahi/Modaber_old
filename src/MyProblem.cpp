@@ -119,9 +119,21 @@ void MyProblem::liftedInitializing(){
 		for (int i = 0; i < nOperators; ++i){
 			if (opName == operators[i]->originalOperator->name->getName()){
 				operators[i]->consideringAction(*actionIt);
+				break;
 			}
 		}
 	}
+
+	for (int i = 0; i < nOperators; i++){
+		int nPartialOperators = myProblem.operators[i]->partialOperator.size();
+		for (int j = 0; j < nPartialOperators; ++j){
+			int nPartialActions = myProblem.operators[i]->partialOperator[j]->child.size();
+			for (int k = 0; k < nPartialActions; ++k){
+				myProblem.operators[i]->partialOperator[j]->child[k]->FindConflictingPartialActions();
+			}
+		}
+	}
+
 
 	assignIdToPropositions();
 	assignIdToVariables();
@@ -236,29 +248,6 @@ void MyProblem::write(ostream &sout){
 		sout << i << ' ' << variables[i].originalPNE->getStateID() << ' ';
 		variables[i].originalPNE->write(sout);
 		sout << endl;
-	}
-}
-
-void MyProblem::writeType (ostream &sout, MyType *type, int indent){
-	string myIndent = "";
-	for (int i = 0; i < indent; i++){
-		myIndent += '\t';
-	}
-
-	sout << myIndent << type->originalType->getName() << ": " << endl;
-	vector <MyObject *>::iterator objIt, objItEnd;
-	objIt = type->objects.begin();
-	objItEnd = type->objects.end();
-	for (; objIt != objItEnd; ++objIt){
-		sout << myIndent << "---" << (*objIt)->originalObject->getName() << endl;
-	}
-
-	list <MyType *>::iterator typeIt, typeItEnd;
-	typeIt = type->children.begin();
-	typeItEnd = type->children.end();
-
-	for (; typeIt != typeItEnd; ++typeIt){
-		writeType(sout, *typeIt, indent+1);
 	}
 }
 

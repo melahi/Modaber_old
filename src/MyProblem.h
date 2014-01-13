@@ -11,7 +11,6 @@
 
 #include "MyAction.h"
 #include "MyAtom.h"
-#include "MyObject.h"
 #include "MyOperator.h"
 #include "MyPartialAction.h"
 #include "VALfiles/parsing/ptree.h"
@@ -62,8 +61,6 @@ public:
 	void liftedInitializing ();
 
 	void write(ostream &sout);
-
-	void writeType (ostream &sout, MyType * type, int indent);
 
 	virtual ~MyProblem() {
 		int nOperators = operators.size();

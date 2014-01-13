@@ -20,7 +20,7 @@ void LiftedTranslator::prepareGoals(double bound) {
 	liftedSMTProblem->inActivePermanentChange();
 	liftedSMTProblem->clearAssertionList();
 	addGoals(translatedLength - 1);
-	if (bound != infinite){
+	if (bound != infinite && bound != -infinite){
 		addMetric(bound, translatedLength - 1);
 	}
 	goals = liftedSMTProblem->getAssertions();
@@ -80,7 +80,7 @@ void LiftedTranslator::addInitialState(){
 		liftedSMTProblem->endClause();
 	}
 
-	addAssignmentList(current_analysis->the_problem->initial_state->assign_effects, &env, 0);
+	addAssignmentList(current_analysis->the_problem->initial_state->assign_effects, 0);
 }
 
 //Add goals to the smt problem
@@ -97,68 +97,6 @@ void LiftedTranslator::addPartialActions (int significantTimePoint){
 	itEnd = myProblem.partialAction.end();
 	for (; it != itEnd; ++it){
 
-		if (it->unificationId.size() != 0){
-			map <string, int>::iterator it1, it1End;
-			it1 = it->unificationId.begin();
-			it1End = it->unificationId.end();
-			liftedSMTProblem->startNewClause();
-			for (; it1 != it1End; ++it1){
-				liftedSMTProblem->addUnificationToClause(it1->second + it->op->offset[it->partialOperator->placement[it1->first]], significantTimePoint, false);
-			}
-			liftedSMTProblem->addPartialActionToClause(&(*it), significantTimePoint, true);
-			liftedSMTProblem->endClause();
-
-			it1 = it->unificationId.begin();
-			for (; it1 != it1End; ++it1){
-				liftedSMTProblem->startNewClause();
-				liftedSMTProblem->addPartialActionToClause(&(*it), significantTimePoint, false);
-				liftedSMTProblem->addUnificationToClause(it1->second + it->op->offset[it->partialOperator->placement[it1->first]], significantTimePoint, true);
-				liftedSMTProblem->endClause();
-			}
-		}else{
-			if (it->op->argument.size() == 0){
-				//In this case we don't need to insert any clause for handling unification
-			}else{
-
-				/*
-				 * An example of this case is:
-				 * 	operator a( ?x, ?y)
-				 * 		precondition:
-				 * 			proposition1, proposition2(?x, ?y)
-				 * 		effect:
-				 * 			~proposition1
-				 *
-				 *
-				 * Which a partial action is:
-				 *  partial action a
-				 * 	  	precondition:
-				 * 	  		precondition1
-				 * 	  	effect:
-				 * 	  		~precondition1
-				 */
-
-				int unificationId = it->op->offset[0];
-				int endingUnificationID = it->op->argument[0]->objects.size() + unificationId;
-				for (; unificationId < endingUnificationID; ++unificationId){
-					liftedSMTProblem->startNewClause();
-					liftedSMTProblem->addUnificationToClause(unificationId, significantTimePoint, false);
-					liftedSMTProblem->addPartialActionToClause(&(*it), significantTimePoint, true);
-					liftedSMTProblem->endClause();
-				}
-
-
-				liftedSMTProblem->startNewClause();
-				unificationId = it->op->offset[0];
-				liftedSMTProblem->addPartialActionToClause(&(*it), significantTimePoint, false);
-				for (; unificationId < endingUnificationID; ++unificationId){
-					liftedSMTProblem->addUnificationToClause(unificationId, significantTimePoint, true);
-				}
-				liftedSMTProblem->endClause();
-			}
-		}
-
-
-
 		if (it->isValid == false){
 			liftedSMTProblem->startNewClause();
 			liftedSMTProblem->addPartialActionToClause(&(*it), significantTimePoint, false);
@@ -169,24 +107,8 @@ void LiftedTranslator::addPartialActions (int significantTimePoint){
 		addSimpleEffectList(E_POS, it->addEffect, significantTimePoint, &(*it));
 		addSimpleEffectList(E_NEG, it->deleteEffect, significantTimePoint, &(*it));
 		addGoalList(it->precondition, significantTimePoint, &(*it));
-
-		if (it->partialOperator->comparisonPrecondition.size() == 0 && it->partialOperator->assignmentEffect.size() == 0){
-			continue;
-		}
-		//Creating FastEnvironment;
-		FastEnvironment env(it->op->originalOperator->parameters->size());
-
-		var_symbol_list::iterator varIt, varItEnd;
-		varIt = it->op->originalOperator->parameters->begin();
-		varItEnd = it->op->originalOperator->parameters->end();
-		for (; varIt != varItEnd; ++varIt){
-			if (it->objects.find((*varIt)->getName()) != it->objects.end()){
-				env[*varIt] = it->objects[(*varIt)->getName()]->originalObject;
-			}
-		}
-
-		addAssignmentList(it->partialOperator->assignmentEffect, &env, significantTimePoint, &(*it));
-		addGoalList(it->partialOperator->comparisonPrecondition, &env, significantTimePoint, &(*it));
+		addAssignmentList(it->partialOperator->assignmentEffect, significantTimePoint, &(*it));
+		addGoalList(it->partialOperator->comparisonPrecondition, significantTimePoint, &(*it));
 	}
 }
 
@@ -205,14 +127,14 @@ void LiftedTranslator::addExplanatoryAxioms (int significantTimePoint){
 		pAIt = myProblem.propositions[i].adder.begin();
 		pAItEnd = myProblem.propositions[i].adder.end();
 		for (; pAIt != pAItEnd; ++pAIt){
-			adder[(*pAIt)->op->id].push_back(*pAIt);
+			adder[(*pAIt)->partialOperator->op->id].push_back(*pAIt);
 		}
 
 		vector < list<MyPartialAction *> > deleter(nOperators);
 		pAIt = myProblem.propositions[i].deleter.begin();
 		pAItEnd = myProblem.propositions[i].deleter.end();
 		for (; pAIt != pAItEnd; ++pAIt){
-			deleter[(*pAIt)->op->id].push_back(*pAIt);
+			deleter[(*pAIt)->partialOperator->op->id].push_back(*pAIt);
 		}
 
 
@@ -252,7 +174,7 @@ void LiftedTranslator::addExplanatoryAxioms (int significantTimePoint){
 		pAIt = myProblem.variables[i].modifier.begin();
 		pAItEnd = myProblem.variables[i].modifier.end();
 		for (; pAIt != pAItEnd; ++pAIt){
-			modifier[(*pAIt)->op->id].push_back(*pAIt);
+			modifier[(*pAIt)->partialOperator->op->id].push_back(*pAIt);
 		}
 		for (int j = 0; j < nOperators; ++j){
 			if (modifier[j].size() || (j == 0 && myProblem.variables[i].modifier.size() == 0)){
@@ -272,35 +194,40 @@ void LiftedTranslator::addExplanatoryAxioms (int significantTimePoint){
 void LiftedTranslator::addCompletingAction (int significantTimePoint){
 	int nOperators = myProblem.operators.size();
 	for (int i = 0; i < nOperators; ++i){
-		int nArguments = myProblem.operators[i]->argument.size();
-		if (nArguments <= 1){
-			continue;
-		}
-		for (int j = 0; j < nArguments; ++j){
-			int starting1, starting2, ending1, ending2;
-			starting1 = myProblem.operators[i]->offset[j];
-			ending1 = starting1 + myProblem.operators[i]->argument[j]->objects.size();
-			starting2 = myProblem.operators[i]->offset[(j + 1) % nArguments];
-			ending2 = starting2 + myProblem.operators[i]->argument[(j + 1) % nArguments]->objects.size();
+		int nPartialOperators = myProblem.operators[i]->partialOperator.size();
+		for (int j = 0; j < nPartialOperators; ++j){
+			int nPartialActions = myProblem.operators[i]->partialOperator[j]->child.size();
+			for (int k = 0; k < nPartialActions; ++k){
 
-			//If a unification for an argument is true then at least one unification for the next argument is also should be true
-			for (int k = starting1; k < ending1; ++k){
-				liftedSMTProblem->startNewClause();
-				liftedSMTProblem->addUnificationToClause(k, significantTimePoint, false);
-				for (int l = starting2; l < ending2; ++l){
-					liftedSMTProblem->addUnificationToClause(l, significantTimePoint, true);
-				}
-				liftedSMTProblem->endClause();
-			}
+				// If a partial action is executed then no other conflicting partial action cab be executed!!!
+				list <MyPartialAction *>::iterator confIt, confItEnd;
+				initializeIterator(confIt, confItEnd, myProblem.operators[i]->partialOperator[j]->child[k]->conflictingPartialAction);
 
-			//At most on unification for each argument should be true
-			for (int k = starting1; k < ending1; ++k){
-				for (int l = starting1; l < k; ++ l){
+				for (; confIt != confItEnd; ++confIt){
 					liftedSMTProblem->startNewClause();
-					liftedSMTProblem->addUnificationToClause(k, significantTimePoint, false);
-					liftedSMTProblem->addUnificationToClause(l, significantTimePoint, false);
+					liftedSMTProblem->addPartialActionToClause(*confIt, significantTimePoint, false);
+					liftedSMTProblem->addPartialActionToClause(myProblem.operators[i]->partialOperator[j]->child[k], significantTimePoint, false);
 					liftedSMTProblem->endClause();
 				}
+				for (int l = 0; l < k; ++l){
+					liftedSMTProblem->startNewClause();
+					liftedSMTProblem->addPartialActionToClause(myProblem.operators[i]->partialOperator[j]->child[k], significantTimePoint, false);
+					liftedSMTProblem->addPartialActionToClause(myProblem.operators[i]->partialOperator[j]->child[l], significantTimePoint, false);
+					liftedSMTProblem->endClause();
+				}
+			}
+			if (nPartialOperators == 1){
+				continue;
+			}
+			int nextPartialOperator = (j + 1) % nPartialOperators;
+			int nNextPartialActions = myProblem.operators[i]->partialOperator[nextPartialOperator]->child.size();
+			for (int k = 0; k < nPartialActions; k++){
+				liftedSMTProblem->startNewClause();
+				liftedSMTProblem->addPartialActionToClause(myProblem.operators[i]->partialOperator[j]->child[k], significantTimePoint, false);
+				for (int l = 0; l < nNextPartialActions; ++l){
+					liftedSMTProblem->addPartialActionToClause(myProblem.operators[i]->partialOperator[nextPartialOperator]->child[l], significantTimePoint, true);
+				}
+				liftedSMTProblem->endClause();
 			}
 		}
 	}
@@ -351,34 +278,35 @@ void LiftedTranslator::addSimpleEffectList (polarity plrty, const list <MyPropos
 	for (; it != itEnd; ++it){
 		liftedSMTProblem->startNewClause();
 		liftedSMTProblem->addPartialActionToClause(partialAction, significantTimePoint, false);
-		liftedSMTProblem->AddConditionToCluase(*it, partialAction->op->id + 1, significantTimePoint, (plrty == E_POS));
+		liftedSMTProblem->AddConditionToCluase(*it, partialAction->partialOperator->op->id + 1, significantTimePoint, (plrty == E_POS));
 		liftedSMTProblem->endClause();
 	}
 }
 
-void LiftedTranslator::addAssignmentList (const pc_list <assignment *> &assignmentEffects, FastEnvironment *env, int significantTimePoint, MyPartialAction *partialAction /* = NULL */){
+void LiftedTranslator::addAssignmentList (const pc_list <assignment *> &assignmentEffects, int significantTimePoint, MyPartialAction *partialAction /* = NULL */){
 	pc_list<assignment*>::const_iterator it = assignmentEffects.begin();
 	pc_list<assignment*>::const_iterator itEnd = assignmentEffects.end();
 	for (; it != itEnd; ++it){
 		liftedSMTProblem->startNewClause();
 		if (partialAction){
 			liftedSMTProblem->addPartialActionToClause(partialAction, significantTimePoint - 1, false);
-			liftedSMTProblem->AddConditionToCluase(*it, env, partialAction->op->id + 1, significantTimePoint);
+			liftedSMTProblem->AddConditionToCluase(*it, partialAction->env, partialAction->partialOperator->op->id + 1, significantTimePoint);
 		}else{
-			liftedSMTProblem->AddConditionToCluase(*it, env, 0, significantTimePoint);
+			FastEnvironment env(0);
+			liftedSMTProblem->AddConditionToCluase(*it, &env, 0, significantTimePoint);
 		}
 		liftedSMTProblem->endClause();
 	}
 }
 
 
-void LiftedTranslator::addAssignmentList (const list <const assignment *> &assignmentEffects, FastEnvironment *env, int significantTimePoint, MyPartialAction *partialAction){
+void LiftedTranslator::addAssignmentList (const list <const assignment *> &assignmentEffects, int significantTimePoint, MyPartialAction *partialAction){
 	list <const assignment*>::const_iterator it = assignmentEffects.begin();
 	list <const assignment*>::const_iterator itEnd = assignmentEffects.end();
 	for (; it != itEnd; ++it){
 		liftedSMTProblem->startNewClause();
 		liftedSMTProblem->addPartialActionToClause(partialAction, significantTimePoint, false);
-		liftedSMTProblem->AddConditionToCluase(*it, env, partialAction->op->id + 1, significantTimePoint);
+		liftedSMTProblem->AddConditionToCluase(*it, partialAction->env, partialAction->partialOperator->op->id + 1, significantTimePoint);
 		liftedSMTProblem->endClause();
 	}
 }
@@ -389,7 +317,7 @@ void LiftedTranslator::addGoal (const goal *gl, FastEnvironment *env, int signif
 		liftedSMTProblem->startNewClause();
 		if (partialAction){
 			liftedSMTProblem->addPartialActionToClause(partialAction, significantTimePoint, false);
-			liftedSMTProblem->addLiteral(simple->getPolarity(), simple->getProp(),env, partialAction->op->id, significantTimePoint);
+			liftedSMTProblem->addLiteral(simple->getPolarity(), simple->getProp(),env, partialAction->partialOperator->op->id, significantTimePoint);
 		}else{
 			liftedSMTProblem->addLiteral(simple->getPolarity(), simple->getProp(),env, 0, significantTimePoint);
 		}
@@ -401,7 +329,7 @@ void LiftedTranslator::addGoal (const goal *gl, FastEnvironment *env, int signif
 		liftedSMTProblem->startNewClause();
 		if (partialAction){
 			liftedSMTProblem->addPartialActionToClause(partialAction, significantTimePoint, false);
-			liftedSMTProblem->AddConditionToCluase(comp, env, partialAction->op->id, significantTimePoint);
+			liftedSMTProblem->AddConditionToCluase(comp, env, partialAction->partialOperator->op->id, significantTimePoint);
 		}else{
 			liftedSMTProblem->AddConditionToCluase(comp, env, 0, significantTimePoint);
 		}
@@ -445,14 +373,14 @@ void LiftedTranslator::addGoal (const goal *gl, FastEnvironment *env, int signif
 	CANT_HANDLE("can't translate some GOAL");
 }
 
-void LiftedTranslator::addGoalList (const list <const comparison *> &gl, FastEnvironment *env, int significantTimePoint, MyPartialAction *partialAction){
+void LiftedTranslator::addGoalList (const list <const comparison *> &gl, int significantTimePoint, MyPartialAction *partialAction){
 	list <const comparison *>::const_iterator it, itEnd;
 	it = gl.begin();
 	itEnd = gl.end();
 	for (; it != itEnd; ++it){
 		liftedSMTProblem->startNewClause();
 		liftedSMTProblem->addPartialActionToClause(partialAction, significantTimePoint, false);
-		liftedSMTProblem->AddConditionToCluase(*it, env, partialAction->op->id, significantTimePoint);
+		liftedSMTProblem->AddConditionToCluase(*it, partialAction->env, partialAction->partialOperator->op->id, significantTimePoint);
 		liftedSMTProblem->endClause();
 	}
 }
@@ -463,7 +391,7 @@ void LiftedTranslator::addGoalList (const list <MyProposition *> &preconditionLi
 	for (; it != itEnd; ++it){
 		liftedSMTProblem->startNewClause();
 		liftedSMTProblem->addPartialActionToClause(partialAction, significantTimePoint, false);
-		liftedSMTProblem->AddConditionToCluase(*it, partialAction->op->id, significantTimePoint, true);
+		liftedSMTProblem->AddConditionToCluase(*it, partialAction->partialOperator->op->id, significantTimePoint, true);
 		liftedSMTProblem->endClause();
 	}
 }
@@ -506,40 +434,44 @@ void LiftedTranslator::extractSolution (ostream &sout){
 	int nOperator = myProblem.operators.size();
 	for (int i = 0; i < translatedLength - 1; ++i){
 		for (int j = 0; j < nOperator; ++j){
-			int nArgument = myProblem.operators[j]->argument.size();
-			if (nArgument == 0){
-				list <MyPartialAction>::iterator it, itEnd;
-				it = myProblem.partialAction.begin();
-				itEnd = myProblem.partialAction.end();
-				for (; it != itEnd; ++it){
-					if (it->op->originalOperator == myProblem.operators[j]->originalOperator){
-						if (liftedSMTProblem->isPartialActionUsed(&(*it), i)){
-							sout << "(" << myProblem.operators[j]->originalOperator->name->getName() << ")" << endl;
-						}
+			int nPartialOperator = myProblem.operators[j]->partialOperator.size();
+			FastEnvironment *env = new FastEnvironment(myProblem.operators[j]->originalOperator->parameters->size());
+			for (int k= 0; k < nPartialOperator; ++k){
+				int nPartialActions = myProblem.operators[j]->partialOperator[k]->child.size();
+				int l;
+				for (l = 0; l < nPartialActions; ++l){
+					if (liftedSMTProblem->isPartialActionUsed(myProblem.operators[j]->partialOperator[k]->child[l], i)){
+//						sout << ";;Partial action: "; myProblem.operators[j]->partialOperator[k]->child[l]->write(sout); sout << endl;
+						break;
 					}
 				}
-			}else{
-				for (int k = 0; k < nArgument; ++k){
-					int offset = myProblem.operators[j]->offset[k];
-					int nUnification = myProblem.operators[j]->argument[k]->objects.size();
-					int objectId;
-					for (objectId = 0; objectId < nUnification; ++objectId){
-						if (liftedSMTProblem->isUnificationUsed(offset + objectId, i)){
-							break;
+				if (l == nPartialActions){
+					if (k != 0){
+						CANT_HANDLE("Oops, some actions was incompletely done");
+					}
+					break;
+				}else{
+					set <const VAL::symbol *>::const_iterator it, itEnd;
+					initializeIterator(it, itEnd, myProblem.operators[j]->partialOperator[k]->argument);
+					for (; it != itEnd; ++it){
+						(*env)[*it] = (*(myProblem.operators[j]->partialOperator[k]->child[l]->env))[*it];
+					}
+				}
+				if (k == nPartialOperator - 1){
+					var_symbol_list::iterator paramIt, paramItEnd;
+					initializeIterator(paramIt, paramItEnd, (*(myProblem.operators[j]->originalOperator->parameters)));
+					for (; paramIt != paramItEnd; ++paramIt){
+						if (((*env)[*paramIt]) == NULL){
+							//It means some parameters of action is not bind, so I assume, I can bind it to any object!!!
+							(*env)[*paramIt] = (*(myProblem.actions[j][0].valAction->getEnv()))[*paramIt];
 						}
 					}
-					if (k == 0){
-						if (objectId == nUnification){
-							break;
-						}
-						sout << "(" << myProblem.operators[j]->originalOperator->name->getName();
-					}
-					sout << " " << myProblem.operators[j]->argument[k]->objects[objectId]->originalObject->getName();
-					if (k == nArgument - 1){
-						sout << ")" << endl;
-					}
+					instantiatedOp op (myProblem.operators[j]->originalOperator, env);
+					op.write(sout);
+					sout << endl;
 				}
 			}
 		}
+
 	}
 }

@@ -13,13 +13,4 @@
 
 time ./Modaber $1 $2 $3
 echo "*******************************"
-for (( i = 1; i < 100000; i++ )){
-	echo $i
-	if [ -f ${3}.$i ]; then
-		Last=${3}.$i
-	else
-		break;
-	fi
-}
-
-./validate $1 $2 $Last
+./validate $1 $2 $3.*

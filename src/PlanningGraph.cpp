@@ -37,7 +37,6 @@ void PlanningGraph::ignoreGraph(){
 }
 
 void PlanningGraph::constructingGraph (int maxNumberOfLayer /* = numeric_limits <int>::max() */){
-
 	while (!levelOff && numberOfLayers < maxNumberOfLayer){
 		levelOff = !extendOneLayer();
 	}

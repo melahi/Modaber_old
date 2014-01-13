@@ -10,6 +10,8 @@
 
 #include "VALfiles/parsing/ptree.h"
 #include "VALfiles/instantiation.h"
+#include "MyPartialAction.h"
+
 
 #include <list>
 #include <vector>
@@ -21,8 +23,7 @@ using namespace Inst;
 namespace mdbr {
 
 class MyPartialOperator;
-class MyLiftedAssignment;
-class MyLiftedComparison;
+
 
 class MyOperator {
 private:

@@ -18,6 +18,8 @@ using namespace std;
 
 #define isVisited(firstVisitedLayer, layerNumber) (firstVisitedLayer != -1 && firstVisitedLayer <= layerNumber)
 
+#define initializeIterator(begining, ending, container) begining = container.begin(); ending = container.end();
+
 extern const double undefinedValue;
 extern const double infinite;
 

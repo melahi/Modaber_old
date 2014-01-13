@@ -16,9 +16,7 @@ namespace mdbr {
 vector <MyPartialOperator *>::iterator MyOperator::findPartialOperator (MyPartialOperator *a){
 	vector <MyPartialOperator *>::iterator ret, pAEnd;
 	ret = partialOperator.begin();
-	pAEnd = partialOperator.end();
-
-	while (ret != pAEnd){
+	while (ret != partialOperator.end()){
 		if ((*ret)->isSubPartialOperator(*a)){
 			(*ret)->mergSubPartialOperator(*a);
 			break;

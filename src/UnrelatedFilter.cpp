@@ -75,6 +75,7 @@ UnrelatedFilter::UnrelatedFilter() {
 	considerAsEffective(current_analysis->the_problem->the_goal, &env);
 
 	while (canContinue){
+		canContinue = false;
 		for (int i = 0; i < nOperators; ++i){
 			int nActions = myProblem.actions[i].size();
 			const pc_list <simple_effect*> *addEffect = &(myProblem.operators[i]->originalOperator->effects->add_effects);

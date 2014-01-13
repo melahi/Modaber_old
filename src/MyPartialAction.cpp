@@ -17,7 +17,7 @@ using namespace VAL;
 namespace mdbr {
 void MyPartialOperator::findArgument (const parameter_symbol_list *parameter){
 
-	parameter_symbol_list::iterator pIt, pItEnd;
+	parameter_symbol_list::const_iterator pIt, pItEnd;
 	pIt = parameter->begin();
 	pItEnd = parameter->end();
 	for (int i = 0; pIt != pItEnd; ++pIt, ++i){
@@ -34,7 +34,6 @@ void MyPartialOperator::findArgument (const parameter_symbol_list *parameter){
 			}
 		}else{
 			argument.insert((*pIt));
-			cout << "DON'T FORGET TO TEST FINDING CONST SYMBOLS" << endl;
 		}
 	}
 
@@ -71,11 +70,11 @@ void MyPartialOperator::findTypes(const expression *exp){
 }
 
 bool MyPartialOperator::isMatchingArgument (MyPartialAction *child, FastEnvironment *env){
-	set <const string>::const_iterator it, itEnd;
+	set <const VAL::symbol *>::const_iterator it, itEnd;
 	it = argument.begin();
 	itEnd = argument.end();
 	for (; it != itEnd; ++it){
-		if ((*(child->env))[*it] != (*env)[*it]){
+		if ((*(child->env))[*it]->getName() != (*env)[*it]->getName()){
 			return false;
 		}
 	}
@@ -116,16 +115,15 @@ bool MyPartialOperator::isSubPartialOperator (const MyPartialOperator &subPartia
 }
 
 template <class T>
-void appendList (list <T> &destination, const list <T> &source){
+void appendList (list <T> &destination, list <T> &source){
 	typename list <T>::const_iterator sIt, sItEnd;
-	sIt = source.begin();
-	sItEnd = source.end();
+	initializeIterator(sIt, sItEnd, source);
 	for (; sIt != sItEnd; ++sIt){
 		destination.push_back(*sIt);
 	}
 }
 
-void MyPartialOperator::mergSubPartialOperator (const MyPartialOperator &subPartialOperator){
+void MyPartialOperator::mergSubPartialOperator ( MyPartialOperator &subPartialOperator){
 	appendList <const proposition *> (precondition, subPartialOperator.precondition);
 	appendList <const proposition *> (addEffect, subPartialOperator.addEffect);
 	appendList <const proposition *> (deleteEffect, subPartialOperator.deleteEffect);
@@ -148,6 +146,20 @@ void MyPartialOperator::consideringAnAction (instantiatedOp *action){
 	child.push_back(&(*myProblem.partialAction.rbegin()));
 }
 
+void MyPartialOperator::write(ostream &sout){
+	sout << "("<< op->originalOperator->name->getName();
+	set <const VAL::symbol *>::iterator it, itEnd;
+	initializeIterator(it, itEnd, argument);
+	for (; it != itEnd; ++it){
+		sout << " " << (*it)->getName();
+	}
+	sout << ")";
+}
+
+bool MyPartialAction::isArgumentsConflicted (MyPartialAction *otherAction, const VAL::symbol * commonSymbol){
+	return ((*env)[commonSymbol]->getName() != (*(otherAction->env))[commonSymbol]->getName());
+}
+
 void MyPartialAction::prepare (MyPartialOperator *partialOperator, FastEnvironment *env, int id){
 	this->id = id;
 	this->partialOperator = partialOperator;
@@ -156,6 +168,8 @@ void MyPartialAction::prepare (MyPartialOperator *partialOperator, FastEnvironme
 	preparePropositionList(partialOperator->precondition, precondition, E_PRECONDITION);
 	preparePropositionList(partialOperator->addEffect, addEffect, E_ADD_EFFECT);
 	preparePropositionList(partialOperator->deleteEffect, deleteEffect, E_DELETE_EFFECT);
+
+	findModifyingVariable();
 }
 
 void MyPartialAction::preparePropositionList (list <const proposition *> &liftedList, list <MyProposition *> &instantiatedList, propositionKind kind){
@@ -173,6 +187,27 @@ void MyPartialAction::preparePropositionList (list <const proposition *> &lifted
 			return;
 		}
 
+		if (kind == E_DELETE_EFFECT){
+			/*
+			 * If an action adds some proposition and deletes the same proposition
+			 * we don't considering the deleting effect!
+			 * According to the Robinson's Thesis (first paragraph of page 26)
+			 */
+			bool isAddedBefore = false;
+
+			list <MyProposition *>::iterator addIt, addItEnd;
+			addIt = addEffect.begin();
+			addItEnd = addEffect.end();
+			for (; addIt != addItEnd; ++addIt){
+				if ((*addIt)->originalLiteral->getStateID() == lit2->getStateID()){
+					isAddedBefore = true;
+					break;
+				}
+			}
+			if (isAddedBefore){
+				continue;
+			}
+		}
 
 		if (lit2->getStateID() != -1){
 			instantiatedList.push_back(&(myProblem.propositions[lit2->getStateID()]));
@@ -181,33 +216,67 @@ void MyPartialAction::preparePropositionList (list <const proposition *> &lifted
 			}else if (kind == E_ADD_EFFECT){
 				myProblem.propositions[lit2->getStateID()].adder.push_back(this);
 			}else{
-
-				/*
-				 * If an action adds some proposition and deletes the same proposition
-				 * we don't considering the deleting effect!
-				 * According to the Robinson's Thesis (first paragraph of page 26)
-				 */
-				bool isAddedBefore = false;
-
-				list <MyProposition *>::iterator addIt, addItEnd;
-				addIt = addEffect.begin();
-				addItEnd = addEffect.end();
-				for (; addIt != addItEnd; ++addIt){
-					if ((*addIt)->originalLiteral->getStateID() == lit2->getStateID()){
-						isAddedBefore = true;
-						break;
-					}
-				}
-
-				if (isAddedBefore == false){
-					myProblem.propositions[lit2->getStateID()].deleter.push_back(this);
-				}
+				myProblem.propositions[lit2->getStateID()].deleter.push_back(this);
 			}
 		}
 	}
 
 }
 
+
+void MyPartialAction::findModifyingVariable(){
+	list <const assignment *>::iterator it, itEnd;
+	initializeIterator(it, itEnd, partialOperator->assignmentEffect);
+	for (; it != itEnd; ++it){
+		PNE pne((*it)->getFTerm(), env);
+		PNE *pne2 = instantiatedOp::findPNE(&pne);
+		if (pne2 && pne2->getStateID() != -1){
+			myProblem.variables[pne2->getStateID()].modifier.push_back(this);
+		}
+	}
+}
+
+
+void MyPartialAction::FindConflictingPartialActions(){
+	int nPartialOperators = partialOperator->op->partialOperator.size();
+	for (int i = 0; i < nPartialOperators; ++i){
+		if (partialOperator->op->partialOperator[i] == partialOperator){
+			return;
+		}
+		set <const VAL::symbol *>::iterator it, it2, itEnd, itEnd2;
+		initializeIterator(it, itEnd, partialOperator->argument);
+
+		int nPartialActions = partialOperator->op->partialOperator[i]->child.size();
+		vector <bool> marked (nPartialActions, false);
+		for (; it != itEnd; ++it){
+			initializeIterator(it2, itEnd2, partialOperator->op->partialOperator[i]->argument);
+			for (; it2 != itEnd2; ++it2){
+				if ((*it)->getName() == (*it2)->getName()){
+					for (int j = 0; j < nPartialActions; ++j){
+						if (marked[j]){
+							continue;
+						}
+						if (isArgumentsConflicted(partialOperator->op->partialOperator[i]->child[j], *it)){
+							marked[j] = true;
+//							write(cout); cout << " and "; partialOperator->op->partialOperator[i]->child[j]->write(cout); cout << " are conflicting!" << endl;
+							conflictingPartialAction.push_back(partialOperator->op->partialOperator[i]->child[j]);
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+void MyPartialAction::write (ostream &sout){
+	sout << "("<< partialOperator->op->originalOperator->name->getName();
+	set <const VAL::symbol *>::iterator it, itEnd;
+	initializeIterator(it, itEnd, partialOperator->argument);
+	for (; it != itEnd; ++it){
+		sout << " " << ((*env)[(*it)])->getName();
+	}
+	sout << ")";
+}
 
 
 

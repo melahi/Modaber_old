@@ -108,7 +108,6 @@ void LiftedCVC4Problem::guaranteeSize (unsigned int nSignificantTimePoint){
 		variableExpr.resize (nSignificantTimePoint * nVariables);
 		propositionExpr.resize (nSignificantTimePoint * nPropositions);
 		partialActionExpr.resize((nSignificantTimePoint - 1) * nPartialActions);
-		unificationExpr.resize((nSignificantTimePoint - 1) * nUnifications);
 		maximumSignificantTimePoint = nSignificantTimePoint;
 	}
 }
@@ -147,7 +146,7 @@ void LiftedCVC4Problem::initialization(){
 
 
 
-LiftedCVC4Problem::LiftedCVC4Problem (int nVariables, int nPropositions, int nPartialActions, int nUnifications): em(), smt(&em), nVariables(nVariables), nPropositions(nPropositions), nPartialActions(nPartialActions), nUnifications(nUnifications){
+LiftedCVC4Problem::LiftedCVC4Problem (int nVariables, int nPropositions, int nPartialActions): em(), smt(&em), nVariables(nVariables), nPropositions(nPropositions), nPartialActions(nPartialActions){
 	initialization();
 }
 
@@ -225,15 +224,6 @@ void LiftedCVC4Problem::addPartialActionToClause (MyPartialAction *partialAction
 	}
 }
 
-
-void LiftedCVC4Problem::addUnificationToClause(int unificationId, int significantTimePoint, bool polarity){
-	int index = getUnificationIndex(unificationId, significantTimePoint);
-	if (polarity){
-		buildingClause.push_back(unificationExpr[index]);
-	}else{
-		buildingClause.push_back(em.mkExpr(kind::NOT, unificationExpr[index]));
-	}
-}
 
 //Add new numerical condition to the building clause
 void LiftedCVC4Problem::AddConditionToCluase(const comparison* numericalCondition, FastEnvironment *env, int operatorId, int significantTimePoint){
@@ -475,12 +465,6 @@ void LiftedCVC4Problem::clearAssertionList(){
 	assertions.clear();
 }
 
-bool LiftedCVC4Problem::isUnificationUsed (int unificationId, int significantTimePoint){
-	int unificationIndex = getUnificationIndex(unificationId, significantTimePoint);
-	bool isUsed = smt.getValue(unificationExpr[unificationIndex]).getConst<bool>();
-	return isUsed;
-}
-
 bool LiftedCVC4Problem::isPartialActionUsed(MyPartialAction *partialAction, int significantTimePoint){
 	int partialActionIndex = getPartialActionIndex(partialAction, significantTimePoint);
 	bool isUsed = smt.getValue(partialActionExpr[partialActionIndex]).getConst<bool>();
@@ -560,16 +544,14 @@ int LiftedCVC4Problem::getPartialActionIndex (MyPartialAction *partialAction, in
 	int ret = significantTimePoint * nPartialActions + partialAction->id;
 	if (partialActionExpr[ret].isNull()){
 		Type boolean = em.booleanType();
-		map <string, int>::iterator it, itEnd;
-		it = partialAction->unificationId.begin();
-		itEnd = partialAction->unificationId.end();
 #ifdef PRINT_FORMULA
 		ostringstream oss;
 		oss << "[";
-		oss << "(" << partialAction->op->originalOperator->name->getName();
+		oss << "(" << partialAction->partialOperator->op->originalOperator->name->getName();
+		set <const VAL::symbol *>::iterator it, itEnd;
+		initializeIterator(it, itEnd, partialAction->partialOperator->argument);
 		for (; it != itEnd; ++it){
-			int unificationIndex = it->second + partialAction->op->offset[partialAction->partialOperator->placement[it->first]];
-			oss << ' ' << partialAction->partialOperator->argument[it->first]->objects[it->second]->originalObject->getName() << ":" << unificationIndex;
+			oss << ' ' << (*(partialAction->env))[*it]->getName();
 		}
 		oss << ")";
 		oss << ", " << significantTimePoint << "]";
@@ -578,23 +560,6 @@ int LiftedCVC4Problem::getPartialActionIndex (MyPartialAction *partialAction, in
 		partialActionExpr[ret] = Expr(em.mkVar(boolean));
 #endif
 
-	}
-	return ret;
-}
-
-
-//find and return the index of corresponding action in the actionExpr array
-int LiftedCVC4Problem::getUnificationIndex (int unificationId, int significantTimePoint){
-	int ret = significantTimePoint * nUnifications + unificationId;
-	if (unificationExpr[ret].isNull()){
-		Type boolean = em.booleanType();
-#ifdef PRINT_FORMULA
-		ostringstream oss;
-		oss << "[" << unificationId << ", " << significantTimePoint << "]";
-		unificationExpr[ret] = Expr (em.mkVar (oss.str(), boolean));
-#else
-		unificationExpr[ret] = Expr (em.mkVar (boolean));
-#endif
 	}
 	return ret;
 }
