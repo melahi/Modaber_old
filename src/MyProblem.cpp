@@ -110,16 +110,12 @@ void MyProblem::liftedInitializing(){
 	}
 
 	//preparing partial actions
-	OpStore::iterator actionIt, actionItEnd;
-	actionIt = instantiatedOp::opsBegin();
-	actionItEnd = instantiatedOp::opsEnd();
 
-	for (; actionIt != actionItEnd; ++actionIt){
-		string opName = (*actionIt)->getHead()->getName();
-		for (int i = 0; i < nOperators; ++i){
-			if (opName == operators[i]->originalOperator->name->getName()){
-				operators[i]->consideringAction(*actionIt);
-				break;
+	for (int i = 0; i < nOperators; ++i){
+		int nActions = actions[i].size();
+		for (int j = 0; j < nActions; ++j){
+			if (actions[i][j].possibleEffective){
+				operators[i]->consideringAction(actions[i][j].valAction);
 			}
 		}
 	}

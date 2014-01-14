@@ -127,6 +127,8 @@ public:
 
 
 	bool ignoreCluase;
+	bool needFlaseExpr;
+
 	bool permanentChange;
 
 

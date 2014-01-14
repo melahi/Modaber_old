@@ -46,7 +46,10 @@ void UnrelatedFilter::considerAsEffective (const goal *gl, FastEnvironment *env)
 		return;
 	}
 	const preference *pref = dynamic_cast <const preference *> (gl);
-	considerAsEffective(pref->getGoal(), env);
+	if (pref){
+		considerAsEffective(pref->getGoal(), env);
+		return;
+	}
 	CANT_HANDLE("can't evaluate some precondition");
 	return;
 }
@@ -68,7 +71,7 @@ bool UnrelatedFilter::canBeEffective (const pc_list <simple_effect*> *addEffect,
 UnrelatedFilter::UnrelatedFilter() {
 
 
-	int nOperators = myProblem.operators.size();
+	int nOperators = current_analysis->the_domain->ops->size();
 
 	bool canContinue = true;
 	FastEnvironment env(0);
@@ -78,8 +81,11 @@ UnrelatedFilter::UnrelatedFilter() {
 		canContinue = false;
 		for (int i = 0; i < nOperators; ++i){
 			int nActions = myProblem.actions[i].size();
-			const pc_list <simple_effect*> *addEffect = &(myProblem.operators[i]->originalOperator->effects->add_effects);
-			const goal *gl = myProblem.operators[i]->originalOperator->precondition;
+			if (nActions == 0){
+				continue;
+			}
+			const pc_list <simple_effect*> *addEffect = &(myProblem.actions[i][0].valAction->forOp()->effects->add_effects);
+			const goal *gl = myProblem.actions[i][0].valAction->forOp()->precondition;
 			for (int j = 0; j < nActions; ++j){
 				if ((!myProblem.actions[i][j].possibleEffective) && canBeEffective(addEffect, myProblem.actions[i][j].valAction->getEnv())){
 					myProblem.actions[i][j].possibleEffective = true;

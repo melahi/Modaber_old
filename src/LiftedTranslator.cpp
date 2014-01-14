@@ -75,9 +75,11 @@ void LiftedTranslator::addInitialState(){
 	}
 
 	for (unsigned int i = 0; i < initialState.size(); i++) {
-		liftedSMTProblem->startNewClause();
-		liftedSMTProblem->addConditionToCluase(i, 0, 0, initialState[i]);
-		liftedSMTProblem->endClause();
+		if (myProblem.propositions[i].possibleEffective){
+			liftedSMTProblem->startNewClause();
+			liftedSMTProblem->addConditionToCluase(i, 0, 0, initialState[i]);
+			liftedSMTProblem->endClause();
+		}
 	}
 
 	addAssignmentList(current_analysis->the_problem->initial_state->assign_effects, 0);

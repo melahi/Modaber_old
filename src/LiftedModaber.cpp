@@ -19,9 +19,11 @@ using namespace mdbr;
 void LiftedModaber::initialization (char *domainFilePath, char *problemFilePath){
 	Modaber::initialization(domainFilePath, problemFilePath);
 
-	myProblem.liftedInitializing();
 
 	UnrelatedFilter filterAllUnrelateActionsAndProposition;
+
+	myProblem.liftedInitializing();
+
 	planGraph = new PlanningGraph();
 
 
@@ -54,6 +56,7 @@ bool LiftedModaber::tryToSolve(double bound){
 		if (!foundSolution){
 			nSignificantTimePoints += 5;
 		}
+
 	}
 	return foundSolution;
 }

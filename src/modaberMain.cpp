@@ -10,7 +10,7 @@ using namespace mdbr;
 
 
 int main (int argc, char * argv[]){
-	int domainFileIndex = -1;
+ 	int domainFileIndex = -1;
 	int problemFileIndex = -1;
 	int solutionFileIndex = -1;
 

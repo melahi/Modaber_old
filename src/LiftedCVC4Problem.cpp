@@ -11,7 +11,7 @@
 using namespace VAL;
 using namespace std;
 
-#define PRINT_FORMULA
+//#define PRINT_FORMULA
 
 
 class ExpressionConvertor {
@@ -155,6 +155,7 @@ LiftedCVC4Problem::LiftedCVC4Problem (int nVariables, int nPropositions, int nPa
 void LiftedCVC4Problem::startNewClause(){
 	buildingClause.clear();
 	ignoreCluase = false;
+	needFlaseExpr = false;
 }
 
 //By calling this function, you mean the clause is already built and it should be inserted to the SMT problem
@@ -162,8 +163,13 @@ void LiftedCVC4Problem::endClause(){
 	if (ignoreCluase){
 		return;
 	}
-	if (buildingClause.size() == 0)
-		return;
+	if (buildingClause.size() == 0){
+		if (!needFlaseExpr){
+			return;
+		}
+		buildingClause.push_back(falseExpr);
+	}
+
 	if (buildingClause.size() == 1){
 		if (permanentChange){
 			smt.assertFormula(buildingClause[0]);
@@ -194,11 +200,26 @@ void LiftedCVC4Problem::addLiteral ( polarity plrty, const proposition *prop, Fa
 		ignoreCluase = true;
 		return;
 	}
+
 	addConditionToCluase(lit2->getStateID(), operatorId, significantTimePoint, (plrty == E_POS));
 }
 
+
 //Add new boolean condition to the building clause
 void LiftedCVC4Problem::addConditionToCluase(int propostionId, int operatorId, int significantTimePoint, bool polarity){
+	if (! myProblem.propositions[propostionId].possibleEffective ){
+		ignoreCluase = true;
+		return;
+	}
+	if (! isVisited(myProblem.propositions[propostionId].firstVisitedLayer, (myProblem.operators.size() * significantTimePoint + operatorId))){
+		if (! polarity){
+			ignoreCluase = true;
+		}else{
+			needFlaseExpr = true;
+		}
+		return;
+	}
+
 	int index = getPropositionIndex(propostionId, operatorId, significantTimePoint);
 	if (polarity){
 		buildingClause.push_back(propositionExpr[index]);
@@ -209,7 +230,7 @@ void LiftedCVC4Problem::addConditionToCluase(int propostionId, int operatorId, i
 
 
 void LiftedCVC4Problem::AddConditionToCluase(const MyProposition *myProposition, int operatorId, int significantTimePoint, bool polarity){
-	addConditionToCluase(myProposition->originalLiteral->getStateID(), operatorId, significantTimePoint, polarity);
+		addConditionToCluase(myProposition->originalLiteral->getStateID(), operatorId, significantTimePoint, polarity);
 }
 
 
