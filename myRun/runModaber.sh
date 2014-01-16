@@ -11,6 +11,6 @@
 
 
 
-time ./Modaber $1 $2 $3
+time timeout 30m  ./Modaber $1 $2 $3
 echo "*******************************"
 ./validate $1 $2 $3.*

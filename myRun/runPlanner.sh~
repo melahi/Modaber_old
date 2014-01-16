@@ -10,6 +10,8 @@ Planner="LiftedSMTModaber"
 Planner="POPF"
 
 Planner="PreferenceMyFP"
+Planner="PreferenceMyFP_PG"
+Planner="MyFP_PG_Preprocessing"
 
 Domain=( 'market' 'Satellite' 'Depots' 'ZenoTravel' 'DriverLog' 'Rovers');
 DomainFile=( 'domain.pddl' 'metricSat.pddl' 'DepotsNum.pddl' 'zenonumeric.pddl' 'driverlogNumeric.pddl' 'NumRover.pddl');
@@ -35,7 +37,8 @@ for (( i = 1; i <= 30; i++)) {
 		TheDomainFile="../../Problem/demo-instances/preferences/${Domain[$j]}/${FileNumber}-domain.pddl"
 		TheProblemFile="../../Problem/demo-instances/preferences/${Domain[$j]}/${FileNumber}.pddl"
 		echo "Planner \"$Planner\" try to solve: $TheDomainFile $TheProblemFile"   
-		timeout 30m ./runModaber.sh "$TheDomainFile" "$TheProblemFile" "${FileNumber}.sol" > "${Planner}Results/${Domain[$j]}/pfile$i.output" 2>&1
+#		timeout 30m ./runModaber.sh "$TheDomainFile" "$TheProblemFile" "${FileNumber}.sol" > "${Planner}Results/${Domain[$j]}/pfile$i.output" 2>&1
+		./runModaber.sh "$TheDomainFile" "$TheProblemFile" "${FileNumber}.sol" > "${Planner}Results/${Domain[$j]}/pfile$i.output" 2>&1
 #		timeout 30m ./optic-clp -N "$TheDomainFile" "$TheProblemFile" > "${Planner}Results/${Domain[$j]}/pfile$i.output" 2>&1
 		if [ -f "${FileNumber}.sol.1" ]; then
 			mv ${FileNumber}.sol.* "${Planner}Results/${Domain[$j]}/"
