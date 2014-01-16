@@ -11,7 +11,7 @@ Planner="POPF"
 
 Planner="PreferenceMyFP"
 Planner="PreferenceMyFP_PG"
-Planner="MyFP_PG_Preprocessing"
+Planner="MyFP_PG_PreprocessingV2"
 
 Domain=( 'market' 'Satellite' 'Depots' 'ZenoTravel' 'DriverLog' 'Rovers');
 DomainFile=( 'domain.pddl' 'metricSat.pddl' 'DepotsNum.pddl' 'zenonumeric.pddl' 'driverlogNumeric.pddl' 'NumRover.pddl');
@@ -30,7 +30,7 @@ for (( j = 0; j < ${#Domain[*]} ; j++)) {
 	mkdir -p "${Planner}Results/${Domain[$j]}"
 }
 
-for (( i = 1; i <= 30; i++)) {
+for (( i = 30; 0 <= i; i--)) {
 	for (( j = 0; j < ${#Domain[*]} ; j++)) {
 		
 		FileNumber=`printf p%02d $i`;

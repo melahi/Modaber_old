@@ -11,7 +11,7 @@ Planner="POPF"
 
 Planner="PreferenceMyFP"
 Planner="PreferenceMyFP_PG"
-Planner="MyFP_PG_Preprocessing"
+Planner="MyFP_PG_PreprocessingV2"
 
 Domain=( 'market' 'Satellite' 'Depots' 'ZenoTravel' 'DriverLog' 'Rovers');
 DomainFile=( 'domain.pddl' 'metricSat.pddl' 'DepotsNum.pddl' 'zenonumeric.pddl' 'driverlogNumeric.pddl' 'NumRover.pddl');
