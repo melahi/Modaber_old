@@ -15,6 +15,7 @@
 
 #include <list>
 #include <vector>
+#include <map>
 
 using namespace VAL;
 using namespace std;
@@ -35,6 +36,8 @@ public:
 
 	vector <MyPartialOperator *> partialOperator;
 
+	vector < map < string, int > > unificationId;
+	map <const VAL::symbol *, int> argument;
 
 	MyOperator(): originalOperator(NULL), id (-2) {}
 
@@ -45,6 +48,8 @@ public:
 	void preparePreconditions (goal *gl);
 
 	void consideringAction (instantiatedOp *action);
+
+	void findingUnifications ();
 
 	virtual ~MyOperator();
 };

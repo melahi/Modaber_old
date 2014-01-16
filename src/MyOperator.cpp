@@ -137,6 +137,29 @@ void MyOperator::consideringAction(instantiatedOp *action){
 	}
 }
 
+void MyOperator::findingUnifications(){
+
+	var_symbol_list::iterator paramIt, paramItEnd;
+	int nArgument = 0;
+	FOR_ITERATION(paramIt, paramItEnd, (*(originalOperator->parameters))){
+		argument[*paramIt] = nArgument++;
+	}
+
+	unificationId.resize(nArgument);
+
+
+	int nPartialOperatiors = partialOperator.size();
+	for (int i = 0; i < nPartialOperatiors; ++i){
+		int nPartialActions = partialOperator[i]->child.size();
+		for (int j = 0; j < nPartialActions; ++j){
+			set <const VAL::symbol *>::iterator it, itEnd;
+			FOR_ITERATION(it, itEnd, partialOperator[i]->argument){
+				unificationId [argument[*it]][(*(partialOperator[i]->child[j]->env))[*it]->getName()] = -2;
+			}
+		}
+	}
+}
+
 
 MyOperator::~MyOperator() {
 	vector <MyPartialOperator *>::iterator it, itEnd;

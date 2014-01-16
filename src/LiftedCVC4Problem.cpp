@@ -108,6 +108,7 @@ void LiftedCVC4Problem::guaranteeSize (unsigned int nSignificantTimePoint){
 		variableExpr.resize (nSignificantTimePoint * nVariables);
 		propositionExpr.resize (nSignificantTimePoint * nPropositions);
 		partialActionExpr.resize((nSignificantTimePoint - 1) * nPartialActions);
+		unificationExpr.resize((nSignificantTimePoint - 1) * nUnification);
 		maximumSignificantTimePoint = nSignificantTimePoint;
 	}
 }
@@ -146,7 +147,7 @@ void LiftedCVC4Problem::initialization(){
 
 
 
-LiftedCVC4Problem::LiftedCVC4Problem (int nVariables, int nPropositions, int nPartialActions): em(), smt(&em), nVariables(nVariables), nPropositions(nPropositions), nPartialActions(nPartialActions){
+LiftedCVC4Problem::LiftedCVC4Problem (int nVariables, int nPropositions, int nPartialActions, int nUnification): em(), smt(&em), nVariables(nVariables), nPropositions(nPropositions), nPartialActions(nPartialActions), nUnification(nUnification){
 	initialization();
 }
 
@@ -242,6 +243,15 @@ void LiftedCVC4Problem::addPartialActionToClause (MyPartialAction *partialAction
 		buildingClause.push_back(partialActionExpr[index]);
 	}else{
 		buildingClause.push_back(em.mkExpr(kind::NOT, partialActionExpr[index]));
+	}
+}
+
+void LiftedCVC4Problem::addUnificationToClause (int unificationId, int significantTimePoint, bool polarity){
+	int index = getUnificationIndex(unificationId, significantTimePoint);
+	if (polarity){
+		buildingClause.push_back(unificationExpr[index]);
+	}else{
+		buildingClause.push_back(em.mkExpr(kind::NOT, unificationExpr[index]));
 	}
 }
 
@@ -561,6 +571,23 @@ int LiftedCVC4Problem::getPropositionIndex (unsigned int propositionId, unsigned
 }
 
 //find and return the index of corresponding action in the actionExpr array
+int LiftedCVC4Problem::getUnificationIndex(unsigned int unificationId, int significantTimePoint){
+	int ret = significantTimePoint * nUnification + unificationId;
+	if (unificationExpr[ret].isNull()){
+		Type boolean = em.booleanType();
+#ifdef PRINT_FORMULA
+		ostringstream oss;
+		oss << "[ unification: " << unificationId << " ]";
+		unificationExpr[ret] = Expr(em.mkVar(oss.str(), boolean));
+#else
+		unificationExpr[ret] = Expr(em.mkVar(boolean));
+#endif
+
+	}
+	return ret;
+}
+
+//find and return the index of corresponding action in the actionExpr array
 int LiftedCVC4Problem::getPartialActionIndex (MyPartialAction *partialAction, int significantTimePoint){
 	int ret = significantTimePoint * nPartialActions + partialAction->id;
 	if (partialActionExpr[ret].isNull()){
@@ -584,7 +611,6 @@ int LiftedCVC4Problem::getPartialActionIndex (MyPartialAction *partialAction, in
 	}
 	return ret;
 }
-
 
 
 

@@ -33,6 +33,8 @@ private:
 	void assignIdToPropositions();
 	void assignIdToVariables();
 
+	void assignIdtoUnification ();
+
 public:
 
 	vector <vector <MyAction> >actions;
@@ -46,6 +48,7 @@ public:
 	int nPropositionIDs;  //The number of variables needed for propositions for each layer in SAT formula
 	int nPartialActions;
 	int nVariableIDs;
+	int nUnification;
 
 	vector <double> initialValue;  //The initial value for each variable
 

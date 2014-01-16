@@ -55,11 +55,19 @@ void UnrelatedFilter::considerAsEffective (const goal *gl, FastEnvironment *env)
 }
 
 
-bool UnrelatedFilter::canBeEffective (const pc_list <simple_effect*> *addEffect, FastEnvironment *env){
-	pc_list<simple_effect*>::const_iterator it = addEffect->begin();
-	pc_list<simple_effect*>::const_iterator itEnd = addEffect->end();
-	for (; it != itEnd; ++it){
-		Literal lit ((*it)->prop,env);
+bool UnrelatedFilter::canBeEffective (instantiatedOp *action){
+	pc_list <assignment *>::const_iterator it, itEnd;
+	FOR_ITERATION(it, itEnd, action->forOp()->effects->assign_effects){
+		if ((*it)->getFTerm()->getFunction()->getName() != "total-cost"){
+			//Because perhaps this action do something good for some variables but for now we
+			//can't analyze numerical variables, so we relax this case and consider this action
+			//can be effective
+			return true;
+		}
+	}
+	pc_list<simple_effect*>::const_iterator it2, it2End;
+	FOR_ITERATION(it2, it2End, action->forOp()->effects->add_effects) {
+		Literal lit ((*it2)->prop, action->getEnv());
 		Literal *lit2 = instantiatedOp::getLiteral(&lit);
 		if (myProblem.propositions[lit2->getStateID()].possibleEffective){
 			return true;
@@ -84,10 +92,9 @@ UnrelatedFilter::UnrelatedFilter() {
 			if (nActions == 0){
 				continue;
 			}
-			const pc_list <simple_effect*> *addEffect = &(myProblem.actions[i][0].valAction->forOp()->effects->add_effects);
 			const goal *gl = myProblem.actions[i][0].valAction->forOp()->precondition;
 			for (int j = 0; j < nActions; ++j){
-				if ((!myProblem.actions[i][j].possibleEffective) && canBeEffective(addEffect, myProblem.actions[i][j].valAction->getEnv())){
+				if ((!myProblem.actions[i][j].possibleEffective) && canBeEffective(myProblem.actions[i][j].valAction)){
 					myProblem.actions[i][j].possibleEffective = true;
 					considerAsEffective(gl, myProblem.actions[i][j].valAction->getEnv());
 					canContinue = true;

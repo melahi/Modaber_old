@@ -149,9 +149,8 @@ void MyPartialOperator::consideringAnAction (instantiatedOp *action){
 void MyPartialOperator::write(ostream &sout){
 	sout << "("<< op->originalOperator->name->getName();
 	set <const VAL::symbol *>::iterator it, itEnd;
-	initializeIterator(it, itEnd, argument);
-	for (; it != itEnd; ++it){
-		sout << " " << (*it)->getName();
+	FOR_ITERATION(it, itEnd, argument){
+		sout << " " << (*it)->getName() << "," << *it;
 	}
 	sout << ")";
 }
@@ -236,37 +235,6 @@ void MyPartialAction::findModifyingVariable(){
 	}
 }
 
-
-void MyPartialAction::FindConflictingPartialActions(){
-	int nPartialOperators = partialOperator->op->partialOperator.size();
-	for (int i = 0; i < nPartialOperators; ++i){
-		if (partialOperator->op->partialOperator[i] == partialOperator){
-			return;
-		}
-		set <const VAL::symbol *>::iterator it, it2, itEnd, itEnd2;
-		initializeIterator(it, itEnd, partialOperator->argument);
-
-		int nPartialActions = partialOperator->op->partialOperator[i]->child.size();
-		vector <bool> marked (nPartialActions, false);
-		for (; it != itEnd; ++it){
-			initializeIterator(it2, itEnd2, partialOperator->op->partialOperator[i]->argument);
-			for (; it2 != itEnd2; ++it2){
-				if ((*it)->getName() == (*it2)->getName()){
-					for (int j = 0; j < nPartialActions; ++j){
-						if (marked[j]){
-							continue;
-						}
-						if (isArgumentsConflicted(partialOperator->op->partialOperator[i]->child[j], *it)){
-							marked[j] = true;
-//							write(cout); cout << " and "; partialOperator->op->partialOperator[i]->child[j]->write(cout); cout << " are conflicting!" << endl;
-							conflictingPartialAction.push_back(partialOperator->op->partialOperator[i]->child[j]);
-						}
-					}
-				}
-			}
-		}
-	}
-}
 
 void MyPartialAction::write (ostream &sout){
 	sout << "("<< partialOperator->op->originalOperator->name->getName();

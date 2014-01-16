@@ -91,8 +91,6 @@ public:
 	MyPartialOperator *partialOperator;
 
 
-	list <MyPartialAction *> conflictingPartialAction;
-
 	MyPartialAction():isValid(true), id (-2), partialOperator(NULL){}
 
 	void prepare (MyPartialOperator *partialOperator, FastEnvironment *env, int id);
@@ -100,7 +98,6 @@ public:
 
 	void findModifyingVariable();
 
-	void FindConflictingPartialActions ();
 
 	void write (ostream &sout);
 

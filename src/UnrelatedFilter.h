@@ -5,8 +5,10 @@
 
 #include "VALfiles/parsing/ptree.h"
 #include "VALfiles/FastEnvironment.h"
+#include "VALfiles/instantiation.h"
 
 using namespace VAL;
+using namespace Inst;
 
 namespace mdbr {
 
@@ -15,7 +17,7 @@ class UnrelatedFilter {
 
 	void considerAsEffective (const goal *gl, FastEnvironment *env);
 
-	bool canBeEffective (const pc_list <simple_effect*> *addEffect, FastEnvironment *env);
+	bool canBeEffective (instantiatedOp *op);
 
 public:
 	UnrelatedFilter();

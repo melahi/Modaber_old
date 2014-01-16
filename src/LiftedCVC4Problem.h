@@ -29,12 +29,13 @@ using namespace mdbr;
 class LiftedCVC4Problem {
 public:
 
+
 	void guaranteeSize (unsigned int maxSignificantTimePoint);
 
 
 	void initialization();
 
-	LiftedCVC4Problem (int nVariables, int nProposition, int nPartialAction);
+	LiftedCVC4Problem (int nVariables, int nProposition, int nPartialAction, int nUnification);
 
 	//Start to build new clause for SMT problem
 	virtual void startNewClause();
@@ -45,6 +46,7 @@ public:
 
 	void addPartialActionToClause (MyPartialAction *partialAction, int significantTimePoint, bool polarity);
 
+	void addUnificationToClause (int unificationId, int significantTimePoint, bool polarity);
 
 	//Add new boolean condition to the building clause
 	void addConditionToCluase(int propostion, int operatorId, int significantTimePoint, bool polarity);
@@ -110,11 +112,13 @@ public:
 	int nVariables;
 	int nPropositions;
 	int nPartialActions;
+	int nUnification;
 
 	map <string, Expr> preferenceExpr;
 	vector <Expr> variableExpr;
 	vector <Expr> propositionExpr;
 	vector <Expr> partialActionExpr;
+	vector <Expr> unificationExpr;
 
 	Expr trueExpr;
 	Expr falseExpr;
@@ -143,6 +147,9 @@ public:
 
 	//find and return the index of corresponding action in the actionExpr array
 	int getPartialActionIndex (MyPartialAction *partialAction, int significantTimePoint);
+
+	//find and return the index of corresponding unification in the unificationExpr array
+	int getUnificationIndex (unsigned int unificationId, int significantTimePoint);
 
 
 

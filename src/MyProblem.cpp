@@ -120,19 +120,9 @@ void MyProblem::liftedInitializing(){
 		}
 	}
 
-	for (int i = 0; i < nOperators; i++){
-		int nPartialOperators = myProblem.operators[i]->partialOperator.size();
-		for (int j = 0; j < nPartialOperators; ++j){
-			int nPartialActions = myProblem.operators[i]->partialOperator[j]->child.size();
-			for (int k = 0; k < nPartialActions; ++k){
-				myProblem.operators[i]->partialOperator[j]->child[k]->FindConflictingPartialActions();
-			}
-		}
-	}
-
-
 	assignIdToPropositions();
 	assignIdToVariables();
+	assignIdtoUnification();
 }
 
 
@@ -229,6 +219,22 @@ void MyProblem::assignIdToVariables(){
 	}
 }
 
+void MyProblem::assignIdtoUnification() {
+	nUnification = 0;
+
+	int nOperators = operators.size();
+	for (int i = 0; i < nOperators; ++i){
+		operators[i]->findingUnifications();
+
+		int nArgument = operators[i]->argument.size();
+		for (int j = 0; j < nArgument; ++j){
+			map <string, int>::iterator it, itEnd;
+			FOR_ITERATION(it, itEnd, operators[i]->unificationId[j]){
+				it->second = nUnification++;
+			}
+		}
+	}
+}
 
 
 void MyProblem::write(ostream &sout){

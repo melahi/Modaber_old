@@ -27,7 +27,7 @@ void LiftedModaber::initialization (char *domainFilePath, char *problemFilePath)
 	planGraph = new PlanningGraph();
 
 
-	liftedSMTProblem = new LiftedCVC4Problem(myProblem.nVariableIDs, myProblem.nPropositionIDs, myProblem.nPartialActions);
+	liftedSMTProblem = new LiftedCVC4Problem(myProblem.nVariableIDs, myProblem.nPropositionIDs, myProblem.nPartialActions, myProblem.nUnification);
 	myLiftedTranslator = new LiftedTranslator(liftedSMTProblem);
 
 	nSignificantTimePoints = 1;
@@ -49,8 +49,9 @@ bool LiftedModaber::tryToSolve(double bound){
 	while (!foundSolution){
 		cout  << "nSignificantTimePoint: " << nSignificantTimePoints << endl;
 		planGraph->constructingGraph(nSignificantTimePoints);
-		cout << "solving ..." << endl;
+		cout  << "Preparing SAT formula" << nSignificantTimePoints << endl;
 		myLiftedTranslator->prepare(nSignificantTimePoints, bound);
+		cout << "solving ..." << endl;
 		foundSolution = myLiftedTranslator->solve();
 		cout << "end solving" << endl;
 		if (!foundSolution){

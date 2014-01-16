@@ -99,6 +99,19 @@ void LiftedTranslator::addPartialActions (int significantTimePoint){
 	itEnd = myProblem.partialAction.end();
 	for (; it != itEnd; ++it){
 
+		MyOperator *theOperator = it->partialOperator->op;
+		if (it->partialOperator->argument.size() != 0){
+			set <const VAL::symbol*>::iterator it1, it1End;
+
+			FOR_ITERATION(it1, it1End, it->partialOperator->argument){
+				liftedSMTProblem->startNewClause();
+				liftedSMTProblem->addPartialActionToClause(&(*it), significantTimePoint, false);
+				liftedSMTProblem->addUnificationToClause(theOperator->unificationId[theOperator->argument[*it1]][(*(it->env))[*it1]->getName()], significantTimePoint, true);
+				liftedSMTProblem->endClause();
+			}
+		}
+
+
 		if (it->isValid == false){
 			liftedSMTProblem->startNewClause();
 			liftedSMTProblem->addPartialActionToClause(&(*it), significantTimePoint, false);
@@ -196,31 +209,33 @@ void LiftedTranslator::addExplanatoryAxioms (int significantTimePoint){
 void LiftedTranslator::addCompletingAction (int significantTimePoint){
 	int nOperators = myProblem.operators.size();
 	for (int i = 0; i < nOperators; ++i){
-		int nPartialOperators = myProblem.operators[i]->partialOperator.size();
-		for (int j = 0; j < nPartialOperators; ++j){
-			int nPartialActions = myProblem.operators[i]->partialOperator[j]->child.size();
-			for (int k = 0; k < nPartialActions; ++k){
+		int nArguments = myProblem.operators[i]->argument.size();
+		for (int j = 0; j < nArguments; ++j){
 
-				// If a partial action is executed then no other conflicting partial action cab be executed!!!
-				list <MyPartialAction *>::iterator confIt, confItEnd;
-				initializeIterator(confIt, confItEnd, myProblem.operators[i]->partialOperator[j]->child[k]->conflictingPartialAction);
+			map <string, int>::iterator it1, it2, itEnd1, itEnd2;
 
-				for (; confIt != confItEnd; ++confIt){
+			//At most on unification for each argument should be true
+			FOR_ITERATION(it1, itEnd1, myProblem.operators[i]->unificationId[j]) {
+				it2 = myProblem.operators[i]->unificationId[j].begin();
+				for (; it2 != it1; ++it2){
 					liftedSMTProblem->startNewClause();
-					liftedSMTProblem->addPartialActionToClause(*confIt, significantTimePoint, false);
-					liftedSMTProblem->addPartialActionToClause(myProblem.operators[i]->partialOperator[j]->child[k], significantTimePoint, false);
-					liftedSMTProblem->endClause();
-				}
-				for (int l = 0; l < k; ++l){
-					liftedSMTProblem->startNewClause();
-					liftedSMTProblem->addPartialActionToClause(myProblem.operators[i]->partialOperator[j]->child[k], significantTimePoint, false);
-					liftedSMTProblem->addPartialActionToClause(myProblem.operators[i]->partialOperator[j]->child[l], significantTimePoint, false);
+					liftedSMTProblem->addUnificationToClause(it1->second, significantTimePoint, false);
+					liftedSMTProblem->addUnificationToClause(it2->second, significantTimePoint, false);
 					liftedSMTProblem->endClause();
 				}
 			}
+		}
+	}
+
+
+
+	for (int i = 0; i < nOperators; ++i){
+		int nPartialOperators = myProblem.operators[i]->partialOperator.size();
+		for (int j = 0; j < nPartialOperators; ++j){
 			if (nPartialOperators == 1){
 				continue;
 			}
+			int nPartialActions = myProblem.operators[i]->partialOperator[j]->child.size();
 			int nextPartialOperator = (j + 1) % nPartialOperators;
 			int nNextPartialActions = myProblem.operators[i]->partialOperator[nextPartialOperator]->child.size();
 			for (int k = 0; k < nPartialActions; k++){
