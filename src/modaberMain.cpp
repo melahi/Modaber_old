@@ -8,6 +8,8 @@
 using namespace std;
 using namespace mdbr;
 
+enum algorithm { SimpleSMT, PartialActionSMT, RangeSAT }
+
 
 int main (int argc, char * argv[]){
  	int domainFileIndex = -1;
