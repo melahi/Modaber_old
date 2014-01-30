@@ -20,7 +20,7 @@
 #include <unistd.h>
 
 /*-------------------------------------------------------------------------*/
-#define NLGLPICOSAT 0
+
 #ifndef NLGLPICOSAT
 #include "picosat.h"
 #endif
@@ -43,7 +43,6 @@
 
 #define FUNVAR		10
 #define FUNQUADS	(1<<(FUNVAR - 6))
-
 #define FALSECNF	(1ll<<32)
 #define TRUECNF		0ll
 
@@ -56,6 +55,7 @@
 #define FLTMIN		(0x0000 ## 0000 ## 0000 ## 0000 ## ll)
 #define FLTMAX		(0x7fff ## ffff ## ffff ## ffff ## ll)
 
+#define EVSIDS		5
 #ifdef NDBLSCR
 #define MAXSCOREXP	(1<<30)
 #else
@@ -66,7 +66,6 @@
 
 #define MAXFLTSTR	6
 #define MAXPHN		10
-#define MAXTRAVHIST	32
 
 /*------------------------------------------------------------------------*/
 #ifndef NLGLOG
@@ -444,13 +443,13 @@ do { \
 
 #define LGLUPDPEN(NAME,SUCCESS) \
 do { \
-  if (SUCCESS && lgl->limits->NAME.pen) \
+  if ((SUCCESS) && lgl->limits->NAME.pen) \
     lgl->limits->NAME.pen--; \
-  if (!SUCCESS && lgl->limits->NAME.pen < lgl->opts->penmax.val) \
+  if (!(SUCCESS) && lgl->limits->NAME.pen < lgl->opts->penmax.val) \
     lgl->limits->NAME.pen++; \
-  if (SUCCESS && lgl->limits->NAME.del.cur) \
+  if ((SUCCESS) && lgl->limits->NAME.del.cur) \
     lgl->limits->NAME.del.cur /= 2; \
-  if (!SUCCESS && lgl->limits->NAME.del.cur < lgl->opts->delmax.val) \
+  if (!(SUCCESS) && lgl->limits->NAME.del.cur < lgl->opts->delmax.val) \
     lgl->limits->NAME.del.cur++; \
   lgl->limits->NAME.del.rem = lgl->limits->NAME.del.cur; \
 } while (0)
@@ -513,237 +512,274 @@ typedef struct Opt {
 typedef struct Opts {
   Opt beforefirst;
   Opt abstime;
-  Opt acts;
-  Opt actvlim;
-  Opt actgsdul;
-  Opt actgeomlim;
-  Opt actdblarithlim;
   Opt actavgmax;
-  Opt actstdmin;
+  Opt actdblarithlim;
+  Opt actgeomlim;
+  Opt actgsdul;
+  Opt acts;
   Opt actstdmax;
+  Opt actstdmin;
+  Opt actvlim;
   Opt agile;
   Opt bate;
   Opt batewait;
   Opt bca;
-  Opt bcawait;
-  Opt bcaminuse;
   Opt bcamaxeff;
+  Opt bcaminuse;
+  Opt bcawait;
   Opt bias;
-  Opt block;
-  Opt blockwait;
   Opt blkboost;
-  Opt blkrtc;
   Opt blkclslim;
-  Opt blkocclim;
   Opt blkmaxeff;
   Opt blkmineff;
+  Opt blkocclim;
   Opt blkreleff;
+  Opt blkrtc;
+  Opt blksched2b2;
+  Opt blkschedprod;
+  Opt blkschedpure;
+  Opt blkschedmin;
+  Opt blkschedsum;
+  Opt block;
+  Opt blockwait;
+  Opt boost;
+  Opt bumpbcplits;
+  Opt bumpclslits;
+  Opt bumpseenaftermin;
+  Opt bumpseenbeforemin;
+  Opt bumpseenlits;
   Opt card;
-  Opt carduse;
-  Opt cardignonbin;
-  Opt cardglue;
-  Opt cardmaxeff;
-  Opt cardmineff;
-  Opt cardreleff;
-  Opt cardminlen;
   Opt cardexpam1;
+  Opt cardglue;
+  Opt cardignonbin;
+  Opt cardmaxeff;
   Opt cardmaxlen;
-  Opt cardocclim;
+  Opt cardmineff;
+  Opt cardminlen;
+  Opt cardocclim1;
+  Opt cardocclim2;
+  Opt cardreleff;
   Opt cardreschedint;
+  Opt carduse;
   Opt cce;
-  Opt ccewait;
   Opt ccemaxeff;
   Opt ccemineff;
   Opt ccereleff;
-  Opt check;
+  Opt ccewait;
   Opt cgrclsr;
   Opt cgrclsrwait;
-  Opt cgrmaxority;
-  Opt cgrmaxeff;
-  Opt cgrmineff;
   Opt cgreleff;
-  Opt cgrexteq;
   Opt cgrextand;
-  Opt cgrextunits;
+  Opt cgrexteq;
   Opt cgrextite;
+  Opt cgrextunits;
   Opt cgrextxor;
-  Opt cliff;
-  Opt cliffwait;
-  Opt cliffreleff;
-  Opt cliffmineff;
-  Opt cliffmaxeff;
-  Opt compact;
-  Opt decompose;
-  Opt deco;
-  Opt decolim;
-  Opt defragint;
-  Opt defragfree;
-  Opt delmax;
-  Opt drup;
-  Opt elim;
-  Opt elmschedsum;
-  Opt elmschedprod;
-  Opt elmschedpure;
-  Opt elmsched2b2;
-  Opt elmboost;
-  Opt elmrtc;
-  Opt elmroundlim;
-  Opt elmblk;
-  Opt elmblkwait;
-  Opt elmclslim;
-  Opt elmlitslim;
-  Opt elmocclim;
-  Opt elmplim1;
-  Opt elmplim2;
-  Opt elmaxeff;
-  Opt elmineff;
-  Opt elmreleff;
-  Opt sleeponabort;
-  Opt exitonabort;
-  Opt flipping;
-  Opt flipint;
-  Opt flipdur;
-  Opt flipvlim;
-  Opt fliptop;
-  Opt force;
-  Opt gauss;
-  Opt gausswait;
-  Opt gaussextrall;
-  Opt gaussmaxor;
-  Opt gaussexptrn;
-  Opt gaussmaxeff;
-  Opt gaussmineff;
-  Opt gaussreleff;
-  Opt gluescale;
-  Opt gluekeep;
-  Opt import;
-  Opt inprocessing;
-  Opt itsimpdel;
+  Opt cgrmaxeff;
+  Opt cgrmaxority;
+  Opt cgrmineff;
+  Opt check;
   Opt cintinc;
   Opt cintincdiv;
+  Opt cintmaxsoft;
+  Opt cintmaxhard;
+  Opt cliff;
+  Opt cliffmaxeff;
+  Opt cliffmineff;
+  Opt cliffreleff;
+  Opt cliffwait;
+  Opt clim;
+  Opt compact;
+  Opt deco;
+  Opt decolim;
+  Opt decompose;
+  Opt defragfree;
+  Opt defragint;
+  Opt delmax;
+  Opt dlim;
+  Opt drup;
+  Opt elim;
+  Opt elmaxeff;
+  Opt elmblk;
+  Opt elmblkwait;
+  Opt elmboost;
+  Opt elmclslim;
+  Opt elmineff;
+  Opt elmlitslim;
+  Opt elmocclim;
+  Opt elmocclim1;
+  Opt elmocclim2;
+  Opt elmreleff;
+  Opt elmroundlim;
+  Opt elmrtc;
+  Opt elmsched2b2;
+  Opt elmschedprod;
+  Opt elmschedpure;
+  Opt elmschedmin;
+  Opt elmschedsum;
+  Opt exitonabort;
+  Opt factmax;
+  Opt factor;
+  Opt flipdur;
+  Opt flipint;
+  Opt flipping;
+  Opt fliptop;
+  Opt flipvlim;
+  Opt force;
+  Opt gauss;
+  Opt gaussexptrn;
+  Opt gaussextrall;
+  Opt gaussmaxeff;
+  Opt gaussmaxor;
+  Opt gaussmineff;
+  Opt gaussreleff;
+  Opt gausswait;
+  Opt gluekeep;
+  Opt gluescale;
+  Opt import;
+  Opt inprocessing;
   Opt irrlim;
-  Opt simpirrlim;
-  Opt lift;
-  Opt liftwait;
+  Opt itsimpdel;
+  Opt jwhred;
+  Opt keepmaxglue;
   Opt lftmaxeff;
   Opt lftmineff;
   Opt lftreleff;
   Opt lftroundlim;
   Opt lhbr;
+  Opt lift;
+  Opt liftlrg;
+  Opt liftwait;
   Opt lkhd;
   Opt lkhdmisifelmrtc;
-  Opt clim;
-  Opt dlim;
+  Opt log;
+  Opt maxglue;
+  Opt maxscorexp;
+  Opt memlim;
   Opt minimize;
   Opt minlocalgluelim;
   Opt minrecgluelim;
   Opt mocint;
   Opt move;
-  Opt penmax;
-  Opt log;
   Opt otfs;
   Opt otfsbump;
-  Opt bumpseenlits;
-  Opt bumpclslits;
-  Opt bumpbcplits;
-  Opt bumpbeforemin;
-  Opt memlim;
+  Opt otfsconf;
+  Opt penmax;
   Opt phase;
   Opt phaseflip;
   Opt phaseneginit;
   Opt plain;
-  Opt probe;
-  Opt prbrtc;
+  Opt plim;
+  Opt prbasic;
   Opt prbasicmaxeff;
   Opt prbasicmineff;
   Opt prbasicreleff;
-  Opt prbasic;
-  Opt prbasicrtc;
   Opt prbasicroundlim;
+  Opt prbasicrtc;
+  Opt prbrtc;
   Opt prbsimple;
   Opt prbsimpleboost;
-  Opt prbsimplertc;
+  Opt prbsimpleliftdepth;
   Opt prbsimplemaxeff;
   Opt prbsimplemineff;
   Opt prbsimplereleff;
-  Opt prbsimpleliftdepth;
+  Opt prbsimplertc;
+  Opt probe;
   Opt psm;
-  Opt rmincpen;
-  Opt treelook;
-  Opt treelookrtc;
-  Opt treelooklrg;
-  Opt treelookfull;
-  Opt treelookboost;
-  Opt treelookmaxeff;
-  Opt treelookmineff;
-  Opt treelookreleff;
-  Opt seed;
-  Opt smallirr;
-  Opt smallve;
-  Opt smallvewait;
-  Opt smallvevars;
+  Opt pure;
   Opt randec;
   Opt randecint;
+  Opt rdp;
+  Opt rdpclslim;
+  Opt rdplim;
+  Opt rdpmaxeff;
+  Opt rdpmineff;
+  Opt rdpreleff;
+  Opt rdpwait;
   Opt redfixed;
+  Opt redinoutinc;
   Opt redlbound;
   Opt redlexpfac;
-  Opt redloutinc;
-  Opt redlinit;
   Opt redlinc;
-  Opt redinoutinc;
-  Opt redlmininc;
+  Opt redlinit;
+  Opt redlmaxabs;
   Opt redlmaxinc;
-  Opt redlminrel;
   Opt redlmaxrel;
   Opt redlminabs;
-  Opt redlmaxabs;
-  Opt reduce;
+  Opt redlmininc;
+  Opt redlminrel;
+  Opt redloutinc;
   Opt redoutvlim;
+  Opt reduce;
   Opt rephase;
   Opt rephaseinc;
   Opt restart;
   Opt restartint;
   Opt restartintscale;
+  Opt rmincpen;
   Opt rstinoutinc;
   Opt scincinc;
-  Opt maxscorexp;
+  Opt score;
+  Opt scoreavgfactor;
+  Opt seed;
+  Opt simpdelay;
+  Opt simpen;
+  Opt simpinterdelay;
+  Opt simpirrchg;
+  Opt simpirrlim;
   Opt simplify;
   Opt simprtc;
-  Opt simpdelay;
-  Opt simpinterdelay;
-  Opt simpen;
-  Opt sizepen;
+  Opt simpvarchg;
+  Opt simpvarlim;
   Opt sizemaxpen;
+  Opt sizepen;
+  Opt sleeponabort;
+  Opt smallirr;
+  Opt smallve;
+  Opt smallvevars;
+  Opt smallvewait;
   Opt sortlits;
-  Opt syncunint;
-  Opt synclsint;
+  Opt subl;
   Opt synclsall;
-  Opt synclslen;
   Opt synclsglue;
+  Opt synclsint;
+  Opt synclslen;
+  Opt syncunint;
   Opt termint;
   Opt ternres;
-  Opt ternreswait;
   Opt ternresboost;
   Opt ternresrtc;
-  Opt trep;
-  Opt trepint;
-  Opt trnrmineff;
-  Opt trnrmaxeff;
-  Opt trnreleff;
+  Opt ternreswait;
   Opt transred;
   Opt transredwait;
-  Opt trdmineff;
+  Opt travshrink;
+  Opt travshrinklim;
+  Opt travshrinkred;
   Opt trdmaxeff;
+  Opt trdmineff;
   Opt trdreleff;
-  Opt unhide;
-  Opt unhidewait;
+  Opt treelook;
+  Opt treelookboost;
+  Opt treelookfull;
+  Opt treelooklrg;
+  Opt treelookmaxeff;
+  Opt treelookmineff;
+  Opt treelookreleff;
+  Opt treelookrtc;
+  Opt trep;
+  Opt trepint;
+  Opt trnreleff;
+  Opt trnrmaxeff;
+  Opt trnrmineff;
+  Opt unhdatrn;
   Opt unhdextstamp;
   Opt unhdhbr;
+  Opt unhdlnpr;
   Opt unhdmaxeff;
   Opt unhdmineff;
   Opt unhdreleff;
-  Opt unhdlnpr;
   Opt unhdroundlim;
+  Opt unhide;
+  Opt unhidewait;
   Opt verbose;
   Opt wait;
   Opt witness;
@@ -771,7 +807,6 @@ typedef double Scr;
 #endif
 /*------------------------------------------------------------------------*/
 
-typedef struct PASL { int psm, act, size, lidx; } PASL;
 typedef struct Conf { int lit, rsn[2]; } Conf;
 typedef struct Ctk { struct Ctr * start, * top, * end; } Ctk;
 typedef struct DFOPF { int observed, pushed, flag; } DFOPF;
@@ -780,7 +815,8 @@ typedef struct EVar { int occ[2], pos, score; } EVar;
 typedef struct Ftk { Flt * start, * top, * end; } Ftk;
 typedef struct HTS { int offset, count; }  HTS;
 typedef struct ITEC { int other, other2; } ITEC;
-typedef struct Lim { int64_t confs, decs; } Lim;
+typedef struct Lim { int64_t confs, decs, props; } Lim;
+typedef struct PASL { int psm, act, size, lidx; } PASL;
 typedef struct PSz { int pos, size; } PSz;
 typedef struct Qnd { int prev, next; struct Qln * line; } Qnd;
 typedef struct RNG { unsigned z, w; } RNG;
@@ -861,8 +897,9 @@ typedef struct Gat {
 /*------------------------------------------------------------------------*/
 
 typedef struct Stats {
-  int64_t steps;
+  int64_t steps, trims;
   int defrags, iterations, acts, reported, repcntdown, gcs, decomps;
+  int cutwidths;
   struct { int64_t count, steps; struct { int max, min; } mincut; } force;
   struct { int clauses, vars; } rescored;
   struct { int count, skipped; 
@@ -876,7 +913,7 @@ typedef struct Stats {
   struct { int64_t sat, mosat, simp, deref, fixed, freeze, lkhd;
 	   int64_t melt, add, assume, cassume, failed, repr; } calls;
   struct { int64_t search, hits; } poison;
-  struct { int64_t search, simp, lkhd; } props, visits;
+  struct { int64_t search, simp, lkhd; } props, visits, travs;
   struct { size_t current, max; } bytes;
   struct { int bin, trn, lrg; } red;
   struct { int cnt, simple, trn, lrg, sub; } hbr;
@@ -910,17 +947,24 @@ typedef struct Stats {
     struct { int elm, tried, failed; } small;
     int64_t resolutions, copies, subchks, strchks, ipos, steps; } elm;
   struct {
+    int sub2, sub3, subl, str2, str3, str3self, strl, strlself;
+    struct { int64_t lits, clauses, occs; } tried;
+    int64_t steps;
+  } bkwd;
+  struct {
     struct { struct { int irr, red; } dyn; } sub, str;
-    int driving, restarting; } otfs;
+    int64_t driving, restarting; } otfs;
   struct { int64_t nonmin, learned; } lits;
-  struct { int64_t learned, glue, nonmaxglue, maxglue, scglue; } clauses;
+  struct { 
+    int64_t learned, glue, realglue, nonmaxglue, maxglue, scglue; }
+  clauses;
   struct {
     int clauses;
     int64_t added, reduced, resolved, forcing, conflicts, saved;
   } lir[POW2GLUE];
   struct { int64_t sum; int count; } glues;
   struct { int count; int64_t set, pos, neg; } phase;
-  struct { int count, climhit; } simp;
+  struct { int count; struct { int confs, irr, vars; } limhit; } simp;
   struct { int count; int64_t steps; } luby, inout;
   struct { int count, gcs, units, equivs, trneqs; 
            struct { int max; int64_t sum; } arity; 
@@ -930,7 +974,8 @@ typedef struct Stats {
            int64_t steps, probed; } cce;
   struct { int count, failed, lifted; int64_t decisions, steps; } cliff;
   struct { 
-    int count, units, expam1, resched; int64_t steps, eliminated, resolved;
+    int count, units, expam1, resched;
+    int64_t steps, eliminated, resolved, subsumed;
     struct { struct { int64_t sum, cnt; } found, used; } am1, am2; } card;
   struct { int64_t bin, trn, lrg; } moved;
   struct { int count, inc; } rephase;
@@ -941,7 +986,10 @@ typedef struct Stats {
       struct { int64_t actual, tried, calls; } consumed;
     } cls, units;
   } sync;
-  struct { int64_t cnt; struct { int64_t orig, red; } sum; } deco;
+  struct { int64_t count; struct { int64_t orig, red; } sum; } deco;
+  int64_t drupped;
+  struct { int64_t count, units, bin, trn, steps; } rdp;
+  struct { int64_t count, tried, cands, sub; } subl;
 } Stats;
 
 /*------------------------------------------------------------------------*/
@@ -949,7 +997,7 @@ typedef struct Stats {
 typedef struct Times {
   double all, dcp, elm, trd, gc, dfg, red, blk, ana, unhd, dec, lkhd;
   double rsts, lft, trn, cgr, phs, srch, prep, inpr, bump, mcls, gauss;
-  double card, cce, cliff, ctw, force, bca;
+  double card, cce, cliff, ctw, force, bca, rdp;
   struct { double all, simple, basic, treelook; } prb;
 } Times;
 
@@ -961,15 +1009,17 @@ typedef struct Limits {
   int flipint, lkhdpen;
   int64_t randec;
   struct { int inner, outer, extra; } reduce;
+  struct { struct { int64_t otfs, confs; } vars; } rescore;
   struct { int pen; Del del; int64_t esteps, csteps; } cgr;
   struct { int pen; Del del; int64_t steps, irrprgss; } elm, blk, cliff;
-  struct { int pen; Del del; int64_t steps; } trd, unhd, trnr, lft, cce, card;
+  struct { int pen; Del del; int64_t steps; }
+    rdp, trd, unhd, trnr, lft, cce, card;
   struct { int pen; Del del; struct { int64_t extr, elim; } steps; } gauss;
   struct { int64_t confs; } rephase;
   struct { int64_t confs; int wasmaxdelta, maxdelta, luby, inout; } restart;
   struct { int64_t steps; 
            struct { int pen; Del del; } simple, basic, treelook; } prb;
-  struct { int64_t irr, prgss, confs; int pen, cinc; } simp;
+  struct { int64_t irr, vars, confs; int pen, cinc; } simp;
   struct { int64_t pshwchs, prgss; } dfg;
   struct { int64_t steps, confs; } sync;
   struct { int64_t steps; } term;
@@ -1016,8 +1066,21 @@ typedef struct Dis { struct { Stk bin, trn; } red, irr; } Dis;
 typedef struct Elm {
   int64_t oldsteps;
   int pivot, negcls, necls, neglidx, round, oldelmd;
-  Stk lits, next, clv, csigs, lsigs, sizes, occs, noccs, mark, m2i;
+  Stk lits, next, clv, csigs, sizes, occs, noccs, mark, m2i;
 } Elm;
+
+typedef struct RDP {
+  int * count, eliminated;
+  Stk lits, * occs;
+  double start;
+} RDP;
+
+typedef struct Blk {
+  int nvars, eliminated;
+  int * count, * pos;
+  Stk * occs, sched;
+  double start;
+} Blk;
 
 typedef struct Card {
   Stk atmost1, atmost2, cards, elim, * occs, units, expam1;
@@ -1070,8 +1133,8 @@ struct LGL {
 
   char cgrclosing, searching, simp, allphaseset, flushphases;
   char lifting, cceing, gaussing, cliffing, bcaing, forcerephead;
-  char unhiding, basicprobing, simpleprobing, treelooking;
-  char eliminating, donotsched, blocking, ternresing, lkhd;
+  char unhiding, basicprobing, simpleprobing, treelooking, setuponce;
+  char eliminating, donotsched, blocking, ternresing, lkhd, allfrozen;
   char blkall, blkrem, blkrtc, elmall, elmrem, elmrtc, cceall, ccerem;
   char frozen, dense, notfullyconnected, forcegc, allowforce, decomposing;
 
@@ -1100,13 +1163,16 @@ struct LGL {
 
   Ctk control;
   Stk clause, eclause, extend, irr, trail, frames;
-  Stk dsched, eassume, assume, cassume, fassume;
+  Stk dsched, eassume, assume, cassume, fassume, learned;
 #ifndef NCHKSOL
   Stk orig;
 #endif
 
-  union { Elm * elm; Cgr * cgr; SPrb * sprb; Tlk * tlk; Gauss * gauss;
-          CCE * cce; Cliff * cliff; BCA * bca; Card * card; };
+  union {
+    Elm * elm; Cgr * cgr; SPrb * sprb; Tlk * tlk; Gauss * gauss;
+    CCE * cce; Cliff * cliff; BCA * bca; Card * card; RDP * rdp;
+    Blk * blk;
+  };
   union { Stk lcaseen, sortstk, resolvent; };
   Stk poisoned, seen, esched, minstk;
   EVar * evars;
@@ -1283,6 +1349,14 @@ double lglflt2dbl (Flt a) {
 }
 #endif
 
+static const char * lgll2str (LGL * lgl, Flt a) {
+  assert (lgl->fltstr);
+  lgl->fltstr->current++;
+  if (lgl->fltstr->current == MAXFLTSTR) lgl->fltstr->current = 0;
+  sprintf (lgl->fltstr->str[lgl->fltstr->current], "%lld", (LGLL) a);
+  return lgl->fltstr->str[lgl->fltstr->current];
+}
+
 static const char * lglflt2str (LGL * lgl, Flt a) {
   double d, e;
   assert (lgl->fltstr);
@@ -1357,7 +1431,8 @@ static Flt lglshflt (Flt a, int s) {
 #ifdef NDBLSCR
 
 static const char * lglscr2str (LGL * lgl, Scr scr) {
-  return lglflt2str (lgl, scr);
+  if (lgl->opts->score.val == EVSIDS) return lglflt2str (lgl, scr);
+  else return lgll2str (lgl, scr);
 }
 
 static Scr lgladdscr (Scr a, Scr b) { return lgladdflt (a, b); }
@@ -1714,22 +1789,6 @@ static void lglrststk (Stk * s, int newsz) {
   s->top = s->start + newsz;
 }
 
-static void lglredstk (LGL * lgl, Stk * s, int minsize, int pow2smaller) {
-  size_t oldsize, count, limit, newsize;
-  assert (pow2smaller >= 2);
-  oldsize = lglszstk (s);
-  if (oldsize <= minsize) return;
-  count = lglcntstk (s);
-  limit = oldsize >> pow2smaller;
-  if (count > limit) return;
-  newsize = oldsize / 2;
-  if (newsize > 0) {
-    RSZ (s->start, oldsize, newsize);
-    s->top = s->start + count;
-    s->end = s->start + newsize;
-  } else lglrelstk (lgl, s);
-}
-
 static void lglclnstk (Stk * s) { lglrststk (s, 0); }
 
 /*------------------------------------------------------------------------*/
@@ -1967,6 +2026,7 @@ static void lglsetdrup (LGL * lgl, int val) {
   SETDRUP (lift);
   SETDRUP (cgrclsr);
   SETDRUP (gauss);
+  SETDRUP (rdp);
   SETDRUP (smallve);
   lglprt (lgl, 1, "[drup] drup solving switched %s", val ? "on" : "off");
 }
@@ -1983,6 +2043,7 @@ static void lglsetplain (LGL * lgl, int val) {
   SETPLAIN (gauss);
   SETPLAIN (lift);
   SETPLAIN (probe);
+  SETPLAIN (rdp);
   SETPLAIN (ternres);
   SETPLAIN (transred);
   SETPLAIN (unhide);
@@ -2022,6 +2083,7 @@ static LGL * lglnewlgl (void * mem,
 
   lgl->mem = alloc ? alloc (mem, sizeof *lgl->mem) : malloc (sizeof *lgl->mem);
   ABORTIF (!lgl->mem, "out of memory allocating memory manager object");
+
   lgl->mem->state = mem;
   lgl->mem->alloc = alloc;
   lgl->mem->realloc = realloc;
@@ -2044,23 +2106,32 @@ static LGL * lglnewlgl (void * mem,
 }
 
 static void lglinitscores (LGL * lgl) {
-  Scr oldscincf = lgl->scincf;
-  Scr oldmaxscore = lgl->maxscore;
+  Scr oldscincf, oldmaxscore = lgl->maxscore;
+  if (lgl->opts->score.val != EVSIDS) {
+    lgl->maxscore = (1ll << 60);
+    if (oldmaxscore != lgl->maxscore)
+      lglprt (lgl, 1,
+	"[init-scores] fixed maxium score %s",
+	lglscr2str (lgl, lgl->maxscore));
+  } else {
+    oldscincf = lgl->scincf;
 #ifdef NDBLSCR
-  lgl->scincf = lglrat (1000 + lgl->opts->scincinc.val, 1000);
-  lgl->maxscore = lglflt (lgl->opts->maxscorexp.val, 1);
+    lgl->scincf = lglrat (1000 + lgl->opts->scincinc.val, 1000);
+    lgl->maxscore = lglflt (lgl->opts->maxscorexp.val, 1);
 #else
-  lgl->scincf = (1000.0 + lgl->opts->scincinc.val) / 1000.0;
-  lgl->maxscore = scalbln (1.0, lgl->opts->maxscorexp.val);
+    lgl->scincf = (1000.0 + lgl->opts->scincinc.val) / 1000.0;
+    lgl->maxscore = scalbln (1.0, lgl->opts->maxscorexp.val);
 #endif
-  if (oldscincf != lgl->scincf)
-    lglprt (lgl, 1,
-      "[init-scores] score increment factor %s (--scincinc=%d)",
-      lglscr2str (lgl, lgl->scincf), lgl->opts->scincinc.val);
-  if (oldmaxscore != lgl->maxscore)
-    lglprt (lgl, 1,
-      "[init-scores] maxium score limit %s (--maxscorexp=%d)",
-      lglscr2str (lgl, lgl->maxscore), lgl->opts->maxscorexp.val);
+    if (oldscincf != lgl->scincf)
+      lglprt (lgl, 1,
+	"[init-scores] score increment factor %s (--scincinc=%d)",
+	lglscr2str (lgl, lgl->scincf), lgl->opts->scincinc.val);
+
+    if (oldmaxscore != lgl->maxscore)
+      lglprt (lgl, 1,
+	"[init-scores] maxium score limit %s (--maxscorexp=%d)",
+	lglscr2str (lgl, lgl->maxscore), lgl->opts->maxscorexp.val);
+  }
 }
 
 LGL * lglminit (void * mem,
@@ -2104,238 +2175,275 @@ LGL * lglminit (void * mem,
   if (apitracename) lglopenapitrace (lgl, apitracename);
 
   OPT(0,abstime,0,0,1,"print absolute time when reporting");
-  OPT(0,acts,2,0,2,"activity based reduction: 0=no,1=enable,2=dyn");
-  OPT(0,actvlim,200*K,0,I,"activity based reduction variable limit");
-  OPT(0,actgsdul,7,0,MG0,"glue useless standard deviation limit");
-  OPT(0,actgeomlim,2,0,MG,"glue limit for geometric increase");
-  OPT(0,actdblarithlim,3,0,MG,"glue lim for dbl arith increase");
   OPT(0,actavgmax,3*MG0/4,0,MG0,"glue average max limit for dyn acts");
-  OPT(0,actstdmin,10,0,MG0,"glue std dev min limit for dyn acts");
+  OPT(0,actdblarithlim,3,0,MG,"glue lim for dbl arith increase");
+  OPT(0,actgeomlim,2,0,MG,"glue limit for geometric increase");
+  OPT(0,actgsdul,7,0,MG0,"glue useless standard deviation limit");
+  OPT(0,acts,2,0,2,"activity based reduction: 0=no,1=enable,2=dyn");
   OPT(0,actstdmax,3*MG0/4,0,MG0,"glue std dev max limit for dyn acts");
+  OPT(0,actstdmin,10,0,MG0,"glue std dev min limit for dyn acts");
+  OPT(0,actvlim,200*K,0,I,"activity based reduction variable limit");
   OPT(0,agile,23,0,100,"agility limit for restarts");
   OPT(0,bate,1,0,1,"basic ATE removal during probing");
-  OPT(0,batewait,2,0,2,"wait for for BCE (1) and/or BVE (2)");
+  OPT(0,batewait,2,0,2,"wait for BCE (1) and/or BVE (2)");
   OPT(0,bca,1,0,2,"enable blocked clause addition (1=week,2=strong)");
   OPT(0,bcamaxeff,10*M,0,I,"BCA maximum number of steps");
-  OPT(0,bcawait,2,0,2,"wait for for BCE (1) and/or BVE (2)");
   OPT(0,bcaminuse,100,0,I,"min number of literals required to be usable");
+  OPT(0,bcawait,2,0,2,"wait for BCE (1) and/or BVE (2)");
   OPT(0,bias,2,-1,2,"decision order initial bias (0=no,2=cw)");
-  OPT(0,block,1,0,1,"blocked clause elimination (BCE)");
-  OPT(0,blockwait,1,0,1,"wait for for BVE");
   OPT(0,blkboost,10,1,10000,"initial BCE boost");
-  OPT(0,blkrtc,0,0,1,"run BCE until completion");
   OPT(0,blkclslim,1000,3,I,"max blocked clause size");
-  OPT(0,blkocclim,10000,3,I,"max occ in blocked clause elimination");
-  OPT(0,blkmaxeff,-1,-1,I,"max effort in BCE (-1=unlimited)");
+  OPT(0,blkmaxeff,I,-1,I,"max effort in BCE (-1=unlimited)");
   OPT(0,blkmineff,50*M,0,I,"min effort in BCE");
+  OPT(0,blkocclim,100*K,3,I,"max occ in blocked clause elimination");
   OPT(0,blkreleff,100,0,K,"rel effort in BCE");
+  OPT(0,blkrtc,0,0,1,"run BCE until completion");
+  OPT(0,blksched2b2,0,0,1,"BCE schedule 2x2 first");
+  OPT(0,blkschedprod,0,0,1,"BCE schedule based on product too");
+  OPT(0,blkschedpure,0,0,1,"BCE schedule pure literals first");
+  OPT(0,blkschedmin,1,0,1,"BCE schedule based on minimum of occurrences");
+  OPT(0,blkschedsum,0,0,1,"BCE schedule based on sum of occurrences too");
+  OPT(0,block,1,0,2,"blocked clause elimination (BCE) (1=old,2=new)");
+  OPT(0,blockwait,1,0,1,"wait for BVE");
+  OPT(0,boost,1,0,1,"enable boosting of preprocessors");
+  OPT(0,bumpbcplits,0,0,1,"bump unseen but propagated literals");
+  OPT(0,bumpclslits,0,0,1,"bump literals in minimized clause");
+  OPT(0,bumpseenaftermin,0,0,1,"bump seen after minimization");
+  OPT(0,bumpseenbeforemin,1,0,1,"bump seen before minimization");
+  OPT(0,bumpseenlits,1,0,1,"bump seen literals");
   OPT(0,card,1,0,1,"cardinality constraint reasoning");
-  OPT(0,carduse,2,0,3,"use clauses (1=oneside,2=bothsidetoo,3=anyside)");
-  OPT(0,cardignonbin,0,0,1,"ignore non binary clause antecedents");
-  OPT(0,cardglue,0,-1,MAXGLUE,"use lrg red cls too (-1=irr,0=moved,...)");
-  OPT(0,cardmaxeff,20*M,-1,I,"max effort for cardmineff reasoning");
-  OPT(0,cardmineff,400*K,0,I,"min effort for cardmineff reasoning");
-  OPT(0,cardreleff,4,0,10*K,"rel effort for cardinality reasoning");
-  OPT(0,cardminlen,4,0,I,"minimal length of (initial) card constraints");
-  OPT(0,cardmaxlen,1000,0,I,"maximal length of cardinality constraints");
   OPT(0,cardexpam1,3,2,I,"min length of exported at-most-one constraint");
-  OPT(0,cardocclim,100,0,I,"cardinality constraints occurrence limit");
+  OPT(0,cardglue,0,-1,MAXGLUE,"use lrg red cls too (-1=irr,0=moved,...)");
+  OPT(0,cardignonbin,0,0,1,"ignore non binary clause antecedents");
+  OPT(0,cardmaxeff,300*M,-1,I,"max effort for cardmineff reasoning");
+  OPT(0,cardmaxlen,10000,0,I,"maximal length of cardinality constraints");
+  OPT(0,cardmineff,2*M,0,I,"min effort for cardmineff reasoning");
+  OPT(0,cardminlen,3,0,I,"minimal length of (initial) card constraints");
+  OPT(0,cardocclim1,300,0,I,"one-sided cardinality constraints occ limit");
+  OPT(0,cardocclim2,15,0,I,"two-sided cardinality constraints occ limit");
+  OPT(0,cardreleff,5,0,10*K,"rel effort for cardinality reasoning");
   OPT(0,cardreschedint,10,1,I,"reschedule variable for card reasoning");
-  OPT(0,cce,3,0,3,"covered clause elimination (1=ate,2=abce,3=cce)");
-  OPT(0,ccewait,2,0,2,"wait for for BCE (1) and/or BVE (2)");
+  OPT(0,carduse,2,0,3,"use clauses (1=oneside,2=bothsidetoo,3=anyside)");
+  OPT(0,cce,3,0,3,"covered clause elimination (1=ate,2=abce,3=acce)");
   OPT(0,ccemaxeff,200*M,-1,I,"max effort in covered clause elimination");
   OPT(0,ccemineff,3*M,0,I,"min effort in covered clause elimination");
   OPT(0,ccereleff,3,0,K,"rel effort in covered clause elimination");
-  OPT('c',check,0,0,3,"check level");
+  OPT(0,ccewait,2,0,2,"wait for BCE (1) and/or BVE (2)");
   OPT(0,cgrclsr,1,0,1,"gate extraction and congruence closure");
-  OPT(0,cgrclsrwait,2,0,2,"wait for for BCE (1) and/or BVE (2)");
-  OPT(0,cgrmaxority,20,2,30,"maximum xor arity to be extracted");
-  OPT(0,cgrmaxeff,8*M,-1,I,"max effort in congruence closure");
-  OPT(0,cgrmineff,200*K,0,I,"min effort in congruence closure");
+  OPT(0,cgrclsrwait,2,0,2,"wait for BCE (1) and/or BVE (2)");
   OPT(0,cgreleff,1,0,10*K,"rel effort in congruence closure");
-  OPT(0,cgrexteq,1,0,1,"extract equivalences");
   OPT(0,cgrextand,1,0,1,"extract and gates");
-  OPT(0,cgrextxor,1,0,1,"extract xor gates");
+  OPT(0,cgrexteq,1,0,1,"extract equivalences");
   OPT(0,cgrextite,1,0,1,"extract ite gates");
   OPT(0,cgrextunits,1,0,1,"extract units");
+  OPT(0,cgrextxor,1,0,1,"extract xor gates");
+  OPT(0,cgrmaxeff,8*M,-1,I,"max effort in congruence closure");
+  OPT(0,cgrmaxority,20,2,30,"maximum xor arity to be extracted");
+  OPT(0,cgrmineff,200*K,0,I,"min effort in congruence closure");
+  OPT('c',check,0,0,3,"check level");
+  OPT(0,cintinc,20*K,10,M,"inprocessing conflict interval increment");
+  OPT(0,cintincdiv,1,0,3,"cintinc reduce policy: 0=no,1=div1,2=div2,3=heur");
+  OPT(0,cintmaxsoft,1*M,-1,I,"soft max conflict interval limit");
+  OPT(0,cintmaxhard,10*M,-1,I,"hard max conflict interval limit");
   OPT(0,cliff,1,0,1,"cliffing");
-  OPT(0,cliffwait,2,0,2,"wait for for BCE (1) and/or BVE (2)");
   OPT(0,cliffmaxeff,100*M,-1,I,"max effort in cliffing");
   OPT(0,cliffmineff,10*M,0,I,"min effort in cliffing");
   OPT(0,cliffreleff,8,0,10*K,"rel effort in cliffing");
+  OPT(0,cliffwait,2,0,2,"wait for BCE (1) and/or BVE (2)");
+  OPT(0,clim,-1,-1,I,"conflict limit");
   OPT(0,compact,0,0,2,"compactify after 'lglsat/lglsimp' (1=UNS,2=SAT)");
-  OPT(0,decompose,1,0,1,"enable decompose");
   OPT(0,deco,2,0,2,"learn decision-only clauses too (2=all-decisions)");
   OPT(0,decolim,60,0,I,"decision-only clauses glue limit");
+  OPT(0,decompose,1,0,1,"enable decompose");
   OPT(0,defragfree,50,10,K,"defragmentation free watches limit");
   OPT(0,defragint,10*M,100,I,"defragmentation pushed watches interval");
   OPT(0,delmax,10,0,10,"maximum delay");
+  OPT(0,dlim,-1,-1,I,"decision limit");
   OPT(0,drup,0,0,1,"print DRUP proof");
   OPT(0,elim,1,0,1,"bounded variable eliminiation (BVE)");
-  OPT(0,elmschedsum,1,0,1,"BVE schedule based on sum of occurrences too");
-  OPT(0,elmschedprod,0,0,1,"BVE schedule based on product too");
-  OPT(0,elmschedpure,0,0,1,"BVE schedule pure literals first");
-  OPT(0,elmsched2b2,0,0,1,"BVE schedule 2x2 first");
-  OPT(0,elmboost,40,1,100,"initial elimination boost");
-  OPT(0,elmrtc,0,0,1,"run BVE until completion");
-  OPT(0,elmroundlim,3,1,I,"variable elimination rounds limit");
+  OPT(0,elmaxeff,I,-1,I,"max effort in BVE (-1=unlimited)");
   OPT(0,elmblk,1,0,1,"enable BCE during BVE");
   OPT(0,elmblkwait,1,0,1,"wait for BVE to be completed once");
+  OPT(0,elmboost,40,1,1000,"initial elimination boost");
   OPT(0,elmclslim,1000,3,I,"max antecendent size in elimination");
+  OPT(0,elmineff,40*M,0,I,"min effort in BVE");
   OPT(0,elmlitslim,200,0,I,"one side literals limit for elimination");
-  OPT(0,elmocclim,10000,3,I,"max occurences in elimination");
-  OPT(0,elmplim1,100,1,I,"one-sided max occ of plim");
-  OPT(0,elmplim2,8,2,I,"two-sided max occ of plim");
-  OPT(0,elmaxeff,-1,-1,I,"max effort in BVE (-1=unlimited)");
-  OPT(0,elmineff,20*M,0,I,"min effort in BVE");
+  OPT(0,elmocclim,100*K,3,I,"max occurrences in elimination");
+  OPT(0,elmocclim1,100,1,I,"one-sided max occ of plim");
+  OPT(0,elmocclim2,8,2,I,"two-sided max occ of plim");
   OPT(0,elmreleff,200,0,10*K,"rel effort in BVE");
-  OPT(0,sleeponabort,0,0,I,"sleep this seconds before abort/exit");
+  OPT(0,elmroundlim,6,1,I,"variable elimination rounds limit");
+  OPT(0,elmrtc,0,0,1,"run BVE until completion");
+  OPT(0,elmsched2b2,0,0,1,"BVE schedule 2x2 first");
+  OPT(0,elmschedprod,0,0,1,"BVE schedule based on product too");
+  OPT(0,elmschedpure,1,0,1,"BVE schedule pure literals first");
+  OPT(0,elmschedmin,0,0,1,"BVE schedule based on minimum of occurrences");
+  OPT(0,elmschedsum,1,0,1,"BVE schedule based on sum of occurrences too");
   OPT(0,exitonabort,0,0,1,"exit instead abort after internal error");
-  OPT(0,flipping,1,0,1,"enable point flipping");
-  OPT(0,flipint,10,0,I,"flipping interval in number top level decision");
+  OPT(0,factmax,10,1,I,"maximum factor");
+  OPT(0,factor,2,0,2,"...{cls,occ}lim factors (0=const1,1=ld,2=lin)");
   OPT(0,flipdur,10,1,I,"flipping duration in number of conflicts");
-  OPT(0,flipvlim,100*K,0,I,"no flipping beyond this number vars");
+  OPT(0,flipint,10,0,I,"flipping interval in number top level decision");
+  OPT(0,flipping,1,0,1,"enable point flipping");
   OPT(0,fliptop,1,0,1,"flipping only at the top level");
+  OPT(0,flipvlim,100*K,0,I,"no flipping beyond this number vars");
   OPT(0,force,0,0,I,"reorder variables with force algorithm");
   OPT(0,gauss,1,0,1,"enable gaussian elimination");
-  OPT(0,gausswait,2,0,2,"wait for for BCE (1) and/or BVE (2)");
-  OPT(0,gaussextrall,1,0,1,"extract all xors (with duplicates)");
-  OPT(0,gaussmaxor,20,2,64,"maximum xor size in gaussian elimination");
   OPT(0,gaussexptrn,1,0,1,"export trn cls from gaussian elimination");
+  OPT(0,gaussextrall,0,0,1,"extract all xors (with duplicates)");
   OPT(0,gaussmaxeff,50*M,-1,I,"max effort in gaussian elimination");
+  OPT(0,gaussmaxor,20,2,64,"maximum xor size in gaussian elimination");
   OPT(0,gaussmineff,2*M,0,I,"min effort in gaussian elimination");
   OPT(0,gaussreleff,2,0,10*K,"rel effort in gaussian elimination");
-  OPT(0,gluescale,2,1,3,"glue scaling: 1=linear,2=sqrt,3=ld");
+  OPT(0,gausswait,2,0,2,"wait for BCE (1) and/or BVE (2)");
   OPT(0,gluekeep,3,0,I,"keep clauses with this original glue");
+  OPT(0,gluescale,4,1,4,"glue scaling: 1=linear,2=sqrt,3=ld,4=hybrid");
   OPT(0,import,1,0,1,"import external indices and map them");
   OPT(0,inprocessing,1,0,1,"enable inprocessing");
-  OPT(0,itsimpdel,20,0,100*K,"simplification delay after iteration");
-  OPT(0,cintinc,20*K,10,M,"inprocessing conflict interval increment");
-  OPT(0,cintincdiv,1,0,3,"cintinc reduce policy: 0=no,1=div1,2=div2,3=heur");
   OPT(0,irrlim,1,0,1,"use irredundant clauses as limit for simps");
-  OPT(0,simpirrlim,20,1,200,"simplification irredundant clauses limit");
-  OPT(0,lift,1,0,1,"enable double lookahead lifting");
-  OPT(0,liftwait,2,0,2,"wait for for BCE (1) and/or BVE (2)");
+  OPT(0,itsimpdel,20,0,100*K,"simplification delay after iteration");
+  OPT(0,jwhred,1,0,1,"compute JWH score based on redundant clauses too");
+  OPT(0,keepmaxglue,0,0,1,"keep maximum glue clauses");
   OPT(0,lftmaxeff,20*M,-1,I,"max effort in lifting");
   OPT(0,lftmineff,500*K,0,I,"min effort in lifting");
   OPT(0,lftreleff,6,0,10*K,"rel effort in lifting");
-  OPT(0,lftroundlim,5,0,I,"lifting round limit");
+  OPT(0,lftroundlim,10,0,I,"lifting round limit");
+  OPT(0,lhbr,1,0,1, "enable lazy hyber binary reasoning");
+  OPT(0,lift,1,0,1,"enable double lookahead lifting");
+  OPT(0,liftlrg,3,0,I,"consider large clauses with this many unassigned");
+  OPT(0,liftwait,2,0,2,"wait for BCE (1) and/or BVE (2)");
+  OPT(0,lkhd,2,0,2, "0=LIS,1=JWH,2=TREELOOK");
+  OPT(0,lkhdmisifelmrtc,0,0,1,"MIS if elimination ran to completion");
+  OPT('l',log,-1,-1,5,"log level");
+  OPT(0,maxglue,I,0,I,"min glue which is considered as MAXGLUE");
+  OPT(0,maxscorexp,500,7,MAXSCOREXP,"maximum score exponent");
+  OPT(0,memlim,-1,-1,I,"memory limit in MB (-1=no limit)");
   OPT(0,minimize,2,0,2,"minimize learned clauses (1=local,2=recursive)");
   OPT(0,minlocalgluelim,40,0,I,"glue limit for using local minimization");
   OPT(0,minrecgluelim,20,0,I,"glue limit for using recursive minimization");
-  OPT(0,lhbr,1,0,1, "enable lazy hyber binary reasoning");
-  OPT(0,lkhd,2,0,2, "0=LIS,1=JWH,2=TREELOOK");
-  OPT(0,lkhdmisifelmrtc,0,0,1,"MIS if elimination ran to completion");
-  OPT(0,clim,-1,-1,I,"conflict limit");
-  OPT(0,dlim,-1,-1,I,"decision limit");
   OPT(0,mocint,1000,1,I,"multiple objectives conflict limit interval");
   OPT(0,move,2,0,3,"move redundant cls (1=only-binary,2=ternary,3=all)");
-  OPT('l',log,-1,-1,5,"log level");
   OPT(0,otfs,1,0,1,"enable on-the-fly subsumption");
   OPT(0,otfsbump,1,0,2,"bump literals during OTFS (1=conflict,2=drive)");
-  OPT(0,bumpseenlits,1,0,1,"bump all seen literals");
-  OPT(0,bumpclslits,0,0,1,"bump literals in minimized clause");
-  OPT(0,bumpbcplits,0,0,1,"bump all propagated literals");
-  OPT(0,bumpbeforemin,1,0,1,"bump before minimization");
+  OPT(0,otfsconf,0,0,1,"count on-the-fly restart as conflict");
   OPT(0,penmax,4,0,16,"maximum penalty");
-  OPT(0,memlim,-1,-1,I,"memory limit in MB (-1=no limit)");
   OPT(0,phase,0,-1,1,"default phase (-1=neg,0=JeroslowWang,1=pos)");
   OPT(0,phaseflip,0,0,1,"flip Jeroslow Wang phase");
   OPT(0,phaseneginit,0,0,I,"initial zero phase conflict interval");
   OPT(0,plain,0,0,1,"plain mode disables all preprocessing");
-  OPT(0,probe,1,0,1,"enable probing");
-  OPT(0,prbrtc,0,0,1,"run all probing until completion");
+  OPT(0,plim,-1,-1,I,"propagation limit (thousands)");
   OPT(0,prbasic,1,0,2,"enable basic probing procedure (1=roots-only)");
-  OPT(0,prbasicrtc,0,0,1,"run basic probing until completion");
-  OPT(0,prbasicroundlim,9,1,I,"basic probing round limit");
   OPT(0,prbasicmaxeff,100*M,-1,I,"max effort in basic probing");
   OPT(0,prbasicmineff,M,0,I,"min effort in basic probing");
   OPT(0,prbasicreleff,10,0,10*K,"rel effort in basic probing");
+  OPT(0,prbasicroundlim,9,1,I,"basic probing round limit");
+  OPT(0,prbasicrtc,0,0,1,"run basic probing until completion");
+  OPT(0,prbrtc,0,0,1,"run all probing until completion");
   OPT(0,prbsimple,2,0,3,"simple probing (1=shallow,2=deep,3=touchall)");
   OPT(0,prbsimpleboost,10,1,1000,"initial simple probing boost");
-  OPT(0,prbsimplertc,0,0,1,"run simple probing until completion");
+  OPT(0,prbsimpleliftdepth,3,1,10,"simple probing lifting depth");
   OPT(0,prbsimplemaxeff,200*M,-1,I,"max effort in simple probing");
   OPT(0,prbsimplemineff,2*M,0,I,"min effort in simple probing");
   OPT(0,prbsimplereleff,40,0,10*K,"rel effort in simple probing");
-  OPT(0,prbsimpleliftdepth,2,1,10,"simple probing lifting depth");
-  OPT(0,psm,1,0,1,"use PSM metric for reduction");
-  OPT(0,rmincpen,4,0,32,"logarithm of watcher removal penalty");
-  OPT(0,treelook,1,0,2,"enable tree-based look-ahead (2=scheduleprobing)");
-  OPT(0,treelookrtc,0,0,1,"run tree-based look-ahead until completion");
-  OPT(0,treelooklrg,1,0,1,"use large clauses during tree-look");
-  OPT(0,treelookfull,0,0,1,"do not limit tree-based look-head");
-  OPT(0,treelookboost,20,1,100000,"tree-based look-head boost factor");
-  OPT(0,treelookmaxeff,50*M,-1,I,"max effort in tree-look based probing");
-  OPT(0,treelookmineff,300*K,0,I,"min effort in tree-look based probing");
-  OPT(0,treelookreleff,1,0,10*K,"rel effort in tree-look based probing");
-  OPT(0,seed,0,0,I,"random number generator seed");
-  OPT(0,smallirr,90,0,100,"max percentage irr lits for BCE and VE");
-  OPT(0,smallve,1,0,1,"enable small number variables elimination");
-  OPT(0,smallvewait,0,0,1,"wait with small variable elimination");
-  OPT(0,smallvevars,FUNVAR,4,FUNVAR, "variables small variable elimination");
+  OPT(0,prbsimplertc,0,0,1,"run simple probing until completion");
+  OPT(0,probe,1,0,1,"enable probing");
+  OPT(0,psm,0,0,3,"use PSM metric (1=afteract,2=afterglue,3=first");
+  OPT(0,pure,1,0,1,"enable pure literal elimination during BCE");
   OPT(0,randec,1,0,1,"enable random decisions");
   OPT(0,randecint,1000,2,I/2,"random decision interval");
-  OPT(0,reduce,2,0,4,"clause reduction (1=noouter,2=luby,3=inout,4=arith)");
-  OPT(0,redoutvlim,1000,0,I,"variable limit for outer reduce schedule");
-  OPT(0,rephase,1,0,2,"enable flushing and recomputation of phases (2=full)");
-  OPT(0,rephaseinc,10000,1,I,"rephasing increment");
+  OPT(0,rdp,0,0,3,"random DP (2=redbin,3=redtrn");
+  OPT(0,rdpclslim,4,0,I,"random DP resolvent size limit");
+  OPT(0,rdplim,80,0,200,"limit #resolvents in percent original clauses");
+  OPT(0,rdpmaxeff,30*M,-1,I,"max effort in RDP");
+  OPT(0,rdpmineff,30*K,0,I,"min effort in RDP");
+  OPT(0,rdpreleff,2,0,10*K,"rel effort in RDP");
+  OPT(0,rdpwait,2,0,2,"wait for BCE (1) and/or BVE (2)");
   OPT(0,redfixed,0,0,1,"keep a fixed size of learned clauses");
+  OPT(0,redinoutinc,100,1,1000,"reduce inner/outer relative increment");
   OPT(0,redlbound,0,0,1,"relative and absolute bounds on learned clauses");
   OPT(0,redlexpfac,10,0,1000,"exponential reduce limit increment factor");
-  OPT(0,redloutinc,10000,0,1000000,"outer arithmetic reduce increment");
-  OPT(0,redlinit,4*K,1,100*M,"initial reduce limit");
   OPT(0,redlinc,1000,1,10*M,"reduce limit increment");
-  OPT(0,redinoutinc,100,1,1000,"reduce inner/outer relative increment");
-  OPT(0,redlmininc,10,1,100*K,"rel min reduce limit increment");
+  OPT(0,redlinit,4*K,1,100*M,"initial reduce limit");
+  OPT(0,redlmaxabs,1000000,10,I/2,"maximum absolute reduce limit");
   OPT(0,redlmaxinc,200,1,100*K,"rel max reduce limit increment");
-  OPT(0,redlminrel,10,10,1000,"minimum relative reduce limit");
   OPT(0,redlmaxrel,300,10,10000,"maximum relative reduce limit");
   OPT(0,redlminabs,500,10,1000000,"minimum absolute reduce limit");
-  OPT(0,redlmaxabs,1000000,10,I/2,"maximum absolute reduce limit");
+  OPT(0,redlmininc,10,1,100*K,"rel min reduce limit increment");
+  OPT(0,redlminrel,10,10,1000,"minimum relative reduce limit");
+  OPT(0,redloutinc,10000,0,1000000,"outer arithmetic reduce increment");
+  OPT(0,redoutvlim,1000,0,I,"variable limit for outer reduce schedule");
+  OPT(0,reduce,2,0,4,"clause reduction (1=noouter,2=luby,3=inout,4=arith)");
+  OPT(0,rephase,1,0,2,"enable flushing and recomputation of phases (2=full)");
+  OPT(0,rephaseinc,10000,1,I,"rephasing increment");
   OPT(0,restart,2,0,3,"enable restarting (0=no,1=fixed,2=luby,3=inout)");
   OPT(0,restartint,5,1,I,"restart interval");
   OPT(0,restartintscale,0,0,1,"scale restart interval");
+  OPT(0,rmincpen,4,0,32,"logarithm of watcher removal penalty");
   OPT(0,rstinoutinc,110,1,1000,"restart inner/outer relative increment");
   OPT(0,scincinc,200,0,10*K,"score increment increment in per mille");
-  OPT(0,maxscorexp,500,0,MAXSCOREXP,"maximume score exponent");
+  OPT(0,score,5,0,5,"decision (0=static,1=inc,2=vmtf,3=sum,4=avg,5=evsids");
+  OPT(0,scoreavgfactor,10*K,1,1*M,"decision score average factor");
+  OPT(0,seed,0,0,I,"random number generator seed");
+  OPT(0,simpdelay,0,0,I,"initial simplification delay");
+  OPT(0,simpen,0,0,24,"logarithmic initial simplification penalty");
+  OPT(0,simpinterdelay,2000,0,I,"inprocessing simplification delay");
+  OPT(0,simpirrchg,100,1,1000, "simp irr clauses percentage change limit");
+  OPT(0,simpirrlim,1000,0,I, "simp irr clauses min limit");
   OPT(0,simplify,2,0,2,"enable simplification");
   OPT(0,simprtc,5,1,100,"min var reduction for simplification RTC");
-  OPT(0,simpdelay,0,0,I,"initial simplification delay");
-  OPT(0,simpinterdelay,2000,0,I,"inprocessing simplification delay");
-  OPT(0,simpen,0,0,24,"logarithmic initial simplification penalty");
-  OPT(0,sizepen,1*M,1,I,"number of clauses size penalty starting point");
+  OPT(0,simpvarchg,100,1,1000, "simp remaining vars percentage change lim");
+  OPT(0,simpvarlim,100,0,I, "simp remaining vars min limit");
   OPT(0,sizemaxpen,5,0,20,"maximum logarithmic size penalty");
+  OPT(0,sizepen,1*M,1,I,"number of clauses size penalty starting point");
+  OPT(0,sleeponabort,0,0,I,"sleep this seconds before abort/exit");
+  OPT(0,smallirr,90,0,100,"max percentage irr lits for BCE and VE");
+  OPT(0,smallve,1,0,1,"enable small number variables elimination");
+  OPT(0,smallvevars,FUNVAR,4,FUNVAR, "variables small variable elimination");
+  OPT(0,smallvewait,0,0,1,"wait with small variable elimination");
   OPT(0,sortlits,0,0,1,"sort lits of cls during garbage collection");
-  OPT(0,syncunint,111111,0,M,"unit synchronization steps interval");
-  OPT(0,synclsint,100,0,1000,"clause synchronization confs interval");
+  OPT(0,subl,9,0,10*K,"try to subsume this many recent learned clauses");
   OPT(0,synclsall,1,0,1,"always synchronize all unconsumed clauses");
-  OPT(0,synclslen,40,0,I,"clause synchronization length limit");
   OPT(0,synclsglue,8,0,I,"clause synchronization glue limit");
+  OPT(0,synclsint,100,0,1000,"clause synchronization confs interval");
+  OPT(0,synclslen,40,0,I,"clause synchronization length limit");
+  OPT(0,syncunint,111111,0,M,"unit synchronization steps interval");
   OPT(0,termint,122222,0,M,"termination check interval");
   OPT(0,ternres,1,0,1,"generate ternary resolvents");
-  OPT(0,ternreswait,2,0,2,"wait for for BCE (1) and/or BVE (2)");
   OPT(0,ternresboost,5,1,100,"initial ternary reslution boost");
   OPT(0,ternresrtc,0,0,1,"run ternary resolvents until completion");
-  OPT(0,trep,1,0,1,"enable time based interval reporting");
-  OPT(0,trepint,55555,1,I,"interval for time based reporting");
-  OPT(0,trnrmaxeff,200*M,-1,I,"max effort in ternary resolutions");
-  OPT(0,trnrmineff,4*M,0,I,"min effort in ternary resolutions");
-  OPT(0,trnreleff,10,0,K,"rel effort in ternary resolutions");
+  OPT(0,ternreswait,2,0,2,"wait for BCE (1) and/or BVE (2)");
   OPT(0,transred,1,0,1,"enable transitive reduction");
-  OPT(0,transredwait,2,0,2,"wait for for BCE (1) and/or BVE (2)");
+  OPT(0,transredwait,2,0,2,"wait for BCE (1) and/or BVE (2)");
+  OPT(0,travshrink,1,0,1,"shrink traversals of large clauses eagerly");
+  OPT(0,travshrinklim,30,1,I,"minimum false lits for traversal shrinking");
+  OPT(0,travshrinkred,4,1,100,"reduction factor in traversal shrinking");
   OPT(0,trdmaxeff,2*M,-1,I,"max effort in transitive reduction");
   OPT(0,trdmineff,100*K,0,I,"min effort in transitive reduction");
   OPT(0,trdreleff,10,0,10*K,"rel effort in transitive reduction");
-  OPT(0,unhide,1,0,1,"enable unhiding");
-  OPT(0,unhidewait,2,0,2,"wait for for BCE (1) and/or BVE (2)");
+  OPT(0,treelook,1,0,2,"enable tree-based look-ahead (2=scheduleprobing)");
+  OPT(0,treelookboost,20,1,100000,"tree-based look-head boost factor");
+  OPT(0,treelookfull,0,0,1,"do not limit tree-based look-head");
+  OPT(0,treelooklrg,1,0,1,"use large clauses during tree-look");
+  OPT(0,treelookmaxeff,50*M,-1,I,"max effort in tree-look based probing");
+  OPT(0,treelookmineff,300*K,0,I,"min effort in tree-look based probing");
+  OPT(0,treelookreleff,1,0,10*K,"rel effort in tree-look based probing");
+  OPT(0,treelookrtc,0,0,1,"run tree-based look-ahead until completion");
+  OPT(0,trep,0,0,1,"enable time based interval reporting");
+  OPT(0,trepint,55555,1,I,"interval for time based reporting");
+  OPT(0,trnreleff,10,0,K,"rel effort in ternary resolutions");
+  OPT(0,trnrmaxeff,200*M,-1,I,"max effort in ternary resolutions");
+  OPT(0,trnrmineff,4*M,0,I,"min effort in ternary resolutions");
+  OPT(0,unhdatrn,1,0,2,"unhide redundant ternary clauses (1=move,2=force)");
   OPT(0,unhdextstamp,1,0,1,"used extended stamping features");
   OPT(0,unhdhbr,0,0,1,"enable unhiding hidden binary resolution");
+  OPT(0,unhdlnpr,3,0,I,"unhide no progress round limit");
   OPT(0,unhdmaxeff,20*M,-1,I,"max effort in unhiding");
   OPT(0,unhdmineff,1*M,0,I,"min effort in unhiding");
   OPT(0,unhdreleff,3,0,10*K,"rel effort in unhiding");
-  OPT(0,unhdlnpr,3,0,I,"unhide no progress round limit");
   OPT(0,unhdroundlim,20,0,100,"unhide round limit");
-  OPT('v',verbose,0,-1,3,"verbosity level");
+  OPT(0,unhide,1,0,1,"enable unhiding");
+  OPT(0,unhidewait,2,0,2,"wait for BCE (1) and/or BVE (2)");
+  OPT('v',verbose,0,-1,4,"verbosity level");
   OPT(0,wait,1,0,1,"enable waiting");
   OPT(0,witness,1,0,1,"print witness");
 
@@ -2369,24 +2477,20 @@ LGL * lglminit (void * mem,
 
 static void lglcompact (LGL *);
 
-LGL * lglclone (LGL * orig) {
+LGL * lglmclone (LGL * orig,
+		 void * mem,
+		 lglalloc alloc,
+		 lglrealloc realloc,
+		 lgldealloc dealloc) {
   size_t max_bytes, current_bytes;
   LGL * lgl = orig;
   int glue;
 
   if (!orig) return 0;
-
   lglcompact (orig);
-
   LOG (1, "cloning");
-
-  lgl = lglnewlgl (orig->mem->state,
-		   orig->mem->alloc,
-		   orig->mem->realloc,
-		   orig->mem->dealloc);
-
+  lgl = lglnewlgl (mem, alloc, realloc, dealloc);
   memcpy (lgl, orig, ((char*)&orig->mem) - (char*) orig);
-
   max_bytes = lgl->stats->bytes.max;
   current_bytes = lgl->stats->bytes.current;
   memcpy (lgl->stats, orig->stats, sizeof *orig->stats);
@@ -2438,6 +2542,7 @@ LGL * lglclone (LGL * orig) {
   CLONESTK (eassume);
   CLONESTK (assume);
   CLONESTK (fassume);
+  CLONESTK (learned);
   CLONESTK (cassume);
   CLONESTK (dsched);
 #ifndef NCHKSOL
@@ -2453,6 +2558,14 @@ LGL * lglclone (LGL * orig) {
   assert (lgl->stats->bytes.max <= orig->stats->bytes.max);
   lgl->stats->bytes.max = orig->stats->bytes.max;
   return lgl;
+}
+
+LGL * lglclone (LGL * lgl) {
+  return lglmclone (lgl,
+                    lgl->mem->state,
+                    lgl->mem->alloc,
+                    lgl->mem->realloc,
+                    lgl->mem->dealloc);
 }
 
 void lglchkclone (LGL * lgl) {
@@ -2490,16 +2603,23 @@ void lglusage (LGL * lgl) {
   }
 }
 
+static int lglignopt (const char * name) {
+  if (!strcmp (name, "abstime")) return 1;
+  if (!strcmp (name, "check")) return 1;
+  if (!strcmp (name, "drup")) return 1;
+  if (!strcmp (name, "exitonabort")) return 1;
+  if (!strcmp (name, "log")) return 1;
+  if (!strcmp (name, "sleeponabort")) return 1;
+  if (!strcmp (name, "verbose")) return 1;
+  if (!strcmp (name, "witness")) return 1;
+  return 0;
+}
+
 void lglopts (LGL * lgl, const char * prefix, int ignsome) {
   Opt * o;
   REQINIT ();
   for (o = FIRSTOPT (lgl); o <= LASTOPT (lgl); o++) {
-    if (ignsome) {
-      if (!strcmp (o->lng, "check")) continue;
-      if (!strcmp (o->lng, "log")) continue;
-      if (!strcmp (o->lng, "verbose")) continue;
-      if (!strcmp (o->lng, "witness")) continue;
-    }
+    if (ignsome && lglignopt (o->lng)) continue;
     fprintf (lgl->out, "%s--%s=%d\n", prefix, o->lng, o->val);
   }
 }
@@ -2509,6 +2629,61 @@ void lglrgopts (LGL * lgl) {
   REQINIT ();
   for (o = FIRSTOPT (lgl); o <= LASTOPT (lgl); o++)
     fprintf (lgl->out, "%s %d %d %d\n", o->lng, o->val, o->min, o->max);
+}
+
+void lglpcs (LGL * lgl, int mixed) {
+  int i, printi, printl;
+  int64_t range;
+  Opt * o;
+  REQINIT ();
+  for (o = FIRSTOPT (lgl); o <= LASTOPT (lgl); o++) {
+    if (lglignopt (o->lng)) continue;
+    range = o->max; range -= o->min;
+    if (range >= 7 && mixed < 0) continue;
+    printi = printl = 0;
+    printf ("%s ", o->lng);
+    if (range < 7) {
+      printf ("{%d", o->min);
+      for (i = o->min + 1; i <= o->max; i++) printf (",%d", i);
+      printf ("}");
+    } else if (!mixed) {
+      printf ("[%d,%d]", o->min, o->max);
+      printi = 1;
+      printl = (o->min > 0 && range >= 100);
+    } else if (o->def == o->min || o->def == o->max) {
+      printf ("{%d,%d,%d,%d,%d}",
+        o->min,
+        (int)(o->min + (1*range + 3)/4),
+        (int)(o->min + (2*range + 3)/4),
+        (int)(o->min + (3*range + 3)/4),
+        o->max);
+    } else if (o->def == o->min + 1) {
+      printf ("{%d,%d,%d,%d}",
+        o->min,
+	o->def,
+	(int)(o->def + (o->max - (int64_t) o->def)/2),
+	o->max);
+    } else if (o->def + 1 == o->max) {
+      printf ("{%d,%d,%d,%d}",
+        o->min,
+	(int)(o->min + (o->def - (int64_t) o->min)/2),
+	o->def,
+	o->max);
+    } else {
+      assert (o->def - o->min >= 2);
+      assert (o->max - o->def >= 2);
+      printf ("{%d,%d,%d,%d,%d}",
+        o->min,
+	(int)(o->min + (o->def - (int64_t) o->min)/2),
+        o->def,
+        (int)(o->def + (o->max - (int64_t) o->min)/2),
+	o->max);
+    }
+    printf ("[%d]", o->def);
+    if (printi) printf ("i"); 
+    if (printl) printf ("l"); 
+    printf (" # %s\n",o->descrp);
+  }
 }
 
 int lglhasopt (LGL * lgl, const char * opt) {
@@ -2906,7 +3081,8 @@ static void lgldreschedule (LGL * lgl) {
 #define RVL 2
 
 static void lglrescorevars (LGL * lgl) {
-  Scr oldscinc, oldscore, oldmaxscore = 0, newmaxscore = 0;
+  Scr oldscinc, oldscore, newscore, oldmaxscore = 0, newmaxscore = 0;
+  int64_t newotfs;
   QVar * qv;
   int idx;
   lgl->stats->rescored.vars++;
@@ -2915,38 +3091,54 @@ static void lglrescorevars (LGL * lgl) {
     oldscore = qv->score;
     if (oldscore > oldmaxscore) oldmaxscore = oldscore;
 #ifdef NDBLSCR
-    qv->score = lglshflt (oldscore, lgl->opts->maxscorexp.val);
+    if (lgl->opts->score.val != EVSIDS) newscore = (oldscore >> 32);
+    else newscore = lglshflt (oldscore, lgl->opts->maxscorexp.val);
 #else
-    qv->score = oldscore / lgl->maxscore;
+    newscore = oldscore / lgl->maxscore;
 #endif
+    qv->score = newscore;
     if (qv->score > newmaxscore) newmaxscore = qv->score;
     LOG (3, "rescored variable %d from %s to %s",
 	 idx, lglscr2str (lgl, oldscore), lglscr2str (lgl, qv->score));
   }
   lgldreschedule (lgl);
-  oldscinc = lgl->scinc;
-#ifdef NDBLSCR
-  lgl->scinc = lglshflt (oldscinc, lgl->opts->maxscorexp.val);
-#else
-  lgl->scinc = oldscinc / lgl->maxscore;
-#endif
-  assert (lgl->scinc > 0);
+  newotfs = lgl->stats->otfs.driving + lgl->stats->otfs.restarting;
+  assert (newotfs >= lgl->limits->rescore.vars.otfs);
+  assert (lgl->stats->confs >= lgl->limits->rescore.vars.confs);
+  lglprt (lgl, RVL,
+    "[rescored-vars-%d] after %lld conflicts and %lld OTFS",
+    lgl->stats->rescored.vars,
+    lgl->stats->confs - lgl->limits->rescore.vars.confs,
+    newotfs - lgl->limits->rescore.vars.otfs);
+  lgl->limits->rescore.vars.confs = lgl->stats->confs;
+  lgl->limits->rescore.vars.otfs = newotfs;
   lglprt (lgl, RVL,
     "[rescored-vars-%d] old maximum score %s",
     lgl->stats->rescored.vars, lglscr2str (lgl, oldmaxscore));
   lglprt (lgl, RVL,
     "[rescored-vars-%d] new maximum score %s",
     lgl->stats->rescored.vars, lglscr2str (lgl, newmaxscore));
-  lglprt (lgl, RVL,
-    "[rescored-vars-%d] old score increment %s",
-    lgl->stats->rescored.vars, lglscr2str (lgl, oldscinc));
-  lglprt (lgl, RVL,
-    "[rescored-vars-%d] new score increment %s",
-    lgl->stats->rescored.vars, lglscr2str (lgl, lgl->scinc));
+  if (lgl->opts->score.val == EVSIDS) {
+    oldscinc = lgl->scinc;
+#ifdef NDBLSCR
+    lgl->scinc = lglshflt (oldscinc, lgl->opts->maxscorexp.val);
+#else
+    lgl->scinc = oldscinc / lgl->maxscore;
+#endif
+    assert (lgl->scinc > 0);
+    lglprt (lgl, RVL,
+      "[rescored-vars-%d] old score increment %s",
+      lgl->stats->rescored.vars, lglscr2str (lgl, oldscinc));
+    lglprt (lgl, RVL,
+      "[rescored-vars-%d] new score increment %s",
+      lgl->stats->rescored.vars, lglscr2str (lgl, lgl->scinc));
+  }
 }
 
 static void lglbumpscinc (LGL * lgl) {
-  Scr oldscinc = lgl->scinc;
+  Scr oldscinc;
+  if (lgl->opts->score.val != EVSIDS) return;
+  oldscinc = lgl->scinc;
   lgl->scinc = lglmulscr (oldscinc, lgl->scincf);
   LOG (3, "bumped variable score increment from %s to %s",
        lglscr2str (lgl, oldscinc), lglscr2str (lgl, lgl->scinc));
@@ -3031,8 +3223,18 @@ static void lgladjext (LGL * lgl, int eidx) {
 }
 
 static void lglmelter (LGL * lgl) {
-  if (!lgl->frozen) return;
-  lgl->frozen = 0;
+  if (lgl->allfrozen) {
+    lglprt (lgl, 1,
+      "[melter] not all literals assumed to be frozen anymore");
+    lgl->allfrozen = 0;
+  }
+  if (lgl->limits->elm.pen || lgl->limits->blk.pen || lgl->limits->cce.pen) {
+    lglprt (lgl, 1,
+      "[melter] reset penalties: %d elm, %d blk, %d cce",
+      lgl->limits->elm.pen, lgl->limits->blk.pen, lgl->limits->cce.pen);
+    lgl->limits->elm.pen = lgl->limits->blk.pen = lgl->limits->cce.pen = 0;
+  }
+  lgl->frozen = lgl->allfrozen = 0;
   LOG (2, "melted solver");
 }
 
@@ -3056,6 +3258,7 @@ static int lglimportaux (LGL * lgl, int elit) {
     ext->imported = 1;
     lgl->i2e[res] = eidx;
     LOG (3, "mapping external variable %d to %d", eidx, res);
+    lglmelter (lgl);
   }
   if (repr < 0) res = -res;
   LOG (2, "importing %d as %d", elit, res);
@@ -3072,8 +3275,8 @@ static int lglimport (LGL * lgl, int elit) {
   return lglimportaux (lgl, elit);
 }
 
-static int * lglidx2lits (LGL * lgl, int red, int lidx) {
-  int * res, glue = 0;
+static Stk * lglidx2stk (LGL * lgl, int red, int lidx) {
+  int glue = 0;
   Stk * s;
   assert (red == 0 || red == REDCS);
   assert (0 <= lidx);
@@ -3084,9 +3287,17 @@ static int * lglidx2lits (LGL * lgl, int red, int lidx) {
     assert (lidx <= MAXREDLIDX);
     s = &lgl->red[glue];
   }
-  res = s->start + lidx;
+  return s;
+}
+
+static int * lglidx2lits (LGL * lgl, int red, int lidx) {
+  Stk * s = lglidx2stk (lgl, red, lidx);
+  int * res;
+  assert (red == 0 || red == REDCS);
+  assert (0 <= lidx);
+  res = s->start + (red ? (lidx >> GLUESHFT) : lidx);
 #ifndef NDEBUG
-  if (red && glue == MAXGLUE) assert (res < s->end);
+  if (red && (lidx & GLUEMASK) == MAXGLUE) assert (res < s->end);
   else assert (res < s->top);
 #endif
   return res;
@@ -3267,10 +3478,11 @@ static void lglassign (LGL * lgl, int lit, int r0, int r1) {
       assert (lgl->lrgluereasons > 0);
       td->lrglue = 1;
     }
-  }
-#ifdef __GNUC__
-  __builtin_prefetch (lglhts2wchs (lgl, lglhts (lgl, -lit)));
+#ifndef NDEBUG
+    if (glue == MAXGLUE)
+      assert ((r1 >> GLUESHFT) + 4 < lglcntstk (&lgl->red[MAXGLUE]));
 #endif
+  }
 }
 
 static void lglf2rce (LGL * lgl, int lit, int other, int red) {
@@ -3330,7 +3542,6 @@ static void lglunassign (LGL * lgl, int lit) {
   lidx = r1 >> GLUESHFT;
   LOG (2, "eagerly deleting maximum glue clause at %d", lidx);
   lglrststk (&lgl->red[glue], lidx);
-  lglredstk (lgl, &lgl->red[glue], (1<<20), 3);
 }
 
 static Val lglifixed (LGL * lgl, int lit) {
@@ -3388,12 +3599,17 @@ static int lglmarked (LGL * lgl, int lit) {
   return res;
 }
 
+static void lgldrupinc (LGL * lgl) {
+  assert (lgl->opts->drup.val);
+  if (lgl->stats->drupped++) return;
+  printf ("o proof DRUP\n");
+}
+
 static void lgldrupclsaux (LGL * lgl, const int * cls) {
   const int * p;
-  assert (lgl->opts->drup.val);
-  printf ("o proof DRUP");
-  for (p = cls; *p;  p++) printf (" %d", lglexport (lgl, *p));
-  printf (" 0\n");
+  lgldrupinc (lgl);
+  for (p = cls; *p;  p++) printf ("%d ", lglexport (lgl, *p));
+  printf ("0\n");
   fflush (stdout);
 }
 
@@ -3405,7 +3621,8 @@ static void lgldrupclsarg (LGL * lgl, int first, ...) {
   va_list ap;
   int lit;
   assert (lgl->opts->drup.val);
-  printf ("o proof DRUP %d", first ? lglexport (lgl, first) : 0);
+  lgldrupinc (lgl);
+  printf ("%d", first ? lglexport (lgl, first) : 0);
   if (first) {
     va_start (ap, first);
     do { 
@@ -3503,7 +3720,7 @@ static void lglunitnocheck (LGL * lgl, int lit) {
 static void lglunit (LGL * lgl, int lit) {
   if (lgl->opts->drup.val) lgldrupclsarg (lgl, lit, 0);
 #ifndef NLGLPICOSAT
-  if (lgl->picosat.chk) lglpicosatchkclsarg (lgl, lit, 0);
+  lglpicosatchkclsarg (lgl, lit, 0);
 #endif
   lglunitnocheck (lgl, lit);
 }
@@ -3902,6 +4119,14 @@ static unsigned lglgcd (unsigned a, unsigned b) {
   return a;
 }
 
+static uint64_t lglgcd64 (uint64_t a, uint64_t b) {
+  uint64_t tmp;
+  assert (a), assert (b);
+  if (a < b) SWAP (uint64_t, a, b);
+  while (b) tmp = b, b = a % b, a = tmp;
+  return a;
+}
+
 static int lglrandidxtrav (LGL * lgl, int (*fun)(LGL*,int idx)) {
   int idx, delta, mod, prev, first, res;
   first = mod = lglmax (lgl->nvars, 2);
@@ -3911,7 +4136,10 @@ static int lglrandidxtrav (LGL * lgl, int (*fun)(LGL*,int idx)) {
   while (lglgcd (delta, mod) > 1)
     if (++delta == mod) delta = 1;
   res = 1;
-  while (res)
+  LOG (2,
+    "random index traversal start %d delta %d mod %d",
+     idx, delta, mod);
+  while (res) {
     if (idx >= 2 && !fun (lgl, idx)) res = 0;
     else {
       prev = idx;
@@ -3920,6 +4148,7 @@ static int lglrandidxtrav (LGL * lgl, int (*fun)(LGL*,int idx)) {
       if (idx == first) break;
       if (first == mod) first = prev;
     }
+  }
   return res;
 }
 
@@ -3939,15 +4168,32 @@ static double lglpcnt (double n, double d) {
 
 static int lglecalc (LGL * lgl, EVar * ev) {
   int oldscore = ev->score, o0 = ev->occ[0], o1 = ev->occ[1], newscore;
-  if (lgl->opts->elmschedpure.val && (!o0 || !o1)) newscore = 0;
-  else if (lgl->opts->elmsched2b2.val && o0 <= 2 && o1 <= 2) newscore = 1;
-  else {
-    newscore = 0;
-    if (lgl->opts->elmschedsum.val) newscore += o0 + o1;
-    if (lgl->opts->elmschedprod.val) {
-      int64_t tmp = newscore, prod = o0 * (int64_t) o1;
-      tmp += prod;
-      newscore = tmp <= INT_MAX ? tmp : INT_MAX;
+  if (lgl->eliminating) {
+    if (lgl->opts->elmschedpure.val && (!o0 || !o1)) newscore = 0;
+    else if (lgl->opts->elmsched2b2.val && o0 <= 2 && o1 <= 2) newscore = 1;
+    else {
+      newscore = 0;
+      if (lgl->opts->elmschedsum.val) newscore += o0 + o1;
+      if (lgl->opts->elmschedmin.val) newscore += lglmin (o0, o1);
+      if (lgl->opts->elmschedprod.val) {
+	int64_t tmp = newscore, prod = o0 * (int64_t) o1;
+	tmp += prod;
+	newscore = tmp <= INT_MAX ? tmp : INT_MAX;
+      }
+    }
+  } else {
+    assert (lgl->blocking || lgl->cceing);
+    if (lgl->opts->blkschedpure.val && (!o0 || !o1)) newscore = 0;
+    else if (lgl->opts->blksched2b2.val && o0 <= 2 && o1 <= 2) newscore = 1;
+    else {
+      newscore = 0;
+      if (lgl->opts->blkschedsum.val) newscore += o0 + o1;
+      if (lgl->opts->blkschedmin.val) newscore += lglmin (o0, o1);
+      if (lgl->opts->blkschedprod.val) {
+	int64_t tmp = newscore, prod = o0 * (int64_t) o1;
+	tmp += prod;
+	newscore = tmp <= INT_MAX ? tmp : INT_MAX;
+      }
     }
   }
   ev->score = newscore;
@@ -3971,9 +4217,8 @@ static void lglincocc (LGL * lgl, int lit) {
   change = lglecalc (lgl, ev);
   LOG (3, "inc occ of %d now occs[%d] = %d %d",
        lit, idx, ev->occ[0], ev->occ[1]);
-  if (ev->pos < 0) { 
-    if (!lgl->elm || lgl->elm->pivot != idx) lglesched (lgl, idx);
-  } else if (change > 0) lgledown (lgl, idx);
+  if (ev->pos < 0) lglesched (lgl, idx);
+  else if (change > 0) lgledown (lgl, idx);
   else if (change < 0) lgleup (lgl, idx);
 }
 
@@ -4110,9 +4355,36 @@ static void lglincjwh (LGL * lgl, int lit, Flt inc) {
   lgl->jwh[ulit] = new;
 }
 
+static int lglscaleglue (LGL * lgl, int origlue) {
+  int scaledglue, redglue;
+  assert (0 <= origlue);
+  if (origlue <= lgl->opts->gluekeep.val) scaledglue = 0;
+  else if (origlue >= lgl->opts->maxglue.val) scaledglue = MAXGLUE;
+  else {
+    redglue = origlue - lgl->opts->gluekeep.val;
+    assert (redglue >= 1);
+    switch (lgl->opts->gluescale.val) {
+      case 4:
+       scaledglue = lglceilsqrt32 (redglue);
+       if (scaledglue > MAXGLUE/2)
+	 scaledglue = MAXGLUE/2 + 1 + lglceilld (scaledglue - MAXGLUE/2);
+       break;
+      case 3: scaledglue = 1 + lglceilld (redglue); break;
+      case 2: scaledglue = lglceilsqrt32 (redglue); break;
+      default: scaledglue = redglue; break;
+    }
+    assert (scaledglue > 0);
+    if (scaledglue > MAXGLUE) scaledglue = MAXGLUE;
+  }
+  if (lgl->opts->keepmaxglue.val && scaledglue == MAXGLUE)
+    scaledglue = MAXGLUE-1;
+  assert (0 <= scaledglue && scaledglue <= MAXGLUE);
+  return scaledglue;
+}
+
 static int lgladdcls (LGL * lgl, int red, int origlue, int force) {
   int size, lit, other, other2, * p, lidx, unit, blit;
-  int scaledglue, redglue, prevglue;
+  int scaledglue, prevglue;
   Flt inc;
   Val val;
   Stk * w;
@@ -4191,18 +4463,7 @@ static int lgladdcls (LGL * lgl, int red, int origlue, int force) {
   }
   assert (size > 3);
   if (red) {
-    assert (0 <= origlue);
-    if (origlue <= lgl->opts->gluekeep.val) scaledglue = 0;
-    else {
-      scaledglue = redglue = origlue - lgl->opts->gluekeep.val;
-      assert (redglue >= 1);
-      switch (lgl->opts->gluescale.val) {
-	case 3: scaledglue = 1 + lglceilld (redglue); break;
-	case 2: scaledglue = lglceilsqrt32 (redglue); break;
-      }
-      assert (scaledglue > 0);
-    }
-    if (scaledglue >= MAXGLUE) scaledglue = MAXGLUE;
+    scaledglue = lglscaleglue (lgl, origlue);
     lgl->stats->clauses.scglue += scaledglue;
     if (scaledglue == MAXGLUE) lgl->stats->clauses.maxglue++;
     else lgl->stats->clauses.nonmaxglue++;
@@ -4464,8 +4725,8 @@ static void lglesetphase (LGL * lgl, int elit, int phase) {
 
 void lglsetphase (LGL * lgl, int elit) {
   REQINIT ();
-  ABORTIF (!elit, "invalid literal argument");
   TRAPI ("setphase %d", elit);
+  ABORTIF (!elit, "invalid literal argument");
   if (elit < 0) lglesetphase (lgl, -elit, -1);
   else lglesetphase (lgl, elit, 1);
   if (lgl->clone) lglsetphase (lgl->clone, elit);
@@ -4473,8 +4734,8 @@ void lglsetphase (LGL * lgl, int elit) {
 
 void lglresetphase (LGL * lgl, int elit) {
   REQINIT ();
-  ABORTIF (elit, "invalid literal argument");
   TRAPI ("resetphase %d", elit);
+  ABORTIF (!elit, "invalid literal argument");
   lglesetphase (lgl, elit, 0);
   if (lgl->clone) lglresetphase (lgl->clone, elit);
 }
@@ -4539,6 +4800,7 @@ void lglassume (LGL * lgl, int elit) {
   }
   lgleassume (lgl, elit);
   lgluse (lgl);
+  lglmelter (lgl);
   if (lgl->clone) lglassume (lgl->clone, elit);
 }
 
@@ -4776,9 +5038,13 @@ static void lglrmlwch (LGL * lgl, int lit, int red, int lidx) {
   HTS * hts;
 #ifndef NLGLOG
   p = lglidx2lits (lgl, red, lidx);
-  LOG (3, "removing watch %d in %s[%d] %d %d %d %d%s",
-       lit, (red ? "red" : "irr"), lidx, p[0], p[1], p[2], p[3],
-       (p[4] ? " ..." : ""));
+  if (red)
+    LOG (3, "removing watch %d in red[%d][%d] %d %d %d %d%s",
+	 lit, (lidx & GLUEMASK), (lidx >> GLUESHFT), p[0], p[1], p[2], p[3],
+	 (p[4] ? " ..." : ""));
+  else
+    LOG (3, "removing watch %d in irr[%d] %d %d %d %d%s",
+	 lit, lidx, p[0], p[1], p[2], p[3], (p[4] ? " ..." : ""));
 #endif
   hts = lglhts (lgl, lit);
   assert (hts->count >= 2);
@@ -4808,6 +5074,7 @@ static void lglrmlwch (LGL * lgl, int lit, int red, int lidx) {
 static void lglpropsearch (LGL * lgl, int lit) {
   int * q, * eos, blit, other, other2, other3, red, prev;
   int tag, val, val2, lidx, * c, * l;
+  int64_t travs;
   const int * p;
   int visits;
   long delta;
@@ -4830,6 +5097,7 @@ static void lglpropsearch (LGL * lgl, int lit) {
   assert (hts->count >= 0);
   eos = q + hts->count;
   visits = 0;
+  travs = 0;
   for (p = q; p < eos; p++) {
     visits++;
     *q++ = blit = *p;
@@ -4839,6 +5107,7 @@ static void lglpropsearch (LGL * lgl, int lit) {
       *q++ = *++p;
     }
     other = (blit >> RMSHFT);
+    travs++;
     val = lglval (lgl, other);
     if (val > 0) continue;
     red = blit & REDCS;
@@ -4847,6 +5116,7 @@ static void lglpropsearch (LGL * lgl, int lit) {
       lglf2rce (lgl, other, -lit, red);
     } else if (tag == TRNCS) {
       other2 = *p;
+      travs++;
       val2 = lglval (lgl, other2);
       if (val2 > 0) continue;
       if (!val && !val2) continue;
@@ -4862,12 +5132,14 @@ static void lglpropsearch (LGL * lgl, int lit) {
       assert (tag == LRGCS);
       assert (val <= 0);
       lidx = *p;
+      travs++;
       c = lglidx2lits (lgl, red, lidx);
       other2 = c[0];
       if (other2 == -lit) other2 = c[0] = c[1], c[1] = -lit;
       else assert (c[1] == -lit);
       if (other2 != other) {
 	other = other2;
+	travs++;
 	val = lglval (lgl, other);
 	if (val > 0) {
 	  q[-2] = LRGCS | (other2 << RMSHFT) | red;
@@ -4879,6 +5151,7 @@ static void lglpropsearch (LGL * lgl, int lit) {
       prev = -lit;
       for (l = c + 2; (other2 = *l); l++) {
 	*l = prev;
+	travs++;
 	val2 = lglval (lgl, other2);
 	if (val2 >= 0) break;
 	assert (!red || !lgliselim (lgl, other));
@@ -4891,6 +5164,27 @@ static void lglpropsearch (LGL * lgl, int lit) {
 	delta = lglwchlrg (lgl, other2, other, red, lidx);
 	if (delta) p += delta, q += delta, eos += delta;
 	q -= 2;
+	if (lgl->opts->travshrink.val) {
+	  int d = l - c - 2;
+	  assert (d >= 0);
+	  if (d > lgl->opts->travshrinklim.val) {
+	    const int * b = l + d / lgl->opts->travshrinkred.val;
+	    int * src = l + 1, * dst = c + 2;
+	    assert (dst < src);
+	    while (src < b) {
+	      int slit = *src, sval;
+	      if (!slit) break;
+	      travs++;
+	      sval = lglval (lgl, slit);
+	      if (sval >= 0) {
+		*src = *dst;
+		assert (dst < src);
+		*dst++ = slit;
+	      }
+	      src++;
+	    }
+	  }
+	}
 	continue;
       }
       while (l > c + 2) {
@@ -4913,6 +5207,7 @@ static void lglpropsearch (LGL * lgl, int lit) {
   assert (!lgl->simp);
 
   lgl->stats->visits.search += visits;
+  lgl->stats->travs.search += travs;
 }
 
 static int lglhbred (LGL * lgl, int subsumed, int red) {
@@ -4980,10 +5275,27 @@ static void lglflushremovedoccs (LGL * lgl, int lit) {
   lglshrinkhts (lgl, hts, q - w);
 }
 
+static void lglpropupdvisits (LGL * lgl, int visits, int64_t travs) {
+  if (lgl->lkhd) lgl->stats->visits.lkhd += visits;
+  else if (lgl->simp) lgl->stats->visits.simp += visits;
+  else lgl->stats->visits.search += visits;
+
+  if (lgl->lkhd) lgl->stats->travs.lkhd += travs;
+  else if (lgl->simp) lgl->stats->travs.simp += travs;
+  else lgl->stats->travs.search += travs;
+
+  if (lgl->basicprobing) ADDSTEPS (prb.basic.steps, visits);
+  if (lgl->simpleprobing) ADDSTEPS (prb.simple.steps, visits);
+  if (lgl->treelooking) ADDSTEPS (prb.treelook.steps, visits);
+  if (lgl->cceing) ADDSTEPS (cce.steps, visits);
+  if (lgl->cliffing) ADDSTEPS (cliff.steps, visits);
+}
+
 static void lglprop (LGL * lgl, int lit) {
   int * p, * q, * eos, blit, other, other2, other3, red, prev;
   int tag, val, val2, lidx, * c, * l, dom, hbred, subsumed;
-  int glue, flushoccs;
+  int glue, flushoccs, visits;
+  int64_t travs;
   long delta;
   HTS * hts;
   LOG (3, "propagating %d over ternary and large clauses", lit);
@@ -4995,6 +5307,8 @@ static void lglprop (LGL * lgl, int lit) {
   q = lglhts2wchs (lgl, hts);
   assert (hts->count >= 0);
   eos = q + hts->count;
+  visits = 0;
+  travs = 0;
   for (p = q; p < eos; p++) {
     blit = *p;
     tag = blit & MASKCS;
@@ -5005,7 +5319,9 @@ static void lglprop (LGL * lgl, int lit) {
       *q++ = blit;
       continue;
     }
+    visits++;
     other = (blit >> RMSHFT);
+    travs++;
     val = lglval (lgl, other);
     if (tag == BINCS) {
       *q++ = blit;
@@ -5023,6 +5339,7 @@ static void lglprop (LGL * lgl, int lit) {
       other2 = *++p;
       *q++ = other2;
       if (val > 0) continue;
+      travs++;
       if (red && lgliselim (lgl, other)) continue;
       val2 = lglval (lgl, other2);
       if (val2 > 0) continue;
@@ -5115,6 +5432,7 @@ NO_HBR_JUST_F3RCE:
       if (other2 == -lit) other2 = c[0] = c[1], c[1] = -lit;
       if (other2 != other) {
 	other = other2;
+	travs++;
 	val = lglval (lgl, other);
 	blit = red;
 	blit |= LRGCS;
@@ -5126,6 +5444,7 @@ NO_HBR_JUST_F3RCE:
       prev = -lit;
       for (l = c + 2; (other2 = *l); l++) {
 	*l = prev;
+	travs++;
 	val2 = lglval (lgl, other2);
 	if (val2 >= 0) break;
 	if (red && lgliselim (lgl, other2)) break;
@@ -5163,6 +5482,7 @@ NO_HBR_JUST_F3RCE:
 	dom = 0;
 	for (l = c; (other2 = *l); l++) {
 	  if (other2 == other) continue;
+	  travs++;
 	  if (!lglevel (lgl, other2)) continue;
 	  assert (lglval (lgl, other2) < 0);
 	  if (!dom) dom = lglgetdom (lgl, -other);
@@ -5257,27 +5577,31 @@ COPYL:
   while (p < eos) *q++ = *p++;
   lglshrinkhts (lgl, hts, hts->count - (p - q));
   if (flushoccs) lglflushremovedoccs (lgl, -lit);
+  lglpropupdvisits (lgl, visits, travs);
 }
 
 static void lglprop2 (LGL * lgl, int lit) {
   int other, blit, tag, val, red, visits;
   const int * p, * w, * eow;
+  int64_t travs;
   HTS * hts;
   LOG (3, "propagating %d over binary clauses", lit);
   assert (!lgliselim (lgl, lit));
   assert (lglval (lgl, lit) == 1);
   visits = 0;
+  travs = 0;
   hts = lglhts (lgl, -lit);
   w = lglhts2wchs (lgl, hts);
   eow = w + hts->count;
   for (p = w; p < eow; p++) {
-    visits++;
     blit = *p;
     tag = blit & MASKCS;
     if (tag == TRNCS || tag == LRGCS) p++;
     if (tag != BINCS) continue;
+    visits++;
     red = blit & REDCS;
     other = blit >> RMSHFT;
+    travs++;
     if (lgliselim (lgl, other)) { assert (red); continue; }
     val = lglval (lgl, other);
     if (val > 0) continue;
@@ -5285,15 +5609,7 @@ static void lglprop2 (LGL * lgl, int lit) {
     lglf2rce (lgl, other, -lit, red);
   }
 
-  if (lgl->lkhd) lgl->stats->visits.lkhd += visits;
-  else if (lgl->simp) lgl->stats->visits.simp += visits;
-  else lgl->stats->visits.search += visits;
-
-  if (lgl->basicprobing) ADDSTEPS (prb.basic.steps, visits);
-  if (lgl->simpleprobing) ADDSTEPS (prb.simple.steps, visits);
-  if (lgl->treelooking) ADDSTEPS (prb.treelook.steps, visits);
-  if (lgl->cceing) ADDSTEPS (cce.steps, visits);
-  if (lgl->cliffing) ADDSTEPS (cliff.steps, visits);
+  lglpropupdvisits (lgl, visits, travs);
 }
 
 static int lglbcp (LGL * lgl) {
@@ -5696,12 +6012,17 @@ static void lglchkred (LGL * lgl) {
 }
 
 static int lglcmppasl (LGL * lgl, PASL * a, PASL * b, int glueuseless) {
-  int res, aglue, bglue, gluediff;
-  if (lgl->opts->psm.val && (res = (b->psm - a->psm))) return res;
-  aglue = (a->lidx & GLUEMASK), bglue = (b->lidx & GLUEMASK);
+  int res, psmval, psmdiff, aglue, bglue, gluediff;
+  psmdiff = a->psm - b->psm;
+  psmval = lgl->opts->psm.val;
+  if (psmval == 3 && psmdiff) return psmdiff;
+  aglue = (a->lidx & GLUEMASK);
+  bglue = (b->lidx & GLUEMASK);
   gluediff = aglue - bglue;
   if (!glueuseless && gluediff) return gluediff;
+  if (psmval == 2 && psmdiff) return psmdiff;
   if ((res = (a->act - b->act))) return res;
+  if (psmval == 1 && psmdiff) return psmdiff;
   if ((res = (b->size - a->size))) return res;
   if (glueuseless && gluediff) return gluediff;
   return a->lidx - b->lidx;
@@ -5724,7 +6045,7 @@ static int lglneedacts (LGL * lgl,
   avg = clauses ? (10*weighted)/clauses : 0;
   lglprt (lgl, 2,
     "[needacts-%d] existing clauses glue average %.1f",
-    lgl->stats->reduced, avg/10.0);
+    lgl->stats->reduced.count, avg/10.0);
   for (glue = 1; glue <= MAXGLUE; glue++) {
     delta = (10*glue - avg);
     var += delta*delta * lgl->stats->lir[glue].clauses;
@@ -5733,65 +6054,65 @@ static int lglneedacts (LGL * lgl,
   std = lglceilsqrt64 (var);
   lglprt (lgl, 2,
     "[needacts-%d] existing clauses glue standard deviation %.1f",
-    lgl->stats->reduced, std/10.0);
+    lgl->stats->reduced.count, std/10.0);
 
   if (std < lgl->opts->actgsdul.val) {
     lglprt (lgl, 2,
       "[needacts-%d] glue useless since standard deviation %.1f < %.1f",
-      lgl->stats->reduced, std/10.0, lgl->opts->actgsdul.val/10.0);
+      lgl->stats->reduced.count, std/10.0, lgl->opts->actgsdul.val/10.0);
     *glueuselessptr = 1;
   } else {
     lglprt (lgl, 2,
       "[needacts-%d] glue useful since standard deviation %.1f >= %.1f",
-      lgl->stats->reduced, std/10.0, lgl->opts->actgsdul.val/10.0);
+      lgl->stats->reduced.count, std/10.0, lgl->opts->actgsdul.val/10.0);
     *glueuselessptr = 0;
   }
 
   if (maxglue <= lgl->opts->actgeomlim.val) {
     lglprt (lgl, 2,
       "[needacts-%d] really need more clauses since maxglue %d <= %d",
-      lgl->stats->reduced, maxglue, lgl->opts->actgeomlim.val);
+      lgl->stats->reduced.count, maxglue, lgl->opts->actgeomlim.val);
     *needmoreclausesptr = 2;
   } else if (maxglue <= lgl->opts->actdblarithlim.val) {
     lglprt (lgl, 2,
       "[needacts-%d] could use more clauses since maxglue %d <= %d",
-      lgl->stats->reduced, maxglue, lgl->opts->actdblarithlim.val);
+      lgl->stats->reduced.count, maxglue, lgl->opts->actdblarithlim.val);
     *needmoreclausesptr = 1;
   } else {
     lglprt (lgl, 2,
       "[needacts-%d] no need for more clauses since maxglue %d > %d",
-      lgl->stats->reduced, maxglue, lgl->opts->actdblarithlim.val);
+      lgl->stats->reduced.count, maxglue, lgl->opts->actdblarithlim.val);
     *needmoreclausesptr = 0;
   }
 
   if (lglrem (lgl) > lgl->opts->actvlim.val) {
     lglprt (lgl, 2,
       "[needacts-%d] too many variables %d > %d",
-      lgl->stats->reduced, lglrem (lgl), lgl->opts->actvlim.val);
+      lgl->stats->reduced.count, lglrem (lgl), lgl->opts->actvlim.val);
     return 0;
   }
   if (avg > lgl->opts->actavgmax.val) {
     lglprt (lgl, 2,
       "[needacts-%d] very large average glue %.1f > %.1f",
-      lgl->stats->reduced, avg/10.0, lgl->opts->actavgmax.val/10.0);
+      lgl->stats->reduced.count, avg/10.0, lgl->opts->actavgmax.val/10.0);
     return 1;
   }
   if (std <= lgl->opts->actstdmin.val) {
     lglprt (lgl, 2,
       "[needacts-%d] very small standard deviation glue %.1f <= %.1f",
-      lgl->stats->reduced, std/10.0, lgl->opts->actstdmin.val/10.0);
+      lgl->stats->reduced.count, std/10.0, lgl->opts->actstdmin.val/10.0);
     return 1;
   }
   if (std > lgl->opts->actstdmax.val) {
     lglprt (lgl, 2,
       "[needacts-%d] very large standard deviation glue %.1f > %.1f",
-      lgl->stats->reduced, std/10.0, lgl->opts->actstdmax.val/10.0);
+      lgl->stats->reduced.count, std/10.0, lgl->opts->actstdmax.val/10.0);
     return 1;
   }
 
   lglprt (lgl, 2,
     "[needacts-%d] regular glue average and standard deviation",
-    lgl->stats->reduced);
+    lgl->stats->reduced.count);
 
   return 0;
 }
@@ -6243,9 +6564,58 @@ static void lglreduce (LGL * lgl, int forced) {
     lgl->limits->reduce.outer = outer;
   } else lglboundredl (lgl);
 NOINC:
+  lglrelstk (lgl, &lgl->learned);
   lglrep (lgl, 1, type);
   lglchkred (lgl);
   lglstop (lgl);
+}
+
+void lglreducecache (LGL * lgl) {
+  REQINIT ();
+  TRAPI ("reduce");
+  if (lgl->mt) return;
+  lgl->limits->reduce.inner = lgl->opts->redlinit.val;
+  lglboundredl (lgl);
+  lglreduce (lgl, 1);
+  lgl->limits->reduce.inner = lgl->opts->redlinit.val;
+  lglboundredl (lgl);
+  lgl->limits->reduce.outer = 2*lgl->limits->reduce.inner;
+  lglprt (lgl, 1, "[reduce-cache] new limit %d", lgl->limits->reduce.inner);
+  if (lgl->clone) lglreducecache (lgl->clone);
+}
+
+static void lgliflushcache (LGL * lgl) {
+  int idx, sign, lit, blit, tag, red, * w, * q, glue;
+  const int * p, * eow;
+  HTS * hts;
+  if (lgl->level) lglbacktrack (lgl, 0);
+  for (idx = 2; idx < lgl->nvars; idx++) {
+    for (sign = -1; sign <= 1; sign += 2) {
+      lit = sign * idx;
+      hts = lglhts (lgl, lit);
+      w = lglhts2wchs (lgl, hts);
+      eow = w + hts->count;
+      q = w;
+      for (p = q; p < eow; p++) {
+	blit = *p;
+	tag = blit & MASKCS;
+	if (tag == TRNCS || tag == LRGCS) p++;
+	red = blit & REDCS;
+	if (red) continue;
+	*q++ = blit;
+	if (tag == TRNCS || tag == LRGCS) *q++ = *p;
+      }
+      lglshrinkhts (lgl, hts, q - w);
+    }
+  }
+
+  lglrelstk (lgl, &lgl->learned);
+  for (glue = 0; glue <= MAXGLUE; glue++)
+    lglrelstk (lgl, lgl->red + glue);
+
+  CLR (lgl->stats->red);
+  for (glue = 0; glue <= MAXGLUE; glue++)
+    lgl->stats->lir[glue].clauses = 0;
 }
 
 void lglflushcache (LGL * lgl) {
@@ -6254,13 +6624,14 @@ void lglflushcache (LGL * lgl) {
   if (lgl->mt) return;
   lgl->limits->reduce.inner = lgl->opts->redlinit.val;
   lglboundredl (lgl);
-  lglreduce (lgl, 1);
+  lgliflushcache (lgl);
   lgl->limits->reduce.inner = lgl->opts->redlinit.val;
   lglboundredl (lgl);
   lgl->limits->reduce.outer = 2*lgl->limits->reduce.inner;
   lglprt (lgl, 1, "[flush-cache] new limit %d", lgl->limits->reduce.inner);
   if (lgl->clone) lglflushcache (lgl->clone);
 }
+
 
 static void lglrmbwch (LGL * lgl, int lit, int other, int red) {
   int * p, blit, blit1, * w, * eow, tag;
@@ -6322,9 +6693,8 @@ static void lgldecocc (LGL * lgl, int lit) {
   change = lglecalc (lgl, ev);
   LOG (3, "dec occ of %d now occs[%d] = %d %d",
        lit, idx,  ev->occ[0], ev->occ[1]);
-  if (ev->pos < 0) {
-    if (!lgl->elm || lgl->elm->pivot != idx) lglesched (lgl, idx);
-  } else if (change < 0) lgleup (lgl, idx);
+  if (ev->pos < 0) lglesched (lgl, idx);
+  else if (change < 0) lgleup (lgl, idx);
   else if (change > 0) lgledown (lgl, idx);
 }
 
@@ -6346,6 +6716,31 @@ static void lglrmtcls (LGL * lgl, int a, int b, int c, int red) {
     lgldecocc (lgl, a), lgldecocc (lgl, b), lgldecocc (lgl, c);
 }
 
+static void lgltrimlitstk (LGL * lgl, int red, int lidx) {
+  Stk * s = lglidx2stk (lgl, red, lidx);
+  int * p = s->top;
+  while (p > s->start && p[-1] == REMOVED)
+    p--;
+  if (p < s->top) {
+    int64_t trimmed = s->top - p;
+#ifndef NLGLOG
+    if (red) LOG (4, "trimmed 'red[%d]' by %lld", (LGLL) trimmed);
+    else LOG (4, "trimmed 'irr' by %lld", (LGLL) trimmed);
+#endif
+    lgl->stats->trims += trimmed;
+    s->top = p;
+    if (red) {
+      int glue = (lidx & GLUEMASK), maxlidx;
+      assert (s == &lgl->red[glue]);
+      maxlidx = (lglcntstk (s) << GLUESHFT) | glue;
+      for (p = lgl->learned.start; p < lgl->learned.top; p += 3) {
+	int olidx = *p, oglue = (olidx & GLUEMASK);
+	if (oglue == glue && olidx >= maxlidx) *p = INT_MIN;
+      }
+    }
+  }
+}
+
 static void lglrmlcls (LGL * lgl, int lidx, int red) {
   int * c, * p, glue, lit;
   assert (!red || red == REDCS);
@@ -6365,12 +6760,13 @@ static void lglrmlcls (LGL * lgl, int lidx, int red) {
   for (p = c; *p; p++) *p = REMOVED;
   *p = REMOVED;
   if (glue != MAXGLUE) lgldeclscnt (lgl, p - c, red, glue);
+  lgltrimlitstk (lgl, red, lidx);
 }
 
 static void lgldynsub (LGL * lgl, int lit, int r0, int r1) {
   int red, tag;
   tag = r0 & MASKCS;
-  LOGREASON (2, lit, r0, r1, "removing subsumed");
+  LOGREASON (2, lit, r0, r1, "removing on-the-fly subsumed");
   red = r0 & REDCS;
   if (red) lgl->stats->otfs.sub.dyn.red++;
   else lgl->stats->otfs.sub.dyn.irr++;
@@ -6382,13 +6778,14 @@ static void lgldynsub (LGL * lgl, int lit, int r0, int r1) {
 static void lglunflict (LGL * lgl, int lit) {
   lgl->conf.lit = lit;
   lgl->conf.rsn[0] = (lit << RMSHFT) | UNITCS;
-  LOG (2, "inconsistent unary clause %d", lit);
+  LOG (1, "inconsistent unary clause %d", lit);
 }
 
 static void lgldynstr (LGL * lgl, int del, int lit, int r0, int r1) {
   int * p, * c, lidx, other, red, tag, glue, other2, other3, blit;
   tag = r0 & MASKCS;
-  LOGREASON (2, lit, r0, r1, "strengthening by removing %d from", del);
+  LOGREASON (2, lit, r0, r1,
+    "on-the-fly strengthening by removing %d from", del);
   red = r0 & REDCS;
   if (red) lgl->stats->otfs.str.dyn.red++;
   else lgl->stats->otfs.str.dyn.irr++;
@@ -6436,6 +6833,7 @@ static void lgldynstr (LGL * lgl, int del, int lit, int r0, int r1) {
   }
   while ((other = *++p)) p[-1] = other;
   p[-1] = 0, *p = REMOVED;
+  lgltrimlitstk (lgl, red, lidx);
   if (!red) assert (lgl->stats->irr.lits.cur), lgl->stats->irr.lits.cur--;
   lglorderclsaux (lgl, c + 0);
   lglorderclsaux (lgl, c + 1);
@@ -6449,6 +6847,7 @@ static void lgldynstr (LGL * lgl, int del, int lit, int r0, int r1) {
     other = c[0], other2 = c[1], other3 = c[2];
     if (red && glue < MAXGLUE) { LGLCHKACT (c[-1]); c[-1] = REMOVED; }
     c[0] = c[1] = c[2] = c[3] = REMOVED;
+    lgltrimlitstk (lgl, red, lidx);
     if (lglevel (lgl, other2) < lglevel (lgl, other3))
       SWAP (int, other2, other3);
     if (lglevel (lgl, other) < lglevel (lgl, other2))
@@ -6505,17 +6904,56 @@ static void lglclnana (LGL * lgl) {
 }
 
 static void lglbumplit (LGL * lgl, int lit) {
-  int idx = abs (lit);
+  int idx = abs (lit), mightneedtorescore = 0;
   QVar * qv = lglqvar (lgl, idx);
   Scr oldscore, newscore;
   oldscore = qv->score;
-  newscore = lgladdscr (oldscore, lgl->scinc);
+  switch (lgl->opts->score.val) {
+    default:
+    case 0:
+      newscore = 0;
+      break;
+    case 1:
+      newscore = oldscore + 1;
+      LOG (0,
+        "incrementing score of variable %d from %lld to %lld",
+        idx, (LGLL) oldscore, (LGLL) newscore);
+      break;
+    case 2:
+      newscore = lgl->stats->confs;
+      LOG (0,
+        "setting last conflict of variable %d from %lld to %lld",
+        idx, (LGLL) oldscore, (LGLL) newscore);
+      break;
+    case 3:
+      newscore = oldscore + lgl->stats->confs;
+      LOG (0,
+        "changing sum of conflict counts of variable %d from %lld to %lld",
+        idx, (LGLL) oldscore, (LGLL) newscore);
+      mightneedtorescore = 1;
+      break;
+    case 4:
+      newscore = oldscore + 
+        (lgl->opts->scoreavgfactor.val * lgl->stats->confs - oldscore)/2;
+      if (newscore <= oldscore) newscore = oldscore + 1;
+      LOG (0,
+        "averaging conflict count of variable %d from %lld to %lld",
+        idx, (LGLL) oldscore, (LGLL) newscore);
+      assert (newscore > oldscore);
+      break;
+    case 5:
+      assert (lgl->opts->score.val == EVSIDS);
+      newscore = lgladdscr (oldscore, lgl->scinc);
+      LOG (3,
+        "bumping EVSIDS score of variable %d from %s to %s",
+        idx, lglscr2str (lgl, oldscore), lglscr2str (lgl, newscore));
+      assert (newscore > oldscore);
+      mightneedtorescore = 1;
+      break;
+  }
   qv->score = newscore;
-  LOG (3, "bumping decision score of variable %d from %s to %s",
-       idx, lglscr2str (lgl, oldscore), lglscr2str (lgl, newscore));
-  assert (newscore > oldscore);
   if (lgldscheduled (lgl, idx)) lgldup (lgl, idx);
-  if (newscore >= lgl->maxscore) lglrescorevars (lgl);
+  if (mightneedtorescore && newscore >= lgl->maxscore) lglrescorevars (lgl);
 }
 
 static void lglbumpseenlits (LGL * lgl) {
@@ -6637,13 +7075,39 @@ void lgldeco (LGL * lgl, int jlevel) {
   else lgldeco2 (lgl);
 }
 
-
 #define SCL 2
 
+static int lglsubl (LGL * lgl, int lidx, int size, int glue) {
+  const int * c, * p;
+  int count, lit;
+  assert (lidx);
+  assert ((lidx & GLUEMASK) < MAXGLUE);
+  c = lglidx2lits (lgl, REDCS, lidx);
+  count = 0;
+  for (p = c; count < size && (lit = *p); p++) {
+    if (lit == REMOVED) return 1;
+    if (lglmarked (lgl, lit) > 0) count++;
+  }
+  lgl->stats->subl.tried++;
+  if (count < size) {
+    LOGCLS (4, c, "only %d literals shared in clause", count);
+    return 0;
+  }
+  LOGCLS (2, c,
+    "subsuming learned scaled glue %d clause",
+    (int)(lidx & GLUEMASK));
+  LOGCLS (2, lgl->clause.start, "subsumed by new scaled glue %d clause",
+    lglscaleglue (lgl, glue));
+  lgl->stats->subl.sub++;
+  lglrmlcls (lgl, lidx, REDCS);
+  return 1;
+}
+
 static int lglana (LGL * lgl) {
-  int size, savedsize, resolventsize, level, mlevel, jlevel, red, glue;
-  int open, resolved, tag, lit, uip, r0, r1, other, * p;
+  int open, resolved, tag, lit, uip, r0, r1, other, other2, * p, * q, lidx;
+  int size, savedsize, resolventsize, level, red, glue, realglue;
   int del, cl, c0, c1, sl, s0, s1;
+  int jlevel, mlevel, nmlevel;
   int len, * rsn;
 #ifdef RESOLVENT
   AVar * av;
@@ -6748,44 +7212,83 @@ RESTART:
       r0 = lgl->conf.rsn[0];
       r1 = lgl->conf.rsn[1];
       assert (lglevel (lgl, lit) == lgl->level);
-      jlevel = 0;
       tag = r0 & MASKCS;
-      if (tag == UNITCS) ;
-      else if (tag == BINCS) {
+      if (tag == UNITCS) {
+	mlevel = lglevel (lgl, lit);
+	nmlevel = 1;
+	jlevel = 0;
+      } else if (tag == BINCS) {
+	jlevel = lglevel (lgl, lit);
 	other = r0 >> RMSHFT;
-	level = lglevel (lgl, other);
-	if (level > jlevel) jlevel = level;
+	mlevel = lglevel (lgl, other);
+	if (jlevel > mlevel) { nmlevel = 1; SWAP (int, mlevel, jlevel); }
+	else if (jlevel == mlevel) nmlevel = 2;
+	else assert (jlevel < mlevel), nmlevel = 1;
       } else if (tag== TRNCS) {
+	jlevel = lglevel (lgl, lit);
 	other = r0 >> RMSHFT;
 	level = lglevel (lgl, other);
-	if (level > jlevel) jlevel = level;
-	if (jlevel < lgl->level) {
-	  other = r1;
-	  level = lglevel (lgl, other);
-	  if (level > jlevel) jlevel = level;
-	}
+	other2 = r1;
+	mlevel = lglevel (lgl, other2);
+	if (jlevel > mlevel) SWAP (int, jlevel, mlevel);
+	if (level > mlevel) SWAP (int, level, mlevel);
+	if (level > jlevel) SWAP (int, level, jlevel);
+	assert (mlevel >= jlevel);
+	assert (jlevel >= level);
+	if (mlevel == jlevel) nmlevel = 2 + (jlevel == level);
+	else assert (mlevel > jlevel), nmlevel = 1;
+	assert (nmlevel == 1 + (mlevel == jlevel) + (mlevel == level));
       } else {
+	mlevel = lglevel (lgl, lit), nmlevel = 1, jlevel = 0;
 	assert (tag == LRGCS);
 	red = r0 & REDCS;
 	p = lglidx2lits (lgl, red, r1);
 	while (jlevel < lgl->level && (other = *p++)) {
+	  if (other == lit) continue;
+	  assert (other != -lit);
 	  level = lglevel (lgl, other);
-	  if (level > jlevel) jlevel = level;
+	  if (level < mlevel) {
+	    if (level > jlevel) jlevel = level;
+	    continue;
+	  }
+	  if (level == mlevel) nmlevel++;
+	  else {
+	    assert (level > mlevel);
+	    jlevel = mlevel;
+	    mlevel = level;
+	    nmlevel = 1;
+	  }
 	}
 	if (red) lglbumplidx (lgl, r1);
       }
-      if (jlevel >= lgl->level) {
+      if (nmlevel >= 2) {
 	LOG (2, "restarting analysis after on-the-fly strengthening");
 	lgl->stats->otfs.restarting++;
 	if (lgl->opts->otfsbump.val >= 1)
 	  lglbumpseenlits (lgl), lglbumpscinc (lgl);
 	lglclnana (lgl);
+	COVER (lgl->level > mlevel);	// TODO remove?
+	if (lgl->level > mlevel) lglbacktrack (lgl, mlevel);
+        if (lgl->opts->otfsconf.val) lgl->stats->confs++;
 	goto RESTART;
       }
+      assert (nmlevel == 1);
+      assert (mlevel > jlevel);
+      assert (lglevel (lgl, lit) == mlevel);
       LOGREASON (2, lit, r0, r1,
 	"driving %d at level %d through strengthened", lit, jlevel);
       lgl->stats->otfs.driving++;
       lglbacktrack (lgl, jlevel);
+      if (tag == LRGCS && (r0 & REDCS) && (r1 & GLUEMASK) == MAXGLUE) {
+	// Note, that 'lit' is unassigned by 'backtrack' above and thus if
+	// it's reason is at the end of the MAXGLUE stack, then the reason
+	// becomes invalid.  See the corresponding 'assert' in 'lglassign'.
+	// As fix to this problem we simple increase the size of the stack
+	// to point after the zero sentinel (if necessary).
+	p = lglidx2lits (lgl, REDCS, r1);
+	while (*p) { assert (*p < NOTALIT); p++; }
+	if (++p > lgl->red[MAXGLUE].top) lgl->red[MAXGLUE].top = p;
+      }
       lglassign (lgl, lit, r0, r1);
       if (lgl->opts->otfsbump.val >= 2) 
 	lglbumpseenlits (lgl), lglbumpscinc (lgl);
@@ -6837,14 +7340,18 @@ RESTART:
   lglpicosatchkcls (lgl);
 #endif
 
-  glue = lglcntstk (&lgl->frames);
-  mlevel = lgl->level, jlevel = 0;
+  mlevel = lgl->level;
+  jlevel = glue = realglue = 0;
   for (p = lgl->frames.start; p < lgl->frames.top; p++) {
     level = *p;
     assert (0 < level && level < lgl->level);
     if (level < mlevel) mlevel = level;
     if (level > jlevel) jlevel = level;
+    if (level >= lgl->alevel) realglue++;
+    glue++;
   }
+  assert (realglue <= glue);
+  assert (glue == lglcntstk (&lgl->frames));
   LOG (2, "jump level %d", jlevel);
   LOG (2, "minimum level %d", mlevel);
   LOG (2, "glue %d covers %.0f%%", glue,
@@ -6853,7 +7360,7 @@ RESTART:
   if (lglrsn (lgl, uip)[0]) lgl->stats->uips++;
   else if (jlevel + 1 == lgl->level) lgl->stats->decflipped++;
 
-  if (lgl->opts->bumpbeforemin.val) lglbumpseenlits (lgl);
+  if (lgl->opts->bumpseenbeforemin.val) lglbumpseenlits (lgl);
 
   {
     int origsize = lglcntstk (&lgl->clause) - 1, redsize = jlevel + 1;
@@ -6862,7 +7369,7 @@ RESTART:
         lgl->opts->deco.val &&
 	redsize < 2*origsize/3 &&
 	glue > lgl->opts->decolim.val) {
-      lgl->stats->deco.cnt++;
+      lgl->stats->deco.count++;
       lgl->stats->deco.sum.orig += origsize;
       lglclnstk (&lgl->clause);
       lgldeco (lgl, jlevel);
@@ -6876,14 +7383,15 @@ RESTART:
     } else lglmincls (lgl, uip, glue);
   }
 
-  if (!lgl->opts->bumpbeforemin.val) lglbumpseenlits (lgl);
-  if (!lgl->opts->bumpclslits.val) lglbumpclslits (lgl);
+  if (lgl->opts->bumpseenaftermin.val) lglbumpseenlits (lgl);
+  if (lgl->opts->bumpclslits.val) lglbumpclslits (lgl);
 
   lglbumpscinc (lgl);
   lglbacktrack (lgl, jlevel);
 
   len = lglcntstk (&lgl->clause) - 1;
   lgl->stats->clauses.glue += glue;
+  lgl->stats->clauses.realglue += realglue;
   lgl->stats->lits.learned += len;
   lgl->stats->clauses.learned++;
   lgl->stats->glues.count++;
@@ -6892,7 +7400,45 @@ RESTART:
 #ifndef NLGLPICOSAT
   lglpicosatchkcls (lgl);
 #endif
-  lgladdcls (lgl, REDCS, glue, 1);
+  lidx = lgladdcls (lgl, REDCS, realglue, 1);
+
+  if (lgl->opts->subl.val) {
+    lgl->stats->subl.count++;
+    lglpopnunmarkstk (lgl, &lgl->seen);
+    size = lglcntstk (&lgl->clause) - 1;
+    if (size > 1) {
+      unsigned sig = 0;
+      p = lgl->clause.start;
+      while ((lit = *p++)) {
+	sig |= (1u << (lglulit (lit) & 31));
+	lglmark (lgl, lit);
+      }
+      q = lgl->learned.start;
+      for (p = q; p < lgl->learned.top; p += 3) {
+	int olidx = p[0], osize = p[1];
+	unsigned osig = (unsigned) p[2];
+	if (olidx < 0) continue;
+	if (osize <= size ||
+	    (sig & ~osig) ||
+	    !lglsubl (lgl, olidx, size, glue))
+	  *q++ = olidx, *q++ = osize, *q++ = (int) osig;
+      }
+      lgl->learned.top = q;
+      if (lidx && (lidx & GLUEMASK) < MAXGLUE) {
+	lgl->stats->subl.cands++;
+	lglpushstk (lgl, &lgl->learned, lidx);
+	lglpushstk (lgl, &lgl->learned, size);
+	lglpushstk (lgl, &lgl->learned, (int) sig);
+	if (lglcntstk (&lgl->learned) / 3 > lgl->opts->subl.val) {
+	  q = lgl->learned.start;
+	  for (p = q + 3; p < lgl->learned.top; p++) *q++ = *p;
+	  lgl->learned.top = q;
+	}
+      } 
+      p = lgl->clause.start;
+      while ((lit = *p++)) lglunmark (lgl, lit);
+    }
+  }
 
   if (lgl->cbs &&
       lgl->cbs->cls.produce.fun &&
@@ -7160,6 +7706,7 @@ static void lgldis (LGL * lgl) {
     }
   lglrelstk (lgl, &bins);
   lglrelstk (lgl, &trns);
+  lglrelstk (lgl, &lgl->learned);
 }
 
 static int lglcmphase (LGL * lgl, int a, int b) {
@@ -7359,7 +7906,7 @@ static void lgljwh (LGL * lgl) {
 	if (tag == TRNCS || tag == LRGCS) p++;
 	if (tag == LRGCS) continue;
 	red = blit & REDCS;
-	if (red) continue;		// Ignore 'ternres', 'hbr', 'move'!
+	if (!lgl->opts->jwhred.val && red) continue;
 	other = blit >> RMSHFT;
 	if (abs (other) < abs (lit)) continue;
 	tmp = lglval (lgl, other);
@@ -7387,7 +7934,9 @@ static void lgljwh (LGL * lgl) {
       }
     }
   for (glue = -1; glue < MAXGLUE; glue++) {
-    s = (glue < 0) ? &lgl->irr : &lgl->red[glue];
+    if (glue < 0) s = &lgl->irr;
+    else if (!lgl->opts->jwhred.val) continue;
+    else s = &lgl->red[glue];
     for (c = s->start; c < s->top; c = p + 1) {
       p = c;
       if (*p >= NOTALIT) continue;
@@ -7469,16 +8018,6 @@ static int * lglis (LGL * lgl) {
       if (!lglval (lgl, other))
 	res[other]++;
   }
-  return res;
-}
-
-static int64_t lglnewirrlim (LGL * lgl) {
-  int64_t add = lgl->stats->irr.clauses.add, res = add;
-  res *= 100ll + lgl->opts->simpirrlim.val;
-  res += 99;
-  res /= 100;
-  if (res <= add) res = add + 1;
-  lglprt (lgl, 2, "[simpirrlim] %lld", (LGLL) res);
   return res;
 }
 
@@ -7581,6 +8120,7 @@ static void lglcutwidth (LGL * lgl) {
   int64_t sum, avg;
   HTS * hts;
   if (lgl->nvars <= 2) return;
+  lgl->stats->cutwidths++;
   lglstart (lgl, &lgl->times->ctw);
   oldbias = lgl->bias;
   assert (abs (oldbias) <= 1);
@@ -8136,6 +8676,7 @@ static int64_t lglsteps (LGL * lgl) {
   steps += lgl->stats->props.lkhd;
   steps += lgl->stats->props.search;
   steps += lgl->stats->props.simp;
+  steps += lgl->stats->rdp.steps;
   steps += lgl->stats->trd.steps;
   steps += lgl->stats->trnr.steps;
   steps += lgl->stats->unhd.steps;
@@ -8355,6 +8896,7 @@ static void lglcompact (LGL * lgl) {
   lglfitstk (lgl, &lgl->eassume);
   lglfitstk (lgl, &lgl->extend);
   lglfitstk (lgl, &lgl->fassume);
+  lglfitstk (lgl, &lgl->learned);
   lglfitstk (lgl, &lgl->cassume);
   lglfitstk (lgl, &lgl->frames);
 #ifndef NCHKSOL
@@ -8365,7 +8907,7 @@ static void lglcompact (LGL * lgl) {
   lglfitstk (lgl, &lgl->wchs->stk);
 
   lglfitstk (lgl, &lgl->irr);
-  for (glue = 0; glue < MAXGLUE; glue++)
+  for (glue = 0; glue <= MAXGLUE; glue++)
     lglfitlir (lgl, lgl->red + glue);
   lglrelstk (lgl, &lgl->lcaseen);
   lglrelstk (lgl, &lgl->minstk);
@@ -8664,6 +9206,7 @@ static void lgldcpdis (LGL * lgl) {
   lgl->wchs->stk.top[-1] = INT_MAX;
   for (i = 0; i < MAXLDFW; i++) lgl->wchs->start[i] = INT_MAX;
   lgl->wchs->free = 0;
+  lglrelstk (lgl, &lgl->learned);
 }
 
 static void lgldcpclnstk (LGL * lgl, int red, Stk * s) {
@@ -8854,8 +9397,8 @@ static void lglemerge (LGL * lgl, int ilit0, int ilit1) {
   assert (lglerepr (lgl, elit1) == repr);
   assert (!(ext0->frozen || ext0->tmpfrozen) ||
 	    ext1->frozen || ext1->tmpfrozen);
-  lglepush (lgl, 0); lglepush (lgl, -ilit0); lglepush (lgl, ilit1);
-  lglepush (lgl, 0); lglepush (lgl, ilit0); lglepush (lgl, -ilit1);
+  lglepush (lgl, -ilit0); lglepush (lgl, ilit1); lglepush (lgl, 0);
+  lglepush (lgl, ilit0); lglepush (lgl, -ilit1); lglepush (lgl, 0);
   if (lgl->opts->drup.val) {
     lgldrupclsarg (lgl, -ilit0, ilit1, 0);
     lgldrupclsarg (lgl, ilit0, -ilit1, 0);
@@ -8889,11 +9432,12 @@ static void lglimerge (LGL * lgl, int lit, int repr) {
 }
 
 static void lglfreezer (LGL * lgl) {
-  int frozen, melted, tmpfrozen, elit, erepr;
+  int frozen, melted, tmpfrozen, elit, erepr, ilit;
   Ext * ext, * rext;
   int * p, eass;
   if (lgl->frozen) return;
-  for (elit = 1; elit <= lgl->maxext; elit++) lgl->ext[elit].tmpfrozen =0;
+  for (elit = 1; elit <= lgl->maxext; elit++)
+    lgl->ext[elit].tmpfrozen = 0;
   tmpfrozen = frozen = 0;
   if (!lglmtstk (&lgl->eassume)) {
     for (p = lgl->eassume.start; p < lgl->eassume.top; p++) {
@@ -8946,6 +9490,7 @@ static void lglfreezer (LGL * lgl) {
     if (ext->frozen) continue;
     if (ext->melted) continue;
     if (ext->tmpfrozen) continue;
+    if (!ext->imported) continue;
     LOG (2, "permanently melted external %d", elit);
     ext->melted = 1;
     melted++;
@@ -8955,6 +9500,18 @@ static void lglfreezer (LGL * lgl) {
   LOG (2, "permanently melted %d external variables", melted);
   lgl->frozen = 1;
   LOG (2, "frozen solver");
+  melted = frozen = 0;
+  for (ilit = 2; ilit < lgl->nvars; ilit++) {
+    if (!lglisfree (lgl, ilit)) continue;
+    if (lglifrozen (lgl, ilit)) frozen++; else melted++;
+  }
+  lgl->allfrozen = !melted;
+  if (lgl->allfrozen) 
+    lglprt (lgl, 1, "[freezer] all %d free variables frozen", frozen);
+  else
+    lglprt (lgl, 1,
+      "[freezer] frozen %d variables out of %d free variables %.0f%%",
+      frozen, frozen + melted, lglpcnt (frozen, frozen + melted));
 }
 
 static int lglcmprepr (LGL * lgl, int a, int b) {
@@ -8972,7 +9529,7 @@ static int lgltarjan (LGL * lgl) {
   AVar * av;
   HTS * hts;
   if (!lgl->nvars) return 1;
-  lglfreezer (lgl);
+  assert (lgl->frozen);
   dfsi = 0;
   NEW (dfsimap, 2*lgl->nvars);
   NEW (mindfsimap, 2*lgl->nvars);
@@ -9503,6 +10060,9 @@ static int lglrandlitrav (LGL * lgl, int (*fun)(LGL*,int lit)) {
   while (lglgcd (delta, mod) > 1)
     if (++delta == mod) delta = 1;
   count = mod;
+  LOG (2,
+    "random literal traversal start %d delta %d mod %d",
+     ulit, delta, mod);
   for (;;) {
     count--;
     assert (count >= 0);
@@ -9854,7 +10414,7 @@ static void lglsimpleprobeaddprbincls (LGL * lgl, int a, int b) {
 #ifndef NLGLPICOSAT
     lglpicosatchkcls (lgl);
 #endif
-    lgladdcls (lgl, 0, 0, 1);	// TODO why not 'REDCS'?
+    lgladdcls (lgl, 0, 0, 1);
   }
   lglclnstk (&lgl->clause);
 }
@@ -10128,7 +10688,7 @@ static void lglsimpleliftcollect (LGL * lgl, int root, int start, int level) {
   HTS * hts;
   INCSTEPS (prb.simple.steps);
   assert (level > 0);
-  LOG (3, "next simple lifting collecing from %d at level %d", start, level);
+  LOG (3, "next simple lifting collecting from %d at level %d", start, level);
   hts = lglhts (lgl, start);
   w = lglhts2wchs (lgl, hts);
   eow = w + hts->count;
@@ -10259,6 +10819,7 @@ static void lglsetprbsimplelim (LGL * lgl) {
         limit > lgl->opts->prbsimplemaxeff.val)
       limit = lgl->opts->prbsimplemaxeff.val;
     if (lgl->stats->prb.simple.count <= 1 &&
+        lgl->opts->boost.val &&
         lgl->opts->prbsimpleboost.val > 1) {
       lglprt (lgl, 1,
 	"[simpleprobe-%d] boosting simple probing limit by %d",
@@ -10310,7 +10871,7 @@ static int lglsimpleprobe (LGL * lgl) {
 
   if (lgl->level > 0) lglbacktrack (lgl, 0);
   lglgc (lgl);
-  lglfreezer (lgl);
+  assert (lgl->frozen);
   lgldense (lgl, 1);
   lglsimpleprobeinit (lgl);
   lglsetprbsimplelim (lgl);
@@ -10522,7 +11083,7 @@ static void lglbasicatestats (LGL * lgl) {
   if (d <= 0) return;
   lgl->stats->prb.basic.ate.count++;
   lglprt (lgl, 1,
-    "[bate-%d] eliminated %d asymmetric tautology during probing",
+    "[bate-%d] eliminated %d asymmetric tautologies during probing",
     lgl->stats->prb.basic.ate.count, d);
   lgl->stats->prb.basic.lastate = n;
 }
@@ -10990,7 +11551,9 @@ static int64_t lglsetprbtreelooklim (LGL * lgl, int * lkhdresptr) {
     limit >>= pen;
     irrlim = lgl->stats->irr.clauses.cur/2;
     irrlim >>= lgl->limits->simp.pen;
-    boost = lgl->tlk->lkhd ? lgl->opts->treelookboost.val : 1;
+    if (lgl->opts->boost.val && lgl->tlk->lkhd)
+      boost = lgl->opts->treelookboost.val;
+    else boost = 1;
     limit *= boost;
     if (lgl->opts->irrlim.val && limit < irrlim) {
       limit = irrlim;
@@ -11085,11 +11648,35 @@ static void lgltlsetlkhd (LGL * lgl, int * lkhdresptr, int remlits) {
   if (lkhdresptr) *lkhdresptr = lkhdres;
 }
 
+static void lglgenericreport (LGL * lgl, const char * name, int count,
+                              int probed, int nprobes, double start) {
+  int div, mod;
+  assert (nprobes >= 0);
+  if (!nprobes || lgl->opts->verbose.val < 2) return;
+  if (lgl->opts->verbose.val == 2) div = 10;
+  else if (lgl->opts->verbose.val == 3) div = 100;
+  else div = 0;
+  mod = div ? (nprobes + div - 1) / div : 1;
+  assert (mod > 0);
+  if (probed % mod) return;
+  lglprt (lgl, 1,
+    "[%s-%d] probed %d/%d (%.0f%%) %.1f sec %d vars %.0f MB",
+    name, count, probed, nprobes, lglpcnt (probed, nprobes),
+    lglgetime (lgl) - start, lglrem (lgl), lglmb (lgl));
+}
+
+static void lgltreelookreport (LGL * lgl,
+                              int probed, int nprobes, double start) {
+  lglgenericreport (lgl,
+     "treelook", lgl->stats->prb.treelook.count, probed, nprobes, start);
+}
+
 static int lgltreelookaux (LGL * lgl, int * lkhdresptr) {
   int oldhbrs, oldrem, remvarsall, remvarslkhd, remlits, notfullyscheduled;
-  int deltavars, newhbrs, success, idx, next, lit;
+  int deltavars, newhbrs, success, idx, next, lit, nseen;
   int64_t oldsteps, steps, limit;
   Stk assignment;
+  double start;
   Ftk reduced;
   TVar * tv;
   AVar * av;
@@ -11142,21 +11729,26 @@ static int lgltreelookaux (LGL * lgl, int * lkhdresptr) {
   CLR (assignment); CLR (reduced);
   remlits = remvarsall = remvarslkhd = 0;
 
-  if (!lgl->mt && !lglmtstk (&lgl->tlk->seen)) {
+  nseen = lglcntstk (&lgl->tlk->seen);
+  if (!lgl->mt && nseen) {
 
     (void) lglsetprbtreelooklim (lgl, lkhdresptr);
     oldsteps = lgl->stats->prb.treelook.steps;
 
     lgldense (lgl, lgl->opts->treelooklrg.val);
     next = 0;
+    start = lglgetime (lgl);
+    lgltreelookreport (lgl, next, nseen, start);
     while (!lgl->mt &&
 	   !lglterminate (lgl) &&
 	   lglsyncunits (lgl) &&
-	   next < lglcntstk (&lgl->tlk->seen) &&
+	   next < nseen &&
 	   lgl->stats->prb.treelook.steps < lgl->limits->prb.steps) {
       lit = lglpeek (&lgl->tlk->seen, next++);
       lgltreelooklit (lgl, &assignment, lkhdresptr ? &reduced : 0, lit);
+      lgltreelookreport (lgl, next, nseen, start);
     }
+    lgltreelookreport (lgl, next, nseen, start);
     lglclntlvals (lgl);
     assert (lgl->stats->prb.treelook.steps >= oldsteps);
     steps = lgl->stats->prb.treelook.steps - oldsteps;
@@ -11330,7 +11922,7 @@ static int lglschedbasicprobe (LGL * lgl, Stk * probes, int round) {
   for (idx = 2; idx < lgl->nvars; idx++) {
     if (!lglisfree (lgl, idx)) continue;
     if (lgl->opts->prbasic.val <= 1 &&
-        lglhasbins (lgl, idx) && lglhasbins (lgl, -idx)) continue;
+        (lglhasbins (lgl, idx) == lglhasbins (lgl, -idx))) continue;
     LOG (1, "new probe %d", idx);
     lglpushstk (lgl, probes, idx);
   }
@@ -11412,6 +12004,12 @@ static void lglsetprbasiclim (LGL * lgl) {
   }
 }
 
+static void lglbasicprobereport (LGL * lgl,
+                                 int probed, int nprobes, double start) {
+  lglgenericreport (lgl,
+    "basicprobe", lgl->stats->prb.basic.count, probed, nprobes, start);
+}
+
 static int lglbasicprobe (LGL * lgl) {
 #ifndef NLGLOG
   int origprobed = lgl->stats->prb.basic.probed;
@@ -11421,13 +12019,11 @@ static int lglbasicprobe (LGL * lgl) {
   int orighbr = lgl->stats->hbr.cnt;
   int root, failed, lifted, units, first, idx;
   int oldrem, deltarem, deltahbr, remprobes;
+  int nprobes, success, round, probed;
   int oldhbr, oldfailed, oldlifted;
-  int nprobes, success, round;
   Stk probes, lift, saved;
   unsigned pos, delta;
-#ifndef NLGLOG
-  int probed;
-#endif
+  double start;
   if (!lgl->nvars) return 1;
   if (!lgl->opts->probe.val) return 1;
   if (lgldelaying (lgl, "basicprobe",
@@ -11451,6 +12047,9 @@ RESTART:
   pos = lglrand (lgl) % nprobes;
   delta = lglrand (lgl) % nprobes;
   if (!delta) delta++;
+  probed = 0;
+  start = lglgetime (lgl);
+  lglbasicprobereport (lgl, probed, nprobes, start);
   while (lglgcd (delta, nprobes) > 1)
     if (++delta == nprobes) delta = 1;
   LOG (1, "probing start %u delta %u mod %u", pos, delta, nprobes);
@@ -11479,8 +12078,10 @@ RESTART:
     pos += delta;
     if (pos >= nprobes) pos -= nprobes;
     if (!lglisfree (lgl, root)) continue;
+    lglbasicprobereport (lgl, ++probed, nprobes, start);
     lglbasicprobelit (lgl, root);
   }
+  lglbasicprobereport (lgl, probed, nprobes, start);
   if (!lgl->mt) {
     if (lgl->stats->prb.basic.steps >= lgl->limits->prb.steps) {
       while (!lglmtstk (&probes))
@@ -11740,14 +12341,11 @@ static int lgli2m (LGL * lgl, int ilit) {
   if (!res) {
     res = lglcntstk (&lgl->seen) + 1;
     av->mark = res;
-    assert (2*lglcntstk (&lgl->seen) == lglcntstk (&lgl->elm->lsigs) - 2);
     assert (2*lglcntstk (&lgl->seen) == lglcntstk (&lgl->elm->noccs) - 2);
     assert (2*lglcntstk (&lgl->seen) == lglcntstk (&lgl->elm->mark) - 2);
     assert (2*lglcntstk (&lgl->seen) == lglcntstk (&lgl->elm->occs) - 2);
     assert (lglcntstk (&lgl->seen) == lglcntstk (&lgl->elm->m2i) - 1);
     lglpushstk (lgl, &lgl->seen, abs (ilit));
-    lglpushstk (lgl, &lgl->elm->lsigs, 0);
-    lglpushstk (lgl, &lgl->elm->lsigs, 0);
     lglpushstk (lgl, &lgl->elm->noccs, 0);
     lglpushstk (lgl, &lgl->elm->noccs, 0);
     lglpushstk (lgl, &lgl->elm->mark, 0);
@@ -11809,7 +12407,6 @@ static void lgladdecl (LGL * lgl, const int * c) {
     lglpushstk (lgl, &lgl->elm->csigs, csig);
     lglpushstk (lgl, &lgl->elm->sizes, size);
     lgl->elm->noccs.start[umlit]++;
-    lgl->elm->lsigs.start[umlit] |= csig;
   }
   lglpushstk (lgl, &lgl->elm->lits, 0);
   lglpushstk (lgl, &lgl->elm->next, 0);
@@ -11872,7 +12469,6 @@ static void lglrstecls (LGL * lgl)  {
   lglclnstk (&lgl->elm->lits);
   lglclnstk (&lgl->elm->next);
   lglclnstk (&lgl->elm->csigs);
-  lglclnstk (&lgl->elm->lsigs);
   lglclnstk (&lgl->elm->sizes);
   lglclnstk (&lgl->elm->occs);
   lglclnstk (&lgl->elm->noccs);
@@ -11886,7 +12482,6 @@ static void lglrelecls (LGL * lgl)  {
   lglrelstk (lgl, &lgl->elm->lits);
   lglrelstk (lgl, &lgl->elm->next);
   lglrelstk (lgl, &lgl->elm->csigs);
-  lglrelstk (lgl, &lgl->elm->lsigs);
   lglrelstk (lgl, &lgl->elm->sizes);
   lglrelstk (lgl, &lgl->elm->occs);
   lglrelstk (lgl, &lgl->elm->noccs);
@@ -11904,7 +12499,6 @@ static void lglinitecls (LGL * lgl, int idx) {
   assert (lglmtstk (&lgl->elm->lits));
   assert (lglmtstk (&lgl->elm->next));
   assert (lglmtstk (&lgl->elm->csigs));
-  assert (lglmtstk (&lgl->elm->lsigs));
   assert (lglmtstk (&lgl->elm->sizes));
   assert (lglmtstk (&lgl->elm->occs));
   assert (lglmtstk (&lgl->elm->noccs));
@@ -11917,8 +12511,6 @@ static void lglinitecls (LGL * lgl, int idx) {
   lglpushstk (lgl, &lgl->elm->occs, 0);
   lglpushstk (lgl, &lgl->elm->noccs, 0);
   lglpushstk (lgl, &lgl->elm->noccs, 0);
-  lglpushstk (lgl, &lgl->elm->lsigs, 0);
-  lglpushstk (lgl, &lgl->elm->lsigs, 0);
   lglpushstk (lgl, &lgl->elm->m2i, 0);
   (void) lgli2m (lgl, idx);
   lglpushstk (lgl, &lgl->elm->lits, 0);
@@ -12006,15 +12598,17 @@ static void lglelrmcls (LGL * lgl, int lit, int * c, int clidx) {
   }
 }
 
+#define BWL 0
+
 static int lglbacksub (LGL * lgl, int * c, int str) {
   int * start = lgl->elm->lits.start, * p, * q, marked = 0, res, * d;
   int lit, ulit, occ, next, osize, other, uolit, size, plit, phase, clidx;
-  unsigned ocsig, lsig, csig = 0;
+  unsigned ocsig, csig = 0, masksig;
 #ifndef NLGLOG
   const char * mode = str ? "strengthening" : "subsumption";
 #endif
-  LOGMCLS (3, c, "backward %s check for clause", mode);
-  LOGCLS (3, c, "backward %s check for mapped clause", mode);
+  LOGMCLS (BWL + 1, c, "backward %s check for clause", mode);
+  LOGCLS (BWL + 1, c, "backward %s check for mapped clause", mode);
   phase = (c - start) >= lgl->elm->neglidx;
   for (p = c; (lit = *p); p++)
     if (abs (lit) != 1)
@@ -12026,13 +12620,12 @@ static int lglbacksub (LGL * lgl, int * c, int str) {
 
   if (str) phase = !phase;
   lit = phase ? -1 : 1;
+  masksig = ~(lglsig (-lit) | lglsig (lit));
 
   ulit = lglulit (lit);
   occ = lglpeek (&lgl->elm->noccs, ulit);
   if (!str && occ <= 1) return 0;
   if (str && !occ) return 0;
-  lsig = lglpeek (&lgl->elm->lsigs, ulit);
-  if ((csig & ~lsig)) return 0;
   for (next = lglpeek (&lgl->elm->occs, ulit);
        !res && next;
        next = lglpeek (&lgl->elm->next, next)) {
@@ -12046,6 +12639,7 @@ static int lglbacksub (LGL * lgl, int * c, int str) {
       if (osize > size) continue;
       ocsig = lglpeek (&lgl->elm->csigs, next);
       assert (ocsig);
+      ocsig &= masksig;
       if ((ocsig & ~csig)) continue;
       if (!marked) {
 	for (q = c; (other = *q); q++) {
@@ -12061,14 +12655,15 @@ static int lglbacksub (LGL * lgl, int * c, int str) {
       if (str) lgl->stats->elm.strchks++; else lgl->stats->elm.subchks++;
       while (d[-1]) d--;
       assert (c != d);
-      LOGMCLS (3, d, "backward %s check with clause", mode);
+      LOGMCLS (BWL + 1, d, "backward %s check with clause", mode);
       res = 1;
       for (q = d; res && (other = *q); q++) {
 	uolit = lglulit (other);
 	res = lglpeek (&lgl->elm->mark, uolit);
       }
       if (!res || !str || osize < size) continue;
-      LOGMCLS (2, d, "strengthening by double self-subsuming resolution");
+      LOGMCLS (BWL, d,
+        "static double strengthened by double self-subsuming resolution");
       assert ((c - start) < lgl->elm->neglidx);
       assert ((d - start) >= lgl->elm->neglidx);
       assert (phase);
@@ -12079,9 +12674,10 @@ static int lglbacksub (LGL * lgl, int * c, int str) {
 	if (other >= NOTALIT) { while (*q++) ; continue; }
 	if (!other) clidx++;
       }
-      LOGMCLS (2, d,
+      LOGMCLS (BWL, d,
 	"strengthened and subsumed original irredundant clause");
-      LOGCLS (3, d, "strengthened and subsumed mapped irredundant clause");
+      LOGCLS (BWL, d,
+        "strengthened and subsumed mapped irredundant clause");
       lglelrmcls (lgl, -lgl->elm->pivot, d, clidx);
   }
   if (marked) {
@@ -12108,14 +12704,15 @@ static void lglelmsub (LGL * lgl) {
     if (lglbacksub (lgl, c, 0)) {
       subsumed++;
       lgl->stats->elm.sub++;
-      LOGMCLS (2, c, "subsumed original irredundant clause");
+      LOGMCLS (BWL, c, "subsumed original irredundant clause");
       LOGCLS (3, c, "subsumed mapped irredundant clause");
       lglelrmcls (lgl, pivot, c, clidx);
     } else clidx++;
     while (*c) c++;
   }
-  LOG (2, "subsumed %d clauses containing %d or %d",
-       subsumed, lgl->elm->pivot, -lgl->elm->pivot);
+  LOG (BWL + !subsumed,
+    "subsumed %d clauses containing %d or %d",
+    subsumed, lgl->elm->pivot, -lgl->elm->pivot);
 }
 
 static int lglelmstr (LGL * lgl) {
@@ -12178,6 +12775,7 @@ static int lglflushclauses (LGL * lgl, int lit) {
   int lidx, glidx, slidx;
   int * c, * q;
   HTS * hts;
+  Stk * s;
 #ifndef NDEBUG
   int occs;
 #endif
@@ -12226,15 +12824,21 @@ static int lglflushclauses (LGL * lgl, int lit) {
       assert (tag == OCCS || tag == LRGCS);
       if (tag == LRGCS) {
 	lidx = *p;
-	c = lglidx2lits (lgl, red, lidx);
-	glue = red ? (lidx & GLUEMASK) : 0;
+	s = lglidx2stk (lgl, red, lidx);
+	if (red) {
+	  glue = lidx & GLUEMASK;
+	  c = s->start + (lidx >> GLUESHFT);
+	} else {
+	  glue = 0;
+	  c = s->start + lidx;
+	}
       } else {
-	lidx = blit >> RMSHFT;
-	c = lglidx2lits (lgl, red, lidx);
+	lidx = (blit >> RMSHFT);
+	s = &lgl->irr;
+	c = s->start + lidx;
 	glue = 0;
       }
-      other = c[0];
-      if (other >= NOTALIT) continue;
+      if (c >= s->top || (other = c[0]) >= NOTALIT) continue;
       LOGCLS (2, c, "flushed %s large clause", lglred2str (red));
       if (tag == LRGCS) {
 	if (other == lit) other = c[1];
@@ -12251,8 +12855,7 @@ static int lglflushclauses (LGL * lgl, int lit) {
 	LGLCHKACT (c[-1]);
 	c[-1] = REMOVED;
       } else lgldecocc (lgl, lit);
-      for (q = c; (other = *q); q++) {
-	assert (other < NOTALIT);
+      for (q = c; (other = *q); q++) { assert (other < NOTALIT);
 	*q = REMOVED;
 	if (other == lit) continue;
 	if (red && glue) continue;
@@ -12263,6 +12866,7 @@ static int lglflushclauses (LGL * lgl, int lit) {
       }
       *q = REMOVED;
       lgldeclscnt (lgl, q - c, red, glue);
+      lgltrimlitstk (lgl, red, lidx);
       if (!red) res++;
       count++;
     }
@@ -12282,7 +12886,10 @@ static int lglflushlits (LGL * lgl, int lit) {
   int count, res;
   Val val, val2;
   long delta;
+  Stk * s;
 
+// Some compilers do not like local functions, thus we use macros instead.
+//
 #define FIXPTRS() do { p += delta, w += delta, eow += delta; } while (0)
 
   HTS * hts;
@@ -12358,8 +12965,9 @@ static int lglflushlits (LGL * lgl, int lit) {
     } else {
       assert (tag == OCCS || tag == LRGCS);
       lidx = (tag == LRGCS) ? *++p : (blit >> RMSHFT);
-      c = lglidx2lits (lgl, red, lidx);
-      if (c[0] >= NOTALIT) continue;
+      s = lglidx2stk (lgl, red, lidx);
+      c = s->start + (red ? (lidx >> GLUESHFT) : lidx);
+      if (c >= s->top || c[0] >= NOTALIT) continue;
       size = satisfied = 0;
       for (l = c; (other = *l); l++) {
 	if (other == lit) continue;
@@ -12454,6 +13062,7 @@ static int lglflushlits (LGL * lgl, int lit) {
 	delta += lglwchlrg (lgl, c[1], c[0], red, glidx);
 	if (delta) FIXPTRS ();
       }
+      lgltrimlitstk (lgl, red, lidx);
     }
   }
   hts = lglhts (lgl, lit);
@@ -12462,6 +13071,9 @@ static int lglflushlits (LGL * lgl, int lit) {
        count, lit, res);
   lglchkirrstats (lgl);
   return res;
+
+#undef FIXPTRS
+
 }
 
 static int lglflush (LGL * lgl) {
@@ -12567,7 +13179,6 @@ static void lglelmfrelit (LGL * lgl, int mpivot,
       assert (maxcover >= cover);
       lgl->stats->elm.blkd++;
       LOGMCLS (2, c, "blocked on %d clause", ipivot);
-      lglepush (lgl, 0);
       lglepush (lgl, ipivot);
       for (p = c; (lit = *p); p++) {
 	if (lit == mpivot) continue;
@@ -12575,6 +13186,7 @@ static void lglelmfrelit (LGL * lgl, int mpivot,
 	ilit = lglm2i (lgl, lit);
 	lglepush (lgl, ilit);
       }
+      lglepush (lgl, 0);
       lglelrmcls (lgl, ipivot, c, clidx);
       lglblockinglit (lgl, ipivot);
       continue;
@@ -12633,7 +13245,6 @@ static void lglepusheliminated (LGL * lgl, int idx) {
     if (tag == LRGCS) continue;
     red = blit & REDCS;
     if (red) continue;
-    lglepush (lgl, 0);
     lglepush (lgl, lit);
     if (tag == BINCS || tag == TRNCS) {
       lglepush (lgl, blit >> RMSHFT);
@@ -12646,9 +13257,10 @@ static void lglepusheliminated (LGL * lgl, int idx) {
 	if (other != lit)
 	  lglepush (lgl, other);
     }
+    lglepush (lgl, 0);
   }
-  lglepush (lgl, 0);
   lglepush (lgl, -lit);
+  lglepush (lgl, 0);
   lgleliminated (lgl, idx);
 }
 
@@ -12723,15 +13335,30 @@ static int lglhastrn (LGL * lgl, int a, int b, int c) {
   return 0;
 }
 
+static int64_t lglfactor (LGL * lgl, int lim, int count) {
+  int64_t factor, res;
+  if (!count) return lim;
+  switch (lgl->opts->factor.val) {
+    default: factor = 1; break;
+    case 1: factor = lglceilld (count); break;
+    case 2: factor = count; break;
+  }
+  if (!factor) factor = 1;
+  if (factor > lgl->opts->factmax.val) factor = lgl->opts->factmax.val;
+  res = lim * factor;
+  return res;
+}
+
 static int lglforcedve (LGL * lgl, int idx) {
   int pocc = lglocc (lgl, idx);
   int nocc = lglocc (lgl, -idx);
+  int count = lgl->stats->elm.count;
   if (!pocc) return 1;
   if (!nocc) return 1;
-  if (pocc >= lgl->opts->elmplim1.val) return -1;
-  if (nocc >= lgl->opts->elmplim1.val) return -1;
-  if (pocc < lgl->opts->elmplim2.val) return 0;
-  if (nocc < lgl->opts->elmplim2.val) return 0;
+  if (pocc >= lglfactor (lgl, lgl->opts->elmocclim1.val, count)) return -1;
+  if (nocc >= lglfactor (lgl, lgl->opts->elmocclim1.val, count)) return -1;
+  if (pocc < lglfactor (lgl, lgl->opts->elmocclim2.val, count)) return 0;
+  if (nocc < lglfactor (lgl, lgl->opts->elmocclim2.val, count)) return 0;
   return -1;
 }
 
@@ -12863,7 +13490,6 @@ static void lgldolargeve (LGL * lgl) {
   for (c = start; c < end; c = p + 1) {
     INCSTEPS (elm.steps);
     if (*c == REMOVED) { for (p = c + 1; *p; p++) ; continue; }
-    lglepush (lgl, 0);
     lglepush (lgl, ip);
     for (p = c; (lit = *p); p++)  {
       if (lit == mp) continue;
@@ -12871,9 +13497,10 @@ static void lgldolargeve (LGL * lgl) {
       ilit = lglm2i (lgl, lit);
       lglepush (lgl, ilit);
     }
+    lglepush (lgl, 0);
   }
-  lglepush (lgl, 0);
   lglepush (lgl, -ip);
+  lglepush (lgl, 0);
   for (c = sop; c < eop; c = p + 1) {
     INCSTEPS (elm.steps);
     if (*c == REMOVED) { for (p = c + 1; *p; p++) ; continue; }
@@ -13520,12 +14147,14 @@ static int lgltrysmallve (LGL * lgl, int idx) {
 }
 
 static int lgl2manyoccs4elm (LGL * lgl, int lit) {
-  return lglocc (lgl, lit) > lgl->opts->elmocclim.val;
+  return lglocc (lgl, lit) > 
+           lglfactor (lgl, lgl->opts->elmocclim.val, lgl->stats->elm.count);
 }
 
 static int lglchkoccs4elmlit (LGL * lgl, int lit) {
   int blit, tag, red, other, other2, lidx, size, lits;
   const int * p, * w, * eow, * c, * l;
+  int count = lgl->stats->elm.count;
   HTS * hts;
   hts = lglhts (lgl, lit);
   w = lglhts2wchs (lgl, hts);
@@ -13554,11 +14183,12 @@ static int lglchkoccs4elmlit (LGL * lgl, int lit) {
       size = 0;
       for (l = c; (other = *l); l++) {
         if (lgl2manyoccs4elm (lgl, other)) return 0;
-        if (++size > lgl->opts->elmclslim.val) return 0;
+        if (++size > lglfactor (lgl, lgl->opts->elmclslim.val, count))
+	  return 0;
       }
       lits += size;
     }
-    if (lits > lgl->opts->elmlitslim.val) return 0;
+    if (lits > lglfactor (lgl, lgl->opts->elmlitslim.val, count)) return 0;
   }
   return 1;
 }
@@ -13588,6 +14218,7 @@ static void lglelimlit (LGL * lgl, int idx) {
 static int lglblockcls (LGL * lgl, int lit) {
   int blit, tag, red, other, other2, lidx, val, count, size;
   const int * p, * w, * eow, * c, *l;
+  int bc = lgl->stats->blk.count;
   HTS * hts;
   INCSTEPS (blk.steps);
   hts = lglhts (lgl, lit);
@@ -13621,7 +14252,7 @@ static int lglblockcls (LGL * lgl, int lit) {
       size = 0;
       for (l = c; (other = *l); l++) {
 	val = lglmarked (lgl, other);
-	if (++size > lgl->opts->blkclslim.val) return 0;
+	if (++size > lglfactor (lgl, lgl->opts->blkclslim.val, bc)) return 0;
 	if (val < 0) break;
       }
       if (other) continue;
@@ -13645,23 +14276,26 @@ static int lglpurelit (LGL * lgl, int lit) {
 }
 
 static int lgl2manyoccs4blk (LGL * lgl, int lit) {
-  return lglhts (lgl, lit)->count > lgl->opts->blkocclim.val;
+  return lglhts (lgl, lit)->count >
+           lglfactor (lgl, lgl->opts->blkocclim.val, lgl->stats->blk.count);
 }
 
 static int lglblocklit (LGL * lgl, int lit, Stk * stk) {
   int blit, tag, red, blocked, other, other2, lidx, count, size;
+  int bc = lgl->stats->blk.count;
   int * p, * w, * eow, * c, * l;
   HTS * hts;
   if (lglval (lgl, lit)) return 0;
   if (lgl2manyoccs4blk (lgl, lit)) return 0;
   hts = lglhts (lgl, lit);
-  assert (hts->count > 0);
+  assert (!lgl->opts->pure.val || hts->count > 0);
   w = lglhts2wchs (lgl, hts);
   eow = w + hts->count;
   count = 0;
   assert (lglmtstk (stk+2) && lglmtstk (stk+3) && lglmtstk (stk+4));
   for (p = w; p < eow; p++) {
     if (INCSTEPS (blk.steps) >= lgl->limits->blk.steps) break;
+    if (lglterminate (lgl)) break;
     blit = *p;
     tag = blit & MASKCS;
     if (tag == TRNCS || tag == LRGCS) p++;
@@ -13687,7 +14321,8 @@ static int lglblocklit (LGL * lgl, int lit, Stk * stk) {
       for (l = c; (other = *l); l++) {
 	if (other == lit) continue;
         if (lgl2manyoccs4blk (lgl, other)) goto CONTINUE;
-	if (++size > lgl->opts->blkclslim.val) goto CONTINUE;
+	if (++size > lglfactor (lgl, lgl->opts->blkclslim.val, bc))
+	  goto CONTINUE;
 	lglpushnmarkseen (lgl, other);
       }
     }
@@ -13715,9 +14350,9 @@ CONTINUE:
     other = lglpopstk (stk+2);
     LOG (2, "blocked binary clause %d %d on %d", lit, other, lit);
     lglrmbcls (lgl, lit, other, 0);
-    lglepush (lgl, 0);
     lglepush (lgl, lit);
     lglepush (lgl, other);
+    lglepush (lgl, 0);
     if (lgl->opts->move.val) lglmvbcls (lgl, lit, other);
   }
   while (!lglmtstk (stk+3)) {
@@ -13727,10 +14362,10 @@ CONTINUE:
     other = lglpopstk (stk+3);
     LOG (2, "blocked ternary clause %d %d %d on %d", lit, other, other2, lit);
     lglrmtcls (lgl, lit, other, other2, 0);
-    lglepush (lgl, 0);
     lglepush (lgl, lit);
     lglepush (lgl, other);
     lglepush (lgl, other2);
+    lglepush (lgl, 0);
     if (lgl->opts->move.val >= 2) lglmvtcls (lgl, lit, other, other2);
   }
   while (!lglmtstk (stk+4)) {
@@ -13739,10 +14374,10 @@ CONTINUE:
     count++;
     c = lglidx2lits (lgl, 0, lidx);
     LOGCLS (2, c, "blocked on %d large clause", lit);
-    lglepush (lgl, 0);
     lglepush (lgl, lit);
     for (l = c; (other = *l); l++)
       if (other != lit) lglepush (lgl, other);
+    lglepush (lgl, 0);
     lglrmvlcls (lgl, lidx);
   }
   LOG (2, "found %d blocked clauses with %d", count, lit);
@@ -13763,7 +14398,9 @@ static void lglsetblklim (LGL * lgl) {
     if (limit < lgl->opts->blkmineff.val) limit = lgl->opts->blkmineff.val;
     if (lgl->opts->blkmaxeff.val >= 0 && limit > lgl->opts->blkmaxeff.val)
       limit = lgl->opts->blkmaxeff.val;
-    if (lgl->stats->blk.count <= 1 && lgl->nvars < 1000000) {
+    if (lgl->stats->blk.count <= 1 &&
+        lgl->opts->boost.val &&
+	lgl->nvars < 1000000) {
       lglprt (lgl, 1,
         "[block-%d] boosting limit by %d",
 	lgl->stats->blk.count, lgl->opts->blkboost.val);
@@ -13855,9 +14492,15 @@ static int lglblkdone (LGL * lgl) {
   return 0;
 }
 
-static void lglblock (LGL * lgl) {
+static int lglispure (LGL * lgl, int lit) {
+  if (!lgl->opts->pure.val) return 0;
+  if (lglifrozen (lgl, lit)) return 0;
+  return !lglocc (lgl, -lit);
+}
+
+static void lgloldblock (LGL * lgl) {
   int oldrem = lgl->blkrem, oldall = lgl->blkall;
-  int idx, count, frozen, all, rem;
+  int idx, count, all, rem;
   Stk blocked[5];
   assert (lglsmallirr (lgl));
   assert (!lgl->simp);
@@ -13869,7 +14512,7 @@ static void lglblock (LGL * lgl) {
   lgl->simp = lgl->blocking = 1;
   lgl->stats->blk.count++;
   lglgc (lgl);
-  lglfreezer (lgl);
+  assert (lgl->frozen);
   assert (!(oldall && !oldrem));
   all = !oldrem || !oldall;
   if (all) lglprt (lgl, 1, "[block-%d] scheduling all variables this time",
@@ -13884,11 +14527,11 @@ static void lglblock (LGL * lgl) {
   while (!lglblkdone (lgl)) {
     idx = lglpopesched (lgl);
     lglavar (lgl, idx)->donotblk = 1;
-    frozen = lglifrozen (lgl, idx);
     if (!lglisfree (lgl, idx)) continue;
-    if (!frozen && !lglocc (lgl, idx)) count += lglpurelit (lgl, -idx);
-    else if (!frozen && !lglocc (lgl, -idx)) count += lglpurelit (lgl, idx);
+    if (lglispure (lgl, -idx)) count += lglpurelit (lgl, -idx);
+    else if (lglispure (lgl, idx)) count += lglpurelit (lgl, idx);
     else {
+      if (lglocc (lgl, -idx) > lglocc (lgl, idx)) idx = -idx;
       count += lglblocklit (lgl, idx, blocked);
       count += lglblocklit (lgl, -idx, blocked);
     }
@@ -13928,6 +14571,141 @@ static void lglblock (LGL * lgl) {
   assert (!lgl->mt);
 }
 
+static void lglnewblocktouch (LGL * lgl, int lit) {
+  Blk * blk = lgl->blk;
+  int pos = blk->pos[lit];
+  if (pos >= 0) return;
+  pos = lglcntstk (&blk->sched);
+  lglpushstk (lgl, &blk->sched, lit);
+  blk->pos[lit] = pos;
+}
+
+static void lglnewblockinit (LGL * lgl) {
+  int nvars, lit, blit, tag, red, other, other2, lidx;
+  const int * w, * eow, * p, * c;
+  HTS * hts;
+  Blk * blk;
+  lglstart (lgl, &lgl->times->blk);
+  assert (!lgl->simp);
+  assert (!lgl->blocking);
+  lgl->simp = lgl->blocking = 1;
+  lgl->stats->blk.count++;
+  if (lgl->level) lglbacktrack (lgl, 0);
+  lglgc (lgl);
+  assert (lgl->frozen);
+  assert (!lgl->blk);
+  NEW (lgl->blk, 1);
+  blk = lgl->blk;
+  blk->nvars = nvars = lgl->nvars;
+  NEW (blk->count, 2*nvars + 1); blk->count += nvars;
+  NEW (blk->occs, 2*nvars + 1); blk->occs += nvars;
+  NEW (blk->pos, 2*nvars + 1); blk->pos += nvars;
+  for (lit = - nvars + 1; lit < nvars; lit++) {
+    if (abs (lit) <= 1) continue;
+    hts = lglhts (lgl, lit);
+    w = lglhts2wchs (lgl, hts);
+    eow = w + hts->count;
+    for (p = w; p < eow; p++) {
+      blit = *p;
+      tag = blit & MASKCS;
+      if (tag == TRNCS || tag == LRGCS) p++;
+      red = blit & REDCS;
+      if (red) continue;
+      if (tag == BINCS) {
+	other = blit >> RMSHFT;
+	lglpushstk (lgl, &blk->occs[lit], blit);
+	if (abs (other) > abs (lit)) {
+	  blk->count[lit]++;
+	  blk->count[other]++;
+	}
+      } else if (tag == TRNCS) {
+	other = blit >> RMSHFT;
+	other2 = *p;
+	lglpushstk (lgl, &blk->occs[lit], blit);
+	lglpushstk (lgl, &blk->occs[lit], other2);
+	if (abs (other) > abs (lit) &&
+	    abs (other2) > abs (lit)) {
+	  blk->count[lit]++;
+	  blk->count[other]++;
+	  blk->count[other2]++;
+	}
+      } else assert (tag == LRGCS);
+    }
+  }
+  for (c = lgl->irr.start; c < lgl->irr.top; c = p + 1) {
+    if (*(p = c) >= NOTALIT) continue;
+    lidx = p - lgl->irr.start;
+    assert (lidx <= (INT_MAX >> RMSHFT));
+    blit = (lidx << RMSHFT) | OCCS;
+    while ((lit = *p)) {
+      lglpushstk (lgl, &blk->occs[lit], blit);
+      blk->count[lit]++;
+      p++;
+    }
+  }
+  for (lit = -nvars + 1; lit < nvars; lit++) {
+    if (abs (lit) <= 1) continue;
+    lglfitstk (lgl, &blk->occs[lit]);
+    blk->pos[lit] = -1;
+    lglnewblocktouch (lgl, lit);
+  }
+  lglfitstk (lgl, &blk->sched);
+}
+
+static void lglnewblockreset (LGL * lgl) {
+  Blk * blk = lgl->blk;
+  int nvars, lit;
+  lglrep (lgl, 2, 'B');
+  assert (blk);
+  assert (lgl->simp);
+  assert (lgl->blocking);
+  lgl->simp = lgl->blocking = 0;
+  lglgc (lgl);
+  nvars = blk->nvars;
+  assert (nvars >= lgl->nvars);
+  lglprt (lgl, 1,
+    "[block-%d] eliminated %d blocked clauses and %d variables",
+    lgl->stats->blk.count, blk->eliminated, nvars - lgl->nvars);
+  for (lit = -nvars + 1; lit < nvars; lit++)
+    if (abs (lit) > 1) lglrelstk (lgl, &blk->occs[lit]);
+  blk->occs -= nvars;
+  blk->count -= nvars;
+  blk->pos -= nvars;
+  DEL (blk->occs, 2*nvars + 1);
+  DEL (blk->count, 2*nvars + 1);
+  DEL (blk->pos, 2*nvars + 1);
+  lglrelstk (lgl, &blk->sched);
+  DEL (lgl->blk, 1);
+  lglstop (lgl);
+}
+
+static int lglnewblockdone (LGL * lgl) {
+  return lglmtstk (&lgl->blk->sched);
+}
+
+static int lglnewblockpop (LGL * lgl) {
+  Blk * blk = lgl->blk;
+  int res = lglpopstk (&blk->sched);
+  assert (blk->pos[res] == lglcntstk (&blk->sched));
+  blk->pos[res] = -1;
+  return res;
+}
+
+static void lglnewblocklit (LGL * lgl, int lit) {
+}
+
+static void lglnewblock (LGL * lgl) {
+  lglnewblockinit (lgl);
+  while (!lglnewblockdone (lgl))
+    lglnewblocklit (lgl, lglnewblockpop (lgl));
+  lglnewblockreset (lgl);
+}
+
+static void lglblock (LGL * lgl) {
+  if (lgl->opts->block.val == 2) lglnewblock (lgl);
+  else lgloldblock (lgl);
+}
+
 static void lglsetccelim (LGL * lgl) {
   int64_t limit, irrlim;
   int pen;
@@ -13945,24 +14723,11 @@ static void lglsetccelim (LGL * lgl) {
       "[cce-%d] limit of %lld steps based on %d irredundant clauses",
       lgl->stats->cce.count, (LGLL) limit, lgl->stats->irr.clauses.cur);
   } else
-    lglprt (lgl, 1, "[cce-%d] limit of %lld steps penalty %d = %d + %d",
-	    lgl->stats->cce.count, (LGLL) limit,
-	    pen, lgl->limits->cce.pen, lglszpen (lgl));
+    lglprt (lgl, 1,
+      "[cce-%d] limit of %lld steps penalty %d = %d + %d",
+      lgl->stats->cce.count, (LGLL) limit,
+      pen, lgl->limits->cce.pen, lglszpen (lgl));
   lgl->limits->cce.steps = lgl->stats->cce.steps + limit;
-}
-
-static int lglcarding (LGL * lgl) {
-  if (!lgl->opts->card.val) return 0;
-  if (lgldelaying (lgl, "card", &lgl->limits->card.del.rem)) return 0;
-  return 1;
-}
-
-static int lglcceing (LGL * lgl) {
-  if (!lgl->opts->cce.val) return 0;
-  if (lgldelaying (lgl, "cce", &lgl->limits->cce.del.rem)) return 0;
-  if (lglwaiting (lgl, "cce", lgl->opts->ccewait.val)) return 0;
-  if (!lglsmallirr (lgl)) return 0;
-  return 1;
 }
 
 #define CCELOGLEVEL 2
@@ -14023,11 +14788,11 @@ static int lglabce (LGL * lgl, int lit) {
   return 1;
 }
 
-static int lglcceclause (LGL * lgl, 
+static int lglcceclause (LGL * lgl,
                          const int * c, 
 			 const int * ignwch,
 			 int igntag) {
-  int other, res, nextala, nextcla, lit, blit, tag, other2;
+  int other, res, nextala, nextcla, lit, blit, tag, other2, i, j, n;
   const int * p, * eow, * w, * d, * q;
   int unit, first, old, prev;
   HTS * hts;
@@ -14041,6 +14806,13 @@ static int lglcceclause (LGL * lgl,
     lglpushstk (lgl, &lgl->seen, other);
     lglpushstk (lgl, &lgl->cce->cla, other);
     lglsignedmark (lgl, other);
+  }
+  n = lglcntstk (&lgl->seen);
+  for (i = n-1; i > 0; i--) {
+    j = lglrand (lgl) % (i + 1);
+    if (j == i) continue;
+    SWAP (int, lgl->seen.start[i], lgl->seen.start[j]);
+    SWAP (int, lgl->cce->cla.start[i], lgl->cce->cla.start[j]);
   }
   nextcla = nextala = res = 0;
 ALA:
@@ -14220,10 +14992,10 @@ ALA:
     } 
     if (lglcntstk (&lgl->cce->cla) > old) {
       nextcla = 0;
-      lglpushstk (lgl, &lgl->cce->extend, 0);
       lglpushstk (lgl, &lgl->cce->extend, lit);
       for (q = lgl->cce->cla.start; q < lgl->cce->cla.start + old; q++)
 	if (*q != lit) lglpushstk (lgl, &lgl->cce->extend, *q);
+      lglpushstk (lgl, &lgl->cce->extend, 0);
     }
     for (q = lgl->cce->cla.start + old; !res && q < lgl->cce->cla.top; q++) {
       if (lglsignedmarked (lgl, -*q)) {
@@ -14247,10 +15019,10 @@ SKIPCLA:
        break;
     if (res) {
       LOGCLS (CCELOGLEVEL, c, "ABCE on %d clause", other);
-      lglpushstk (lgl, &lgl->cce->extend, 0);
       lglpushstk (lgl, &lgl->cce->extend, other);
       for (p = lgl->cce->cla.start; p < lgl->cce->cla.top; p++)
         if (*p != other) lglpushstk (lgl, &lgl->cce->extend, *p);
+      lglpushstk (lgl, &lgl->cce->extend, 0);
       lgl->stats->cce.abce++;
     }
   }
@@ -14261,7 +15033,7 @@ DONE:
   if (res && !lglmtstk (&lgl->cce->extend)) {
     assert (lgl->opts->cce.val >= 2);
     assert (lgl->opts->block.val);
-    prev = INT_MAX;
+    prev = 0;
     for (p = lgl->cce->extend.start; p < lgl->cce->extend.top; p++) {
       lit = *p;
       lglepush (lgl, lit);
@@ -14342,7 +15114,7 @@ RESTART:
   NEW (lgl->cce->rem, oldvars);
   for (idx = 2; idx < oldvars; idx++) lgl->cce->rem[idx] = INT_MAX;
   lglgc (lgl);
-  lglfreezer (lgl);
+  assert (lgl->frozen);
   assert (!(oldall && !oldrem));
   all = !oldrem || !oldall;
   if (all) lglprt (lgl, 1, "[cce-%d-%d] scheduling all variables this time",
@@ -14357,7 +15129,7 @@ RESTART:
          lgl->limits->cce.steps > lgl->stats->cce.steps) {
     idx = lglpopesched (lgl);
     lglavar (lgl, idx)->donotcce = 1;
-    if (lglocc (lgl, -idx) < lglocc (lgl, idx)) idx = -idx;
+    if (lglocc (lgl, -idx) > lglocc (lgl, idx)) idx = -idx;
     lglccelit (lgl, idx);
     if (lgl->mt) break;
     lglccelit (lgl, -idx);
@@ -14582,7 +15354,9 @@ static void lglsetelmlim (LGL * lgl) {
     if (limit < lgl->opts->elmineff.val) limit = lgl->opts->elmineff.val;
     if (lgl->opts->elmaxeff.val >= 0 && limit > lgl->opts->elmaxeff.val)
       limit = lgl->opts->elmaxeff.val;
-    if (lgl->stats->elm.count <= 1 && lgl->opts->elmboost.val > 1) {
+    if (lgl->stats->elm.count <= 1 &&
+        lgl->opts->boost.val &&
+        lgl->opts->elmboost.val > 1) {
       lglprt (lgl, 1,
         "[elim-%d] boosting limit by %d",
 	lgl->stats->elm.count, lgl->opts->elmboost.val);
@@ -14625,8 +15399,307 @@ static int lglforceschedall (LGL * lgl) {
   return res;
 }
 
+static void lgladdstrbincls (LGL * lgl, int a, int b) {
+  assert (lglisfree (lgl, a));
+  assert (lglisfree (lgl, b));
+  assert (lglmtstk (&lgl->clause));
+  lglpushstk (lgl, &lgl->clause, a);
+  lglpushstk (lgl, &lgl->clause, b);
+  lglpushstk (lgl, &lgl->clause, 0);
+  LOG (BWL, "strengthened binary clause", a, b);
+  if (lgl->opts->drup.val) lgldrupcls (lgl);
+#ifndef NLGLPICOSAT
+  lglpicosatchkcls (lgl);
+#endif
+  lgladdcls (lgl, 0, 0, 1);
+  lglclnstk (&lgl->clause);
+}
+
+static int lglbackwardlit (LGL * lgl,
+			   const int * clause, const int * skip,
+			   int size, int minlit,
+			   int *subptr, int *strptr) {
+  int res, blit, tag, red, other, other2, lidx, count, remove, hit;
+  const int * p, * w, * eow, * c, * l;
+  int marked, marked2, val;
+  HTS * hts;
+  assert (!lgl->level);
+  lgl->stats->bkwd.tried.lits++;
+  LOGCLS (BWL, clause,
+    "backward subsume and strengthen clauses with %d by size %d clause",
+    minlit, size);
+  hit = res = 0;
+  hts = lglhts (lgl, minlit);
+  w = lglhts2wchs (lgl, hts);
+  eow = w + hts->count;
+  for (p = w; !res && p < eow; p++) {
+    blit = *p;
+    tag = blit & MASKCS;
+    if (tag == TRNCS || tag == LRGCS) p++;
+    if (tag == LRGCS) continue;
+    if (p == skip) continue;
+    red = blit & REDCS;
+    if (red) continue;
+    lgl->stats->bkwd.tried.occs++;
+    INCSTEPS (elm.steps);
+    if (tag == BINCS) {
+      if (size > 2) continue;
+      other = blit >> RMSHFT;
+      if (!lglisfree (lgl, other)) continue;
+      marked = lglmarked (lgl, other);
+      if (marked > 0) {
+	if (size == 2 && !hit++) continue;
+	LOG (BWL, "subsumed binary clause %d %d", minlit, other);
+	assert (!(w <= skip && skip < eow) || skip < p);
+	ADDSTEPS (elm.steps, 2);
+	lglrmbcls (lgl, minlit, other, 0);
+	lgl->stats->bkwd.sub2++;
+	*subptr += 1;
+	res = 1;
+      } else if (marked < 0) {
+	LOG (BWL,
+	  "removing %d and thus strengthening binary clause %d %d",
+	  other, minlit, other);
+	assert (p != skip);
+	ADDSTEPS (elm.steps, 2);
+	lglunit (lgl, minlit);
+	lgl->stats->bkwd.str2++;
+	*strptr += 1;
+	res = 1;
+      }
+    } else if (tag == TRNCS) {
+      if (size > 3) continue;
+      other = blit >> RMSHFT;
+      other2 = *p;
+      if (!lglisfree (lgl, other)) continue;
+      if (!lglisfree (lgl, other2)) continue;
+      marked = lglmarked (lgl, other);
+      marked2 = lglmarked (lgl, other2);
+      if ((size == 2 && (marked > 0 || marked2 > 0)) ||
+          (size == 3 && marked > 0 && marked2 > 0)) {
+	if (size == 3 && !hit++) continue;
+	assert (!(w <= skip && skip < eow) || skip < p);
+	LOG (BWL,
+	  "subsumed ternary clause %d %d %d",
+	  minlit, other, other2);
+	ADDSTEPS (elm.steps, 3);
+	lglrmtcls (lgl, minlit, other, other2, 0);
+	lgl->stats->bkwd.sub3++;
+	*subptr += 1;
+	res = 1;
+      } else {
+	if (marked < 0 && marked2 > 0) {
+	  int tmp = other; other = other2; other2 = tmp;
+	} else if (marked <= 0 || marked2 >= 0) continue;
+	LOG (BWL,
+	  "removing %d and thus strengthening ternary clause %d %d %d",
+	  other2, minlit, other, other2);
+	assert (lglmarked (lgl, other) > 0);
+	assert (lglmarked (lgl, other2) < 0);
+	lgladdstrbincls (lgl, minlit, other);
+	lglrmtcls (lgl, minlit, other, other2, 0);
+	if (size == 3) {
+	  LOG (BWL,
+	    "removing %d and thus strengthening ternary clause %d %d %d",
+	    other2, minlit, other, -other2);
+	  lglrmtcls (lgl, minlit, other, -other2, 0);
+	  lgl->stats->bkwd.str3self++;
+	}
+	ADDSTEPS (elm.steps, 3);
+	lgl->stats->bkwd.str3++;
+	*strptr += 1;
+	res = 1;
+      }
+    } else {
+      assert (tag == OCCS);
+      lidx = blit >> RMSHFT;
+      c = lglidx2lits (lgl, 0, lidx);
+      if (c == skip) continue;
+      INCSTEPS (elm.steps);
+      count = size;
+      remove = 0;
+      for (l = c; (other = *l); l++) {
+	val = lglval (lgl, other);
+	if (val > 0) { remove = INT_MAX; break; }
+	if (val < 0) continue;
+	assert (!val);
+	marked = lglmarked (lgl, other);
+	if (!marked) continue;
+	count--;
+	if (marked > 0) continue;
+	if (remove) { remove = INT_MAX; break; }
+	remove = other;
+      }
+      if (count > 0) continue;
+      if (remove == INT_MAX) continue;
+      if (!remove) {
+	assert (!(w <= skip && skip < eow) || skip < p);
+	LOGCLS (BWL, c, "subsumed large clause");
+	ADDSTEPS (elm.steps, (l - c));
+	lglrmlcls (lgl, lidx, 0);
+	lgl->stats->bkwd.subl++;
+	*subptr += 1;
+	res = 1;
+      } else if (lglsmallirr (lgl)) {
+	LOGCLS (BWL, c, "removing %d and thus strengthening clause", remove);
+	assert (lglmtstk (&lgl->clause));
+	for (l = c; (other = *l); l++) {
+	  if (other == remove) continue;
+	  val = lglval (lgl, other);
+	  if (val < 0) continue;
+	  assert (!val);
+	  lglpushstk (lgl, &lgl->clause, other);
+	}
+	lglpushstk (lgl, &lgl->clause, 0);
+	LOGCLS (BWL, lgl->clause.start, "strengthened clause");
+	if (lgl->opts->drup.val) lgldrupcls (lgl);
+#ifndef NLGLPICOSAT
+	lglpicosatchkcls (lgl);
+#endif
+	ADDSTEPS (elm.steps, (l - c));
+	lglrmlcls (lgl, lidx, 0);
+	if (l - c == size) lgl->stats->bkwd.strlself++;
+	lgladdcls (lgl, 0, 0, 1);
+	lglclnstk (&lgl->clause);
+	lgl->stats->bkwd.strl++;
+	*strptr += 1;
+	res = 1;
+      }
+    }
+  }
+  return res;
+}
+
+static int lglbackwardclause (LGL * lgl,
+                              const int * clause, const int * skip,
+			      int * subsumedptr, int * strengthenedptr) {
+  int lit, size, minlit, minlit2, minocc, minocc2, tmpocc, res, large;
+  const int * p;
+  long delta;
+  lgl->stats->bkwd.tried.clauses++;
+  INCSTEPS (elm.steps);
+  minocc = minlit = minocc2 = minlit2 = 0;
+  for (p = clause; (lit = *p); p++) {
+    lglmarkunmarked (lgl, lit);
+    tmpocc = lglocc (lgl, lit);
+    if (!minlit || tmpocc < minocc) {
+      minocc2 = minocc, minlit2 = minlit;
+      minocc = tmpocc, minlit = lit;
+    } else if (!minlit2 || tmpocc < minocc2) {
+      minocc2 = tmpocc, minlit2 = lit;
+    }
+  }
+  size = p - clause;
+  assert (size >= 2);
+  LOG (BWL, "minimum occurrence %d of literal %d", minocc, minlit);
+  LOG (BWL, "next minimum occurrence %d of literal %d", minocc2, minlit2);
+  large = (lgl->irr.start <= clause && clause < lgl->irr.top);
+  delta = large ? clause - lgl->irr.start : 0;
+  res = lglbackwardlit (lgl, clause, skip,
+		        size, minlit, subsumedptr, strengthenedptr);
+  if (!res) {
+    res = lglbackwardlit (lgl, clause, skip,
+			  size, minlit2, subsumedptr, strengthenedptr);
+  }
+  if (res && large) clause = lgl->irr.start + delta;
+  for (p = clause; (lit = *p); p++)
+    lglunmark (lgl, lit);
+  return res;
+}
+
+static void lglbackward (LGL * lgl, int * u, int * t) {
+  int idx, sign, lit, blit, red, tag, other, other2, clause[4], * w;
+  const int * p, * eow, * c;
+  HTS * hts;
+  long i;
+  Stk stk;
+  CLR (stk);
+  *u = *t = 0;
+  for (idx = 2; idx < lgl->nvars; idx++) {
+    for (sign = -1; sign <= 1; sign += 2) {
+RESTART:
+      if (lgl->mt) goto DONE;
+      if (!lglsyncunits (lgl)) goto DONE;
+      if (lglterminate (lgl)) goto DONE;
+      if (!lglisfree (lgl, idx)) continue;
+      if (INCSTEPS (elm.steps) >= lgl->limits->elm.steps) goto DONE;
+      lit = sign * idx;
+      hts = lglhts (lgl, lit);
+      w = lglhts2wchs (lgl, hts);
+      eow = w + hts->count;
+      lglclnstk (&stk);
+      for (p = w; p < eow; p++) {
+	blit = *p;
+	tag = blit & MASKCS;
+	if (tag == TRNCS || tag == LRGCS) p++;
+	if (tag != BINCS) continue;
+	red = blit & REDCS;
+	if (red) continue;
+	lglpushstk (lgl, &stk, blit);
+      }
+      for (p = w; p < eow; p++) {
+	blit = *p;
+	tag = blit & MASKCS;
+	if (tag == TRNCS || tag == LRGCS) p++;
+	if (tag != TRNCS) continue;
+	red = blit & REDCS;
+	if (red) continue;
+	lglpushstk (lgl, &stk, blit);
+	lglpushstk (lgl, &stk, *p);
+      }
+      for (p = w; p < eow; p++) {
+	blit = *p;
+	tag = blit & MASKCS;
+	if (tag == TRNCS || tag == LRGCS) p++;
+	red = blit & REDCS;
+	if (!red && (tag == BINCS || tag == TRNCS)) continue;
+	lglpushstk (lgl, &stk, blit);
+	if (tag == TRNCS || tag == LRGCS)
+	  lglpushstk (lgl, &stk, *p);
+      }
+      assert (lglcntstk (&stk) == hts->count);
+      memcpy (w, stk.start, lglcntstk (&stk) * sizeof *w);
+      clause[0] = lit;
+      for (p = w; p < eow; p++) {
+	blit = *p;
+	tag = blit & MASKCS;
+	if (tag == TRNCS || tag == LRGCS) p++;
+	if (tag == LRGCS) continue;
+	red = blit & REDCS;
+	if (red) continue;
+	if (INCSTEPS (elm.steps) >= lgl->limits->elm.steps) goto DONE;
+	if (tag == BINCS) {
+	  other = blit >> RMSHFT;
+	  if (abs (other) < idx) continue;
+	  clause[1] = other, clause[2] = 0;
+	  if (!lglbackwardclause (lgl, clause, p, u, t)) continue;
+	} else if (tag == TRNCS) {
+	  other = blit >> RMSHFT;
+	  if (abs (other) < idx) continue;
+	  other2 = *p;
+	  if (abs (other2) < idx) continue;
+	  clause[1] = other, clause[2] = other2, clause[3] = 0;
+	  if (!lglbackwardclause (lgl, clause, p, u, t)) continue;
+	} else { assert (tag == OCCS); continue; }
+	if (lglflush (lgl)) goto RESTART;
+	else goto DONE;
+      }
+    }
+  }
+  for (c = lgl->irr.start; c < lgl->irr.top; c = p + 1) {
+    if (!lglsmallirr (lgl)) goto DONE;
+    if (INCSTEPS (elm.steps) >= lgl->limits->elm.steps) goto DONE;
+    if (*(p = c) >= NOTALIT) continue;
+    while (*p) p++;
+    i = p - lgl->irr.start;
+    if (lglbackwardclause (lgl, c, c, u, t)) p = lgl->irr.start + i;
+  }
+DONE:
+  lglrelstk (lgl, &stk);
+}
+
 static int lglelmdone (LGL * lgl) {
-  int newelmd, eliminated;
+  int newelmd, eliminated, subsumed, strengthened;
   int64_t steps;
   if (!lglsmallirr (lgl)) return 1;
   if (lglterminate (lgl)) return 1;
@@ -14647,11 +15720,25 @@ static int lglelmdone (LGL * lgl) {
     "[elim-%d-%d] eliminated %d variables %.0f%% in round %d in %lld steps",
     lgl->stats->elm.count, lgl->elm->round, eliminated, 
     lglpcnt (eliminated, lgl->nvars - 2), lgl->elm->round, (LGLL) steps);
-  if (lgl->elm->round >= lgl->opts->elmroundlim.val) return 1;
+  lglbackward (lgl, &subsumed, &strengthened);
+  lglprt (lgl, 1,
+    "[elim-%d-%d] subsumed %d clauses, strengthened %d clauses",
+    lgl->stats->elm.count, lgl->elm->round, subsumed, strengthened);
   lgl->elm->round++;
-  lgl->elm->oldsteps = lgl->stats->elm.steps;
   lgl->stats->elm.rounds++;
   lgl->elm->oldelmd = newelmd;
+  lgl->elm->oldsteps = lgl->stats->elm.steps;
+  if (lgl->mt) return 1;
+  if (lgl->limits->elm.steps <= lgl->stats->elm.steps) return 1;
+  if (lgl->elm->round >= lgl->opts->elmroundlim.val) return 1;
+  if (!lglmtstk (&lgl->esched)) {
+    lglprt (lgl, 1,
+      "[elim-%d-%d] rescheduled %d variables %.0f%% by backward subsumption",
+      lgl->stats->elm.count, lgl->elm->round,
+      lglcntstk (&lgl->esched),
+      lglpcnt (lglcntstk (&lgl->esched), lglrem (lgl)));
+    return 0;
+  }
   return !lglforceschedall (lgl);
 }
 
@@ -14675,7 +15762,7 @@ static int lglelim (LGL * lgl) {
   if (lgl->level > 0) lglbacktrack (lgl, 0);
   oldnvars = lglrem (lgl);
   lglgc (lgl);
-  lglfreezer (lgl);
+  assert (lgl->frozen);
   assert (!(oldall && !oldrem));
   all = !oldrem || !oldall;
   if (all) lglprt (lgl, 1, "[elim-%d] scheduling all variables this time",
@@ -14847,6 +15934,8 @@ DONE:
 }
 
 int lglnvars (LGL * lgl) { return lglrem (lgl); }
+
+int lglnclauses (LGL * lgl) { return lgl->stats->irr.clauses.cur; }
 
 static int lglcgrepr (LGL * lgl, int lit) {
   return lglptrjmp (lgl->repr, lgl->nvars - 1, lit);
@@ -16326,7 +17415,7 @@ static int lglcgrclsr (LGL * lgl) {
   if (lgl->level > 0) lglbacktrack (lgl, 0);
   lglgc (lgl);
 
-  lglfreezer (lgl);
+  assert (lgl->frozen);
   lgldense (lgl, 1);
 
   nvars = lgl->nvars;
@@ -16385,12 +17474,17 @@ static int lglrandomprobe (LGL * lgl, Stk * outer) {
   return res;
 }
 
-static int lglinnerprobe (LGL * lgl, int old,  Stk * outer, Stk * tmp) {
-  int i, lit, blit, tag, other, other2, res;
-  const int * w, * eow, * p;
+static int lglinnerprobe (LGL * lgl, int old,  Stk * outer,
+                          Stk * tmp1, Stk * tmp2) {
+  int i, lit, blit, tag, other, other2, red, lidx, res, val, count;
+  const int * w, * eow, * p, * c, * q;
   HTS * hts;
   assert (old < lglcntstk (&lgl->trail));
-  assert (lglmtstk (tmp));
+  assert (!tmp2 || lglmtstk (tmp2));
+  for (p = tmp1->start; p < tmp1->top; p++) {
+    assert (!lglmarked (lgl, *p));
+    lglmark (lgl, *p);
+  }
   for (i = old; i < lglcntstk (&lgl->trail); i++) {
     lit = lglpeek (&lgl->trail, i);
     hts = lglhts (lgl, -lit);
@@ -16411,24 +17505,50 @@ static int lglinnerprobe (LGL * lgl, int old,  Stk * outer, Stk * tmp) {
 	other = abs (other);
 	if (!lglmarked (lgl, other)) {
 	  lglmark (lgl, other);
-	  lglpushstk (lgl, tmp, other);
+	  lglpushstk (lgl, tmp1, other);
 	  LOG (4, "potential inner probe %d for %d", other, lit);
 	}
 	other2 = abs (other2);
 	if (!lglmarked (lgl, other2)) {
 	  lglmark (lgl, other2);
-	  lglpushstk (lgl, tmp, other2);
+	  lglpushstk (lgl, tmp1, other2);
 	  LOG (3, "potential inner probe %d for %d", other2, lit);
 	}
-      } else {
-	assert (tag == LRGCS);	/* TODO pick some here as well!! */
+      } else if (tmp2 && lgl->opts->liftlrg.val) {
+	assert (tag == LRGCS);
+	lidx = *p;
+	red = blit & REDCS;
+	c = lglidx2lits (lgl, red, lidx);
+	count = lgl->opts->liftlrg.val;
+	for (q = c; (other = *q) && count > 0; q++) {
+	  if (other == -lit) continue;
+	  assert (other != lit);
+	  val = lglval (lgl, other);
+	  if (val > 0) break;
+	  if (!val) count--;
+	}
+	if (other) continue;
+	for (q = c; (other = *q); q++) {
+	  if (other == -lit) continue;
+	  assert (other != lit);
+	  val = lglval (lgl, other);
+	  COVER (!val);
+	  if (val < 0) continue;
+	  assert (!val);
+	  if (lglmarked (lgl, other)) continue;
+	  lglmark (lgl, other);
+	  lglpushstk (lgl, tmp2, other);
+	  LOG (3, "potential inner probe %d for %d", other, lit);
+	}
       }
     }
   }
-  LOG (2, "found %d inner probes in ternary clauses", lglcntstk (tmp));
-  res = lglrandomprobe (lgl, tmp);
-  lglpopnunmarkstk (lgl, tmp);
+  LOG (2, "found %d inner probes", lglcntstk (tmp1));
+  res = lglrandomprobe (lgl, tmp1);
+  lglpopnunmarkstk (lgl, tmp1);
   if (!res) res = lglrandomprobe (lgl, outer);
+  if (tmp2)
+    for (p = tmp2->start; p < tmp2->top; p++) lglunmark (lgl, *p);
   return res;
 }
 
@@ -16501,7 +17621,7 @@ static int lgliftaux (LGL * lgl) {
   int deltaunits, deltaimpls, origeqs, origunits, origimpls, units, impls, eqs;
   int lit1, lit2, repr1, repr2, orepr1, orepr2, tobeprobed, notobeprobed;
   int i, idx, lit, * reprs[3], first, outer, inner, round, branch;
-  Stk probes, represented[2], saved, tmp;
+  Stk probes, represented[2], saved, tmp1, tmp2;
   int ok, oldouter, dom, repr, other;
   unsigned pos, delta, mod;
   Val val, val1, val2;
@@ -16511,7 +17631,7 @@ static int lgliftaux (LGL * lgl) {
 #endif
   assert (lgl->simp && lgl->lifting && !lgl->level);
   NEW (lgl->repr, lgl->nvars);
-  CLR (probes); CLR (saved); CLR (tmp);
+  CLR (probes); CLR (saved); CLR (tmp1); CLR (tmp2);
   CLR (represented[0]); CLR (represented[1]);
   NEW (reprs[0], lgl->nvars);
   NEW (reprs[1], lgl->nvars);
@@ -16537,7 +17657,8 @@ static int lgliftaux (LGL * lgl) {
     if (!lglhasbinortrn (lgl, idx)) continue;
     if (!lglhasbinortrn (lgl, -idx)) continue;
     LOG (1, "new outer probe %d", idx);
-    lglpushstk (lgl, &probes, idx);
+    lit = (lglrand (lgl) & 1) ? idx : -idx;
+    lglpushstk (lgl, &probes, lit);
   }
   mod = lglcntstk (&probes);
   lglprt (lgl, 1, "[lift-%d] using %d probes %.0f%%",
@@ -16597,7 +17718,8 @@ FIRST_OUTER_BRANCH_FAILED:
       lgl->mt = 1;
       break;
     }
-    inner = lglinnerprobe (lgl, oldouter, &probes, &tmp);
+    lglclnstk (&tmp2);
+    inner = lglinnerprobe (lgl, oldouter, &probes, &tmp1, &tmp2);
     assert (lglmtstk (&represented[0]));
     if (!inner) {
 FIRST_OUTER_BRANCH_WIHOUT_INNER_PROBE:
@@ -16711,7 +17833,7 @@ SECOND_OUTER_BRANCH_FAILED:
     oldinner = lglcntstk (&lgl->trail);
 #endif
     if (!inner || lglval (lgl, inner))
-      inner = lglinnerprobe (lgl, oldouter, &probes, &tmp);
+      inner = lglinnerprobe (lgl, oldouter, &probes, &tmp2, 0);
     if (!inner) {
 SECOND_OUTER_BRANCH_WIHOUT_INNER_PROBE:
       LOG (2, "no inner probe for 2nd outer branch %d", -outer);
@@ -16883,7 +18005,8 @@ DONE:
   lglrelstk (lgl, &represented[0]);
   lglrelstk (lgl, &represented[1]);
   lglrelstk (lgl, &saved);
-  lglrelstk (lgl, &tmp);
+  lglrelstk (lgl, &tmp1);
+  lglrelstk (lgl, &tmp2);
   if (lgl->mt) DEL (lgl->repr, lgl->nvars);
   return !lgl->mt;
 }
@@ -17216,7 +18339,9 @@ static void lglseternreslim (LGL * lgl) {
     if (limit < lgl->opts->trnrmineff.val) limit = lgl->opts->trnrmineff.val;
     if (lgl->opts->trnrmaxeff.val >= 0 && limit > lgl->opts->trnrmaxeff.val)
       limit = lgl->opts->trnrmaxeff.val;
-    if (lgl->stats->trnr.count <= 1 && lgl->opts->ternresboost.val > 1) {
+    if (lgl->stats->trnr.count <= 1 &&
+        lgl->opts->boost.val &&
+        lgl->opts->ternresboost.val > 1) {
       lglprt (lgl, 1,
         "[ternres-%d] boosting ternary resolution limit by %d",
 	lgl->stats->trnr.count, lgl->opts->ternresboost.val);
@@ -17953,8 +19078,12 @@ UNIT:
 	  } else if ((red || irronly) &&
 		     (lglunhimplies2incl (dfpr, -lit, other) ||
 		      lglunhimplies2incl (dfpr, -lit, other2))) {
-	    LOG (2, "unhiding tautological ternary clause %d %d %d",
-		 lit, other, other2);
+
+	    if (!lgl->opts->unhdatrn.val) continue;
+	    if (red && lgl->opts->unhdatrn.val == 1) continue;
+
+	    LOG (2, "unhiding %s tautological ternary clause %d %d %d",
+		 lglred2str (red), lit, other, other2);
 	    lgl->stats->unhd.tauts.trn++;
 	    lgl->stats->prgss++;
 	    if (red) lgl->stats->unhd.tauts.red++;
@@ -17965,7 +19094,19 @@ UNIT:
 		 lglred2str (red), lit, other, other2);
 	    lgldeclscnt (lgl, 3, red, 0);
 	    assert (!lgl->dense);
-	    q -= 2;
+	    if (!red && lgl->opts->move.val >= 2) {
+	      long delta;
+	      assert (q >= w);
+	      assert (q[-2] == blit);
+	      assert (q[-1] == other2);
+	      q[-2] |= REDCS;
+	      delta = lglwchtrn (lgl, other, lit, other2, REDCS);
+	      delta += lglwchtrn (lgl, other2, lit, other, REDCS);
+	      if (delta) w += delta, eow += delta, p += delta, q += delta;
+	      LOG (2, "moved ternary clause %d %d %d", lit, other, other2);
+              lgl->stats->red.trn++, assert (lgl->stats->red.trn > 0);
+	      lgl->stats->moved.trn++;
+	    } else q -= 2;
 	  } else if (lglunhimplies2incl (dfpr, other2, lit)) {
 TRNSTR:
 	    LOG (2,
@@ -18866,6 +20007,8 @@ static int lglgaussubcls (LGL * lgl, uint64_t signs,  const int * c) {
   return res;
 }
 
+#define GL 0
+
 static int lglgaussextractxoraux (LGL * lgl, const int * c) {
   int lit, val, size, maxsize, negs, start, max, *d, * q;
   int allxors = lgl->opts->gaussextrall.val;
@@ -18901,10 +20044,87 @@ static int lglgaussextractxoraux (LGL * lgl, const int * c) {
   if (signs) return 0;
   for (q = d; (lit = *q); q++) *q = abs (lit);
   *q = !negs;
-  LOGEQN (2, start, "extracted %d-ary XOR constraint",  size);
+  LOGEQN (GL, start, "extracted %d-ary XOR constraint",  size);
   lgl->stats->gauss.arity.sum += size;
   if (lgl->stats->gauss.arity.max < size) lgl->stats->gauss.arity.max = size;
   lgl->stats->gauss.extracted++;
+#if 0
+  if (size == 4) {
+    int i, j, k;
+    Stk cands;
+    CLR (cands);
+    for (k = 0; k < size; k++) {
+      int out = d[k], checks = 0;
+      assert (lglmtstk (&cands));
+      for (i = 0; i < size; i++) {
+	if (i != k) {
+	  int first = d[i];
+	  for (j = i + 1; j < size; j++) {
+	    int second, old;
+	    if (j == k) continue;
+	    second = d[j];
+	    old = lglcntstk (&lgl->trail);
+	    assert (!lgl->level);
+	    lgliassume (lgl, first);
+	    if (!lglbcp (lgl)) goto DONE;
+	    if (lglval (lgl, second)) goto DONE;
+	    lgliassume (lgl, second);
+	    if (!lglbcp (lgl)) goto DONE;
+	    if (checks++) {
+	      q = cands.start;
+	      for (p = q; p < cands.top; p++) {
+		int c = *p;
+		if (lglval (lgl, c) <= 0) continue;
+		*q++ = c;
+	      }
+	      cands.top = q;
+	    } else {
+	      while (old < lglcntstk (&lgl->trail)) {
+		lit = lglpeek (&lgl->trail, old++);
+		if (abs (lit) == abs (out)) continue;
+		if (abs (lit) == abs (first)) continue;
+		if (abs (lit) == abs (second)) continue;
+		lglpushstk (lgl, &cands, lit);
+	      }
+	    }
+	    lglbacktrack (lgl, 0);
+	    assert (checks > 0);
+	    if (lglmtstk (&cands)) goto NEXT;
+	    lgliassume (lgl, -first);
+	    if (!lglbcp (lgl)) goto DONE;
+	    if (lglval (lgl, second)) goto DONE;
+	    lgliassume (lgl, -second);
+	    if (!lglbcp (lgl)) goto DONE;
+	    q = cands.start;
+	    for (p = q; p < cands.top; p++) {
+	      int c = *p;
+	      if (lglval (lgl, c) >= 0) continue;
+	      *q++ = c;
+	    }
+	    cands.top = q;
+	    lglbacktrack (lgl, 0);
+	    assert (checks > 0);
+	    if (lglmtstk (&cands)) goto NEXT;
+	  }
+	  for (p = cands.start; p < cands.top; p++) {
+	    if (lgl->opts->log.val < 0) continue;
+	    if (!negs) out = -out;
+	    lglogstart (lgl, 0, 
+	      "found %d-ary majority gate %d = majority", size-1, out);
+	    for (i = 0; i < size; i++)
+	      if (i != k) fprintf (lgl->out, " %d", d[i]);
+	    lglogend (lgl);
+	  }
+	}
+      }
+NEXT:
+      lglrelstk (lgl, &cands);
+    }
+DONE:
+    if (lgl->level) lglbacktrack (lgl, 0);
+    lglrelstk (lgl, &cands);
+  }
+#endif
   return 1;
 }
 
@@ -19418,20 +20638,53 @@ static int lglgauss (LGL * lgl) {
   return !lgl->mt;
 }
 
-static int lglprobing (LGL * lgl) {
-  if (!lgl->opts->probe.val) return 0;
-  if (lgl->opts->prbasic.val) return 1;
-  if (!lglsmallirr (lgl)) return 0;
-  if (lgl->opts->prbsimple.val) return 1;
-  if (lgl->opts->treelook.val) return 1;
-  return 0;
-}
-
 /*------------------------------------------------------------------------*/
 
 #define CARDLOGLEVEL 2
 
-static void lgladdcard (LGL * lgl, const int * lits, int bound) {
+static int lglcardsub (LGL * lgl, const int * lits, int bound) {
+  int count, size, res, minlit, minocc, nocc, lit, pos, otherbound;
+  Card * card = lgl->card;
+  const int * p, * c, * q;
+  Stk * s;
+  minocc = INT_MAX;
+  minlit = 0;
+  for (p = lits; minocc && (lit = *p); p++) {
+    lglmarkunmarked (lgl, lit);
+    s = card->occs + lit;
+    INCSTEPS (card.steps);
+    nocc = lglcntstk (s);
+    if (nocc > minocc) continue;
+    minlit = lit;
+    minocc = nocc;
+  }
+  res = 0;
+  if (minocc && minlit) {
+    size = p - lits;
+    s = card->occs + minlit;
+    for (p = s->start; p < s->top; p++) {
+      pos = *p;
+      c = card->cards.start + pos;
+      INCSTEPS (card.steps);
+      otherbound = *c;
+      if (otherbound > bound) continue;
+      count = 0;
+      for (q = c + 1; (lit = *q); q++)
+	if (lglmarked (lgl, lit) > 0) count++;
+      if (count >= size) {
+	LOGCLS (CARDLOGLEVEL, lits,
+	  "subsumed cardinality constraint %d >=", bound);
+	LOGCLS (CARDLOGLEVEL, c + 1,
+	  "subsuming cardinality constraint %d >=", otherbound);
+	res = 1;
+      }
+    }
+  }
+  for (p = lits; (lit = *p); p++) lglunmark (lgl, lit);
+  return res;
+}
+
+static int lgladdcard (LGL * lgl, const int * lits, int bound) {
   Card * card = lgl->card;
   const int * p;
   int start, lit;
@@ -19439,6 +20692,10 @@ static void lgladdcard (LGL * lgl, const int * lits, int bound) {
   int size = 0;
   for (p = lits; *p; p++) size++;
 #endif
+  if (lglcardsub (lgl, lits, bound)) {
+    lgl->stats->card.subsumed++;
+    return 0;
+  }
   LOGCLS (CARDLOGLEVEL, lits,
     "new %s cardinality constraint %d >=",
     (bound + 1 < size ? "real" : "pseudo"), bound);
@@ -19457,6 +20714,7 @@ static void lgladdcard (LGL * lgl, const int * lits, int bound) {
     lglpushstk (lgl, card->occs + lit, start);
   }
   lglpushstk (lgl, &card->cards, 0);
+  return 1;
 }
 
 static void lglcardfmstep (LGL * lgl, int pivot,
@@ -19539,7 +20797,7 @@ static void lglcardfmstep (LGL * lgl, int pivot,
       lglunmark (lgl, lit);
       unit[0] = lit;
       unit[1] = 0;
-      lgladdcard (lgl, unit, 0);
+      (void) lgladdcard (lgl, unit, 0);
     }
   } else if (b >= len) {
     LOGCLS (CARDLOGLEVEL, lgl->clause.start,
@@ -19564,9 +20822,11 @@ static void lglcardfmstep (LGL * lgl, int pivot,
     }
   }
 DONE:
+  cp = card->cards.start + cardposidx + 1;
+  cn = card->cards.start + cardnegidx + 1;
   for (p = cp; (lit = *p); p++) lglunmark (lgl, lit);
   for (q = cn; (lit = *q); q++) lglunmark (lgl, lit);
-  if (addcard > 0) lgladdcard (lgl, lgl->clause.start, b);
+  if (addcard > 0) (void) lgladdcard (lgl, lgl->clause.start, b);
   lglclnstk (&lgl->clause);
 }
 
@@ -19606,24 +20866,32 @@ static void lglcardresched (LGL * lgl) {
 static void lglcardfmlit (LGL * lgl, int pivot) {
   Stk * poccs = lgl->card->occs + pivot, * noccs = lgl->card->occs - pivot;
   int pcnt = lglcntstk (poccs), ncnt = lglcntstk (noccs);
+  int count = lgl->stats->card.count;
   const int * p, * q;
   assert (pivot > 0);
   assert (!lgl->card->eliminated[pivot]);
-  if (pcnt >= lgl->opts->cardocclim.val) return;
-  if (ncnt >= lgl->opts->cardocclim.val) return;
-  if (!pcnt || !ncnt) return;
+  if (!pcnt || !ncnt) goto DONE;
+  if (pcnt > lglfactor (lgl, lgl->opts->cardocclim1.val, count) &&
+      ncnt > lglfactor (lgl, lgl->opts->cardocclim1.val, count)) goto DONE;
+  if (pcnt > lglfactor (lgl, lgl->opts->cardocclim2.val, count)) goto DONE;
+  if (ncnt > lglfactor (lgl, lgl->opts->cardocclim2.val, count)) goto DONE;
   lgl->stats->card.eliminated++;
   lgl->card->eliminated[pivot] = 1;
   LOG (CARDLOGLEVEL,
     "fourier-motzkin pivot %d with %d positive and %d negative occurrences",
     pivot, pcnt, ncnt);
-  for (p = poccs->start; !lgl->mt && p < poccs->top; p++) {
+  for (p = poccs->start; !lgl->mt && p < poccs->top; p++)
     for (q = noccs->start; !lgl->mt && q < noccs->top; q++)
       lglcardfmstep (lgl, pivot, *p, *q);
+DONE:
+  for (p = poccs->start; !lgl->mt && p < poccs->top; p++) {
     lglrmcardexcept (lgl, *p, pivot);
+    INCSTEPS (card.steps);
   }
-  for (q = noccs->start; !lgl->mt && q < noccs->top; q++)
+  for (q = noccs->start; !lgl->mt && q < noccs->top; q++) {
     lglrmcardexcept (lgl, *q, -pivot);
+    INCSTEPS (card.steps);
+  }
   lglrelstk (lgl, poccs);
   lglrelstk (lgl, noccs);
   if (!(lgl->stats->card.eliminated % lgl->opts->cardreschedint.val))
@@ -19964,8 +21232,8 @@ static int lglcardelim (LGL * lgl, int count) {
     for (len = 0; lglpeek (&card->atmost1, start + len); len++)
       ;
     if (len >= lgl->opts->cardminlen.val &&
-	len <= lgl->opts->cardmaxlen.val) {
-      lgladdcard (lgl, card->atmost1.start + start, 1);
+	len <= lgl->opts->cardmaxlen.val &&
+        lgladdcard (lgl, card->atmost1.start + start, 1)) {
       lgl->stats->card.am1.used.sum += len;
       lgl->stats->card.am1.used.cnt++;
       used++;
@@ -19976,8 +21244,8 @@ static int lglcardelim (LGL * lgl, int count) {
     for (len = 0; lglpeek (&card->atmost2, start + len); len++)
       ;
     if (len >= lgl->opts->cardminlen.val &&
-	len <= lgl->opts->cardmaxlen.val) {
-      lgladdcard (lgl, card->atmost2.start + start, 2);
+	len <= lgl->opts->cardmaxlen.val &&
+        lgladdcard (lgl, card->atmost2.start + start, 2)) {
       lgl->stats->card.am2.used.sum += len;
       lgl->stats->card.am2.used.cnt++;
       used++;
@@ -20018,7 +21286,7 @@ static int lglcardelim (LGL * lgl, int count) {
 	  other = blit >> RMSHFT;
 	  if (abs (other) < idx) continue;
 	  clause[0] = -lit, clause[1] = -other, clause[2] = 0;
-	  lgladdcard (lgl, clause, 1);
+	  (void) lgladdcard (lgl, clause, 1);
 	} else if (tag == TRNCS) {
 	  other = blit >> RMSHFT;
 	  if (abs (other) < idx) continue;
@@ -20026,7 +21294,7 @@ static int lglcardelim (LGL * lgl, int count) {
 	  if (abs (other2) < idx) continue;
 	  clause[0] = -lit, clause[1] = -other,
 	  clause[2] = -other2, clause[3] = 0;
-	  lgladdcard (lgl, clause, 2);
+	  (void) lgladdcard (lgl, clause, 2);
 	} else assert (tag == LRGCS);
       }
     }
@@ -20048,7 +21316,7 @@ static int lglcardelim (LGL * lgl, int count) {
       for (q = c; (lit = *q); q++)
 	lglpushstk (lgl, &lgl->clause, -lit);
       lglpushstk (lgl, &lgl->clause, 0);
-      lgladdcard (lgl, lgl->clause.start, bound);
+      (void) lgladdcard (lgl, lgl->clause.start, bound);
       lglclnstk (&lgl->clause);
       if (lglterminate (lgl) ||
 	  lgl->limits->card.steps < INCSTEPS (card.steps)) goto SKIP;
@@ -20157,6 +21425,7 @@ static int lglcard (LGL * lgl) {
   assert (!lgl->mt);
   lglstart (lgl, &lgl->times->card);
   lgl->stats->card.count++;
+  if (lgl->level) lglbacktrack (lgl, 0);
   limit = lglsetcardlim (lgl);
   assert (!lgl->card);
   NEW (lgl->card, 1);
@@ -20175,114 +21444,356 @@ static int lglcard (LGL * lgl) {
 
 /*------------------------------------------------------------------------*/
 
-static int lgltreducing (LGL * lgl) {
-  if (lgldelaying (lgl, "transred", &lgl->limits->trd.del.rem)) return 0;
-  if (lglwaiting (lgl, "transred", lgl->opts->transredwait.val)) return 0;
-  return lgl->opts->transred.val;
+static int lglrdpclslim (LGL * lgl) {
+  int64_t res64;
+  int res;
+  res64 = lgl->opts->rdpclslim.val + (int64_t) lgl->stats->rdp.count;
+  res = res64 > INT_MAX ? INT_MAX : res64;
+  return res;
 }
 
-static int lglunhiding (LGL * lgl) { 
-  if (lgldelaying (lgl, "unhide", &lgl->limits->unhd.del.rem)) return 0;
-  if (lglwaiting (lgl, "unhide", lgl->opts->unhidewait.val)) return 0;
-  return lgl->opts->unhide.val;
-}
-
-static int lgldecomposing (LGL * lgl) { return lgl->opts->decompose.val; }
-
-static int lglcgrclosing (LGL * lgl) {
-  if (lgldelaying (lgl, "cgrclsr", &lgl->limits->cgr.del.rem)) return 0;
-  if (lglwaiting (lgl, "cgrclsr", lgl->opts->cgrclsrwait.val)) return 0;
-  return lgl->opts->cgrclsr.val && lglsmallirr (lgl);
-}
-
-static int lglifting (LGL * lgl) {
-  if (lgldelaying (lgl, "lift", &lgl->limits->lft.del.rem)) return 0;
-  if (lglwaiting (lgl, "lift", lgl->opts->liftwait.val)) return 0;
-  return lgl->opts->lift.val;
-}
-
-static int lglblocking (LGL * lgl) {
-  if (!lgl->opts->block.val) return 0;
-  if (lgldelaying (lgl, "block", &lgl->limits->blk.del.rem)) return 0;
-  if (lgl->opts->blockwait.val &&
-      (!lgl->opts->elim.val || !lgl->elmrtc)) {
-    lglprt (lgl, 2, 
-      "[block-waiting] for bounded variable elimination to be completed");
-    return 0;
+static void lglrdpaddcls (LGL * lgl, const int * c) {
+  int cidx = lglcntstk (&lgl->rdp->lits), lit;
+  const int * p;
+  for (p = c; (lit = *p); p++)
+    ;
+  if (p - c > lglrdpclslim (lgl) + 1) return;
+  for (p = c; (lit = *p); p++) {
+    lgl->rdp->count[lit]++;
+    lglpushstk (lgl, &lgl->rdp->occs[lit], cidx);
+    lglpushstk (lgl, &lgl->rdp->lits, lit);
   }
-  if (!lglsmallirr (lgl)) return 0;
-  if (lgl->nvars <= 2) return 0;
-  if (lgl->mt) return 0;
-  if (lgl->blkrem) return 1;
-  return lgl->stats->irrprgss > lgl->limits->blk.irrprgss;
+  lglpushstk (lgl, &lgl->rdp->lits, 0);
 }
 
-static int lgleliminating (LGL * lgl) {
-  if (lgldelaying (lgl, "elim", &lgl->limits->elm.del.rem)) return 0;
-  if (!lgl->opts->elim.val) return 0;
-  if (!lglsmallirr (lgl)) return 0;
-  if (lgl->nvars <= 2) return 0;
-  if (lgl->mt) return 0;
-  if (lgl->elmrem) return 1;
-  return lgl->stats->irrprgss > lgl->limits->elm.irrprgss;
+static void lglrdpconbintrn (LGL *  lgl) {
+  int idx, sign, lit, blit, tag, red, other, other2, cls[4];
+  const int * p, * w, * eow;
+  HTS * hts;
+  for (sign = -1; sign <= 1; sign += 2)
+    for (idx = 2; idx < lgl->nvars; idx++) {
+      lit = sign * idx;
+      hts = lglhts (lgl, lit);
+      w = lglhts2wchs (lgl, hts);
+      eow = w + hts->count;
+      for (p = w; p < eow; p++) {
+	blit = *p;
+	tag = blit & MASKCS;
+	red = blit & REDCS;
+	if (tag == TRNCS || tag == LRGCS) p++;
+	if (tag == LRGCS) continue;
+	if (tag == BINCS) {
+	  if (red && lgl->opts->rdp.val < 2) continue;
+	  other = blit >> RMSHFT;
+	  if (abs (other) < idx) continue;
+	  cls[0] = lit, cls[1] = other, cls[2] = 0;
+	} else if (tag == TRNCS) {
+	  if (red && lgl->opts->rdp.val < 3) continue;
+	  other = blit >> RMSHFT;
+	  if (abs (other) < idx) continue;
+	  other2 = *p;
+	  if (abs (other2) < idx) continue;
+	  cls[0] = lit, cls[1] = other, cls[2] = other2, cls[3] = 0;
+	}
+	lglrdpaddcls (lgl, cls);
+      }
+    }
 }
 
-static int lglbcaing (LGL * lgl) {
-  if (lgldelaying (lgl, "bca", &lgl->limits->bca.del.rem)) return 0;
-  if (lglwaiting (lgl, "bca", lgl->opts->bcawait.val)) return 0;
-  if (!lglsmallirr (lgl)) return 0;
-  return lgl->opts->bca.val;
-}
-
-static int lglreducing (LGL * lgl) {
-  int reducable;
-  if (!lgl->opts->reduce.val) return 0;
-  reducable = lgl->stats->red.lrg;
-  assert (reducable >= lgl->lrgluereasons);
-  reducable -= lgl->lrgluereasons;
-  assert (reducable >= lgl->stats->lir[0].clauses);
-  reducable -= lgl->stats->lir[0].clauses;
-  return reducable >= lgl->limits->reduce.inner;
-}
-
-static int lgldefragmenting (LGL * lgl) {
-  int relfree;
-  if (lgl->stats->pshwchs < lgl->limits->dfg.pshwchs) return 0;
-  if (!lgl->nvars) return 0;
-  relfree = (100 * lgl->wchs->free + 99) / lgl->nvars;
-  return relfree >= lgl->opts->defragfree.val;
-}
-
-static int lglrestarting (LGL * lgl) {
-  int assumptions;
-  if (!lgl->opts->restart.val) return 0;
-  if (!lgl->level) return 0;
-  if ((assumptions = lglcntstk (&lgl->assume))) {
-    if (lgl->assumed < assumptions) return 0;
-    assert (lgl->alevel <= lgl->level);
-    if (lgl->alevel == lgl->level) return 0;
+static void lglrdpconlrg (LGL * lgl) {
+  const int * c, * p;
+  for (c = lgl->irr.start; c < lgl->irr.top; c = p + 1) {
+    if (*(p = c) >= NOTALIT) continue;
+    assert (*p);
+    while (*++p)
+      ;
+    lglrdpaddcls (lgl, c);
   }
-  return lgl->stats->confs >= lgl->limits->restart.confs;
 }
 
-static int lglternresolving (LGL * lgl) { 
-  if (lgldelaying (lgl, "ternres", &lgl->limits->trnr.del.rem)) return 0;
-  if (lglwaiting (lgl, "ternres", lgl->opts->ternreswait.val)) return 0;
-  return lgl->opts->ternres.val;
+#if 0
+static void lglrdpreport (LGL * lgl) {
+  int div, mod, eliminated = lgl->rdp->eliminated;
+  if (!lgl->nvars || lgl->opts->verbose.val < 2) return;
+  if (lgl->opts->verbose.val == 2) div = 10;
+  else if (lgl->opts->verbose.val == 3) div = 100;
+  else div = 0;
+  mod = div ? (lgl->nvars + div - 1) / div : 1;
+  assert (mod > 0);
+  if (eliminated % mod) return;
+  lglprt (lgl, 1,
+    "[rdp-%d] eliminated %d out of %d (%.0f%%) after %.1f seconds %.1f MB",
+    lgl->stats->rdp.count,
+    eliminated, lgl->nvars, lglpcnt (eliminated, lgl->nvars),
+    lglgetime (lgl) - lgl->rdp->start, lglmb (lgl));
+}
+#endif
+
+static void lglrdpreport (LGL * lgl) {
+  lglgenericreport (lgl,
+    "rdp", lgl->stats->rdp.count,
+    lgl->rdp->eliminated, lgl->nvars, lgl->rdp->start);
 }
 
-static int lglgaussing (LGL * lgl) { 
-  if (lgldelaying (lgl, "gauss", &lgl->limits->gauss.del.rem)) return 0;
-  if (lglwaiting (lgl, "gauss", lgl->opts->gausswait.val)) return 0;
-  if (!lglsmallirr (lgl)) return 0;
-  return lgl->opts->gauss.val;
+static void lglrdpinit (LGL * lgl) {
+  NEW (lgl->rdp, 1);
+  lgl->rdp->start = lglgetime (lgl);
+  lglrdpreport (lgl);
+  NEW (lgl->rdp->count, 2*lgl->nvars);
+  lgl->rdp->count += lgl->nvars;
+  NEW (lgl->rdp->occs, 2*lgl->nvars);
+  lgl->rdp->occs += lgl->nvars;
+  lglrdpconbintrn (lgl);
+  lglrdpconlrg (lgl);
+  lglfitstk (lgl, &lgl->rdp->lits);
 }
 
-static int lglcliffing (LGL * lgl) {
-  if (lgldelaying (lgl, "cliff", &lgl->limits->cliff.del.rem)) return 0;
-  if (lglwaiting (lgl, "cliff", lgl->opts->cliffwait.val)) return 0;
-  return lgl->opts->cliff.val;
+static void lglrdpreset (LGL * lgl) {
+  int nvars = lgl->nvars;
+  Stk * p;
+  for (p = lgl->rdp->occs - nvars; p < lgl->rdp->occs + nvars; p++)
+    lglrelstk (lgl, p);
+  lgl->rdp->occs -= nvars;
+  DEL (lgl->rdp->occs, 2*nvars);
+  lgl->rdp->count -= nvars;
+  DEL (lgl->rdp->count, 2*nvars);
+  lglrelstk (lgl, &lgl->rdp->lits);
+  DEL (lgl->rdp, 1);
 }
+
+#define RDPL 2
+
+static void lglrdpcollect (LGL * lgl, Stk * s) {
+  int * q = s->start;
+  const int * p;
+  for (p = q; p < s->top; p++) {
+    int cidx = *p;
+    const int * c = lgl->rdp->lits.start + cidx;
+    assert (c < lgl->rdp->lits.top);
+    if (*c != REMOVED) *q++ = cidx;
+  }
+  LOG (RDPL, "collected %ld references", (long)(s->top - q));
+  s->top = q;
+}
+
+static void lglrdpflush (LGL * lgl, Stk * s) {
+  const int * p, * q;
+  for (p = s->start; p < s->top; p++) {
+    int cidx = *p, * c = lgl->rdp->lits.start + cidx, lit;
+    assert (c < lgl->rdp->lits.top);
+    for (q = c; (lit = *q); q++) {
+      assert (lgl->rdp->count[lit] > 0);
+      lgl->rdp->count[lit]--;
+    }
+    *c = REMOVED;
+  }
+  LOG (RDPL, "flushed %d references", lglcntstk (s));
+}
+
+static int lglrdpresolve (LGL * lgl, int pivot, int cidx, int didx) {
+  int res, lit, val, csize, dsize, rsize, resolventsize;
+  const int * c = lgl->rdp->lits.start + cidx, * p;
+  const int * d = lgl->rdp->lits.start + didx;
+  const int64_t lim = lglrdpclslim (lgl);
+  res = resolventsize = 0;
+  assert (pivot > 0);
+  assert (c < lgl->rdp->lits.top);
+  assert (d < lgl->rdp->lits.top);
+  assert (lglmtstk (&lgl->clause));
+  INCSTEPS (rdp.steps);
+  LOGCLS (RDPL+1, c, "RDP resolution 1st antecedent");
+  for (p = c;  resolventsize <= lim && (lit = *p); p++) {
+    if (lit == pivot) continue;
+    assert (lit != -pivot);
+    val = lglval (lgl, lit);
+    if (val < 0) continue;
+    if (val > 0) {
+      assert (!res);
+      LOG (RDPL + 1, "1st antecedent statisfied");
+      goto DONE;
+    }
+    lglpushstk (lgl, &lgl->clause, lit);
+    lglmark (lgl, lit);
+    resolventsize++;
+  }
+  csize = p - c;
+  LOGCLS (RDPL+1, d, "RDP resolution 2nd antecedent");
+  for (p = d; resolventsize <= lim && (lit = *p); p++) {
+    if (-lit == pivot) continue;
+    assert (lit != -pivot);
+    val = lglval (lgl, lit);
+    if (val < 0) continue;
+    if (val > 0) {
+      assert (!res);
+      LOG (RDPL + 1, "2nd antecedent statisfied");
+      goto DONE;
+    }
+    val = lglmarked (lgl, lit);
+    if (val > 0) continue;
+    if (val < 0) {
+      assert (!res);
+      LOG (RDPL + 1, "skipping trivial RDP resolvent");
+      goto DONE;
+    } 
+    lglpushstk (lgl, &lgl->clause, lit);
+    resolventsize++;
+  }
+  if (resolventsize > lim) {
+    LOG (RDPL+1, "RDP larger than %d literals", lim);
+    assert (!res);
+    goto DONE;
+  }
+  dsize = p - d;
+  rsize = lglcntstk (&lgl->clause);
+  assert (rsize == resolventsize);
+  lglpushstk (lgl, &lgl->clause, 0);
+  LOGCLS (RDPL+1, lgl->clause.start, "add non-trivial RDP resolvent");
+  lglrdpaddcls (lgl, lgl->clause.start);
+  if (!rsize) {
+    LOG (1, "RDP produced empty clause");
+    lgl->mt = 1;
+  } else if (rsize == 1) {
+    lit = lglpeek (&lgl->clause, 0);
+    val = lglval (lgl, lit);
+    if (val < 0) {
+      LOG (1, "RDP produced inconsistent unit %d", lit);
+      lgl->mt = 1;
+    } else if (!val) {
+      LOG (1, "RDP produced unit %d", lit);
+      lgl->stats->rdp.units++;
+      lglunit (lgl, lit);
+      if (!lglbcp (lgl)) {
+	LOG (1, "propagating RDP units produces empty clause");
+	lgl->mt = 1;
+      }
+    }
+  } else if (rsize == 2 && (csize > 2 || dsize > 2)) {
+    int a = lglpeek (&lgl->clause, 0);
+    int b = lglpeek (&lgl->clause, 1);
+    if (!lglhasbin (lgl, a, b)) {
+      LOGCLS (RDPL+1, lgl->clause.start, "exporting binary RDP resolvent");
+      lgladdcls (lgl, REDCS, 0, 1);
+      lgl->stats->rdp.bin++;
+#ifndef NLGLPICOSAT
+      lglpicosatchkcls (lgl);
+#endif
+    }
+  } else if (rsize == 3 && (csize > 3 || dsize > 3)) {
+    int a = lglpeek (&lgl->clause, 0);
+    int b = lglpeek (&lgl->clause, 1);
+    int c = lglpeek (&lgl->clause, 2);
+    if (!lglhastrn (lgl, a, b, c)) {
+      LOGCLS (RDPL+1, lgl->clause.start, "exporting ternary RDP resolvent");
+      lgladdcls (lgl, REDCS, 0, 1);
+      lgl->stats->rdp.trn++;
+#ifndef NLGLPICOSAT
+      lglpicosatchkcls (lgl);
+#endif
+    }
+  }
+  res = 1;
+DONE:
+  while (!lglmtstk (&lgl->clause)) {
+    lit = lglpopstk (&lgl->clause);
+    if (lit) lglunmark (lgl, lit);
+  }
+  return res;
+}
+
+static int lglrdplit (LGL * lgl, int idx) {
+  int64_t npos, nneg, k, i, j, r, p, s, l;
+  Stk * pos = &lgl->rdp->occs[idx];
+  Stk * neg = &lgl->rdp->occs[-idx];
+  LOG (RDPL,
+    "RDP pivot %d: pos %d/%d + neg %d/%d",
+    idx,
+    lgl->rdp->count[idx], lglcntstk (pos),
+    lgl->rdp->count[-idx], lglcntstk (neg));
+  lglrdpcollect (lgl, pos), lglrdpcollect (lgl, neg);
+  assert (lgl->rdp->count[idx] >= lglcntstk (pos));
+  assert (lgl->rdp->count[-idx] >= lglcntstk (neg));
+  npos = lglcntstk (pos), nneg = lglcntstk (neg);
+  if (!npos || !nneg) goto DONE;
+  l = ((npos + nneg) * lgl->opts->rdplim.val + 50)/100;
+  r = npos * nneg;
+  p = lglrand (lgl);
+  while (!p || lglgcd64 (p, r) != 1) p++;
+  p = p % r;
+  s = k = lglrand (lgl) % r;
+  LOG (RDPL,
+    "RDP traversal range %lld = %lld * %lld start %lld period %lld limit %lld",
+    (LGLL) r, (LGLL) npos, (LGLL) nneg, (LGLL) s, (LGLL) p, (LGLL) l);
+  do {
+    i = k / nneg, j = k % nneg;
+    LOG (RDPL + 1, "trying index %lld RDP pair %d %d", (LGLL) k, i, j);
+    if (lglrdpresolve (lgl, idx, lglpeek (pos, i), lglpeek (neg, j))) l--;
+    k += p; if (k >= r) k -= r;
+    assert (0 <= k && k < r);
+  } while (!lgl->mt && l >= 0 && s != k);
+DONE:
+  lglrdpflush (lgl, pos), lglrdpflush (lgl, neg);
+  lglrelstk (lgl, pos), lglrelstk (lgl, neg);
+  lgl->rdp->eliminated++;
+  lglrdpreport (lgl);
+  return !lgl->mt && lgl->stats->rdp.steps < lgl->limits->rdp.steps;
+}
+
+static void lglsetrdplim (LGL * lgl) {
+  int64_t limit, irrlim;
+  int pen;
+  limit = (lgl->opts->rdpreleff.val*lgl->stats->visits.search)/1000;
+  if (limit < lgl->opts->rdpmineff.val) limit = lgl->opts->rdpmineff.val;
+  if (lgl->opts->rdpmaxeff.val >= 0 && limit > lgl->opts->rdpmaxeff.val)
+    limit = lgl->opts->rdpmaxeff.val;
+  limit >>= (pen = lgl->limits->rdp.pen + lglszpen (lgl));
+  irrlim = 3*lgl->stats->irr.clauses.cur;
+  irrlim >>= lgl->limits->simp.pen;
+  if (lgl->opts->irrlim.val && limit < irrlim) {
+    limit = irrlim;
+    lglprt (lgl, 1,
+      "[rdp-%d] limit %lld based on %d irredundant clauses",
+      lgl->stats->rdp.count, (LGLL) limit, lgl->stats->irr.clauses.cur);
+  } else
+    lglprt (lgl, 1, "[rdp-%d] limit %lld with penalty %d = %d + %d",
+      lgl->stats->rdp.count, (LGLL) limit,
+      pen, lgl->limits->rdp.pen, lglszpen (lgl));
+  lgl->limits->rdp.steps = lgl->stats->rdp.steps + limit;
+}
+
+static int lglrdp (LGL * lgl) {
+  int oldunits, newunits, deltaunits, success;
+  int oldtrn, newtrn, deltatrn;
+  int oldbin, newbin, deltabin;
+  if (lgl->nvars <= 2) return 1;
+  if (lgl->mt) return 0;
+  lglstart (lgl, &lgl->times->rdp);
+  lgl->stats->rdp.count++;
+  if (lgl->level) lglbacktrack (lgl, 0);
+  assert (!lgl->simp);
+  lgl->simp = 1;
+  lglsetrdplim (lgl);
+  oldunits = lgl->stats->rdp.units;
+  oldbin = lgl->stats->rdp.bin;
+  oldtrn = lgl->stats->rdp.trn;
+  lglrdpinit (lgl);
+  lglrandidxtrav (lgl, lglrdplit);
+  lglrdpreport (lgl);
+  lglrdpreset (lgl);
+  newunits = lgl->stats->rdp.units; deltaunits = (newunits - oldunits);
+  newbin = lgl->stats->rdp.bin; deltabin = (newbin - oldbin);
+  newtrn = lgl->stats->rdp.trn; deltatrn = (newtrn - oldtrn);
+  lglprt (lgl, 1,
+    "[rdp-%d] found %d units, %d binary and %d ternary clauses",
+    lgl->stats->rdp.count, deltaunits, deltabin, deltatrn);
+  success = deltaunits + deltabin + deltatrn;
+  LGLUPDPEN (rdp, success);
+  assert (lgl->simp);
+  lgl->simp = 0;
+  lglstop (lgl);
+  return !lgl->mt;
+}
+
+/*------------------------------------------------------------------------*/
 
 static int lglbcaoccmin (LGL * lgl, int lit) {
   int * p, * w, * eow;
@@ -20452,7 +21963,7 @@ static void lglbca (LGL * lgl) {
 
   if (lgl->level > 0) lglbacktrack (lgl, 0);
   lglgc (lgl);
-  lglfreezer (lgl);
+  assert (lgl->frozen);
 
   for (idx = 2; idx < lgl->nvars; idx++) lglavar (lgl, idx)->inred = 0;
   inred = 0;
@@ -20513,10 +22024,161 @@ DONE:
   lglstop (lgl);
 }
 
+/*------------------------------------------------------------------------*/
+
+static int lgltreducing (LGL * lgl) {
+  if (lgldelaying (lgl, "transred", &lgl->limits->trd.del.rem)) return 0;
+  if (lglwaiting (lgl, "transred", lgl->opts->transredwait.val)) return 0;
+  return lgl->opts->transred.val;
+}
+
+static int lglunhiding (LGL * lgl) { 
+  if (lgldelaying (lgl, "unhide", &lgl->limits->unhd.del.rem)) return 0;
+  if (lglwaiting (lgl, "unhide", lgl->opts->unhidewait.val)) return 0;
+  return lgl->opts->unhide.val;
+}
+
+static int lgldecomposing (LGL * lgl) { return lgl->opts->decompose.val; }
+
+static int lglcgrclosing (LGL * lgl) {
+  if (lgldelaying (lgl, "cgrclsr", &lgl->limits->cgr.del.rem)) return 0;
+  if (lglwaiting (lgl, "cgrclsr", lgl->opts->cgrclsrwait.val)) return 0;
+  return lgl->opts->cgrclsr.val && lglsmallirr (lgl);
+}
+
+static int lglifting (LGL * lgl) {
+  if (lgldelaying (lgl, "lift", &lgl->limits->lft.del.rem)) return 0;
+  if (lglwaiting (lgl, "lift", lgl->opts->liftwait.val)) return 0;
+  return lgl->opts->lift.val;
+}
+
+static int lglblocking (LGL * lgl) {
+  if (!lgl->opts->block.val) return 0;
+  if (lgl->allfrozen) return 0;
+  if (lgldelaying (lgl, "block", &lgl->limits->blk.del.rem)) return 0;
+  if (lgl->opts->blockwait.val &&
+      (!lgl->opts->elim.val || !lgl->elmrtc)) {
+    lglprt (lgl, 2, 
+      "[block-waiting] for bounded variable elimination to be completed");
+    return 0;
+  }
+  if (!lglsmallirr (lgl)) return 0;
+  if (lgl->nvars <= 2) return 0;
+  if (lgl->mt) return 0;
+  if (lgl->blkrem) return 1;
+  return lgl->stats->irrprgss > lgl->limits->blk.irrprgss;
+}
+
+static int lgleliminating (LGL * lgl) {
+  if (!lgl->opts->elim.val) return 0;
+  if (lgl->allfrozen) return 0;
+  if (lgldelaying (lgl, "elim", &lgl->limits->elm.del.rem)) return 0;
+  if (!lglsmallirr (lgl)) return 0;
+  if (lgl->nvars <= 2) return 0;
+  if (lgl->mt) return 0;
+  if (lgl->elmrem) return 1;
+  return lgl->stats->irrprgss > lgl->limits->elm.irrprgss;
+}
+
+static int lglrdping (LGL * lgl) {
+  if (lgldelaying (lgl, "rdp", &lgl->limits->rdp.del.rem)) return 0;
+  if (lglwaiting (lgl, "rdp", lgl->opts->rdpwait.val)) return 0;
+  return lgl->opts->rdp.val;
+}
+
+static int lglbcaing (LGL * lgl) {
+  if (!lgl->opts->bca.val) return 0;
+  if (lgl->allfrozen) return 0;
+  if (lgldelaying (lgl, "bca", &lgl->limits->bca.del.rem)) return 0;
+  if (lglwaiting (lgl, "bca", lgl->opts->bcawait.val)) return 0;
+  if (!lglsmallirr (lgl)) return 0;
+  return 1;
+}
+
+static int lglreducing (LGL * lgl) {
+  int reducable;
+  if (!lgl->opts->reduce.val) return 0;
+  reducable = lgl->stats->red.lrg;
+  assert (reducable >= lgl->lrgluereasons);
+  reducable -= lgl->lrgluereasons;
+  assert (reducable >= lgl->stats->lir[0].clauses);
+  reducable -= lgl->stats->lir[0].clauses;
+  return reducable >= lgl->limits->reduce.inner;
+}
+
+static int lgldefragmenting (LGL * lgl) {
+  int relfree;
+  if (lgl->stats->pshwchs < lgl->limits->dfg.pshwchs) return 0;
+  if (!lgl->nvars) return 0;
+  relfree = (100 * lgl->wchs->free + 99) / lgl->nvars;
+  return relfree >= lgl->opts->defragfree.val;
+}
+
+static int lglrestarting (LGL * lgl) {
+  int assumptions;
+  if (!lgl->opts->restart.val) return 0;
+  if (!lgl->level) return 0;
+  if ((assumptions = lglcntstk (&lgl->assume))) {
+    if (lgl->assumed < assumptions) return 0;
+    assert (lgl->alevel <= lgl->level);
+    if (lgl->alevel == lgl->level) return 0;
+  }
+  return lgl->stats->confs >= lgl->limits->restart.confs;
+}
+
+static int lglternresolving (LGL * lgl) { 
+  if (lgldelaying (lgl, "ternres", &lgl->limits->trnr.del.rem)) return 0;
+  if (lglwaiting (lgl, "ternres", lgl->opts->ternreswait.val)) return 0;
+  return lgl->opts->ternres.val;
+}
+
+static int lglgaussing (LGL * lgl) { 
+  if (lgldelaying (lgl, "gauss", &lgl->limits->gauss.del.rem)) return 0;
+  if (lglwaiting (lgl, "gauss", lgl->opts->gausswait.val)) return 0;
+  if (!lglsmallirr (lgl)) return 0;
+  return lgl->opts->gauss.val;
+}
+
+static int lglcliffing (LGL * lgl) {
+  if (lgldelaying (lgl, "cliff", &lgl->limits->cliff.del.rem)) return 0;
+  if (lglwaiting (lgl, "cliff", lgl->opts->cliffwait.val)) return 0;
+  return lgl->opts->cliff.val;
+}
+
+static int lglprobing (LGL * lgl) {
+  if (!lgl->opts->probe.val) return 0;
+  if (lgl->opts->prbasic.val) return 1;
+  if (!lglsmallirr (lgl)) return 0;
+  if (lgl->opts->prbsimple.val) return 1;
+  if (lgl->opts->treelook.val) return 1;
+  return 0;
+}
+
+static int lglcarding (LGL * lgl) {
+  if (!lgl->opts->card.val) return 0;
+  if (lgldelaying (lgl, "card", &lgl->limits->card.del.rem)) return 0;
+  return 1;
+}
+
+static int lglcceing (LGL * lgl) {
+  if (!lgl->opts->cce.val) return 0;
+  if (lgl->allfrozen) return 0;
+  if (lgldelaying (lgl, "cce", &lgl->limits->cce.del.rem)) return 0;
+  if (lglwaiting (lgl, "cce", lgl->opts->ccewait.val)) return 0;
+  if (!lglsmallirr (lgl)) return 0;
+  return 1;
+}
+
+/*------------------------------------------------------------------------*/
+
 static int lglisimp (LGL * lgl) {
   if (!lgl->opts->simplify.val) return 1;
 
   if (lglternresolving (lgl) && !lglternres (lgl)) return 0;
+  if (lglterminate (lgl)) return 1;
+  assert (!lgl->mt);
+
+  if (lglcarding (lgl) && !lglcard (lgl)) return 0;
   if (lglterminate (lgl)) return 1;
   assert (!lgl->mt);
 
@@ -20544,10 +22206,6 @@ static int lglisimp (LGL * lgl) {
   if (lglterminate (lgl)) return 1;
   assert (!lgl->mt);
 
-  if (lglcarding (lgl) && !lglcard (lgl)) return 0;
-  if (lglterminate (lgl)) return 1;
-  assert (!lgl->mt);
-
   if (lglunhiding (lgl) && !lglunhide (lgl)) return 0;
   if (lglterminate (lgl)) return 1;
   assert (!lgl->mt);
@@ -20565,6 +22223,10 @@ static int lglisimp (LGL * lgl) {
   assert (!lgl->mt);
 
   if (lgleliminating (lgl) && !lglelim (lgl)) return 0;
+  if (lglterminate (lgl)) return 1;
+  assert (!lgl->mt);
+
+  if (lglrdping (lgl) && !lglrdp (lgl)) return 0;
   if (lglterminate (lgl)) return 1;
   assert (!lgl->mt);
 
@@ -20591,12 +22253,11 @@ static void lglregularly (LGL * lgl) {
   if (lgldefragmenting (lgl)) lgldefrag (lgl);
 }
 
-static void lglupdsimpcinc (LGL * lgl, int red) {
+static void lglupdsimpcinc (LGL * lgl, int red, int success) {
   const char * type = "no";
   int inc = 0, div = 1, res;
   assert (red >= 0);
   if (red <= 100) {
-
     if (red > 0) {
       switch (lgl->opts->cintincdiv.val) {
 	case 3: 
@@ -20612,7 +22273,6 @@ static void lglupdsimpcinc (LGL * lgl, int red) {
 	  break;
       }
     }
-
     inc = lgl->opts->cintinc.val;
     if (lgl->opts->simplify.val == 1) {
       type = "arithmetic";
@@ -20635,10 +22295,27 @@ static void lglupdsimpcinc (LGL * lgl, int red) {
     lglprt (lgl, 1,
       "[simplification-%d] full %s conflict interval increment %d",
       lgl->stats->simp.count, type, res);
+
+  if (success &&
+      lgl->opts->cintmaxsoft.val >= 0 &&
+      lgl->limits->simp.cinc >= lgl->opts->cintmaxsoft.val) {
+    lgl->limits->simp.cinc = lgl->opts->cintmaxsoft.val;
+    lglprt (lgl, 1,
+      "[simplification-%d] "
+      "conflict interval soft limit %d reached",
+      lgl->stats->simp.count, lgl->limits->simp.cinc);
+  } else if (lgl->opts->cintmaxhard.val >= 0 &&
+             lgl->limits->simp.cinc >= lgl->opts->cintmaxhard.val) {
+    lgl->limits->simp.cinc = lgl->opts->cintmaxhard.val;
+    lglprt (lgl, 1,
+      "[simplification-%d] "
+      "conflict interval hard limit %d reached",
+      lgl->stats->simp.count, lgl->limits->simp.cinc);
+  }
 }
 
-static void lglupdsimpint (LGL * lgl, int oldrem, int forced) {
-  int removed, pcntred, oldirrlim, sameirrlim, simpcinc;
+static void lglupdsimpint (LGL * lgl, int oldrem, int oldirr, int forced) {
+  int removed, remirr, pcntred, simpcinc;
   int64_t pcntred64;
 
   removed = oldrem - lglrem (lgl);
@@ -20651,18 +22328,33 @@ static void lglupdsimpint (LGL * lgl, int oldrem, int forced) {
     "[simplification-%d] removed %d variables %d%%",
     lgl->stats->simp.count, removed, pcntred);
 
+  remirr = oldirr - lgl->stats->irr.clauses.cur;
+  lglprt (lgl, 1,
+    "[simplification-%d] removed %d irredundant clauses %.0f%%",
+    lgl->stats->simp.count, remirr, lglpcnt (remirr, oldirr));
+
   if (forced) {
     simpcinc = 0;
     lglprt (lgl, 1,
-      "[simplification-%d] keeping old conflict interval %d",
-      lgl->stats->simp.count, pcntred, lgl->opts->simprtc.val);
-  } else if (removed > 0 && pcntred >= lgl->opts->simprtc.val) {
-    simpcinc = lgl->opts->simpinterdelay.val;
+      "[simplification-%d] forced so keeping old conflict interval %d",
+      lgl->stats->simp.count, lgl->limits->simp.cinc);
+  } else if (lgl->stats->confs < lgl->limits->simp.confs &&
+             (simpcinc = lgl->limits->simp.cinc)) {
     lglprt (lgl, 1,
-      "[simplification-%d] reduction %d%% >= %d%% thus conflict interval %d",
-      lgl->stats->simp.count, pcntred, lgl->opts->simprtc.val, simpcinc);
+      "[simplification-%d] keeping old conflict interval %d "
+      "(non-conflict triggered simplification)",
+      lgl->stats->simp.count, lgl->limits->simp.cinc);
+  } else if (removed > 0 && pcntred >= lgl->opts->simprtc.val) {
+    int factor = 11 - lgl->stats->simp.count;
+    if (factor <= 0) factor = 1;
+    simpcinc = lgl->opts->simpinterdelay.val / factor;
+    lglprt (lgl, 1,
+      "[simplification-%d] "
+      "reduction %d%% >= %d%% thus conflict interval %d = %d / %d",
+      lgl->stats->simp.count, pcntred, lgl->opts->simprtc.val,
+      simpcinc, lgl->opts->simpinterdelay.val, factor);
   } else {
-    lglupdsimpcinc (lgl, pcntred);
+    lglupdsimpcinc (lgl, pcntred, removed);
     simpcinc = lgl->limits->simp.cinc;
     lglprt (lgl, 1, "[simplification-%d] new conflict interval %d",
             lgl->stats->simp.count, simpcinc);
@@ -20689,63 +22381,99 @@ static void lglupdsimpint (LGL * lgl, int oldrem, int forced) {
       lgl->stats->simp.count, lgl->limits->simp.pen);
   }
 
-  lgl->limits->simp.prgss = lgl->stats->prgss;
-
-  oldirrlim = lgl->limits->simp.irr;
-  lgl->limits->simp.irr = lglnewirrlim (lgl);
-  sameirrlim = (oldirrlim == lgl->limits->simp.irr);
-
-  lglprt (lgl, 1 + sameirrlim,
-    "[simplification-%d] %s irredundant limit %lld",
-    lgl->stats->simp.count,
-    (sameirrlim ? "same" : "new"),
-    (LGLL) lgl->limits->simp.irr);
+  lgl->limits->simp.irr = lgl->stats->irr.clauses.cur;
+  lgl->limits->simp.vars = lglrem (lgl);
 
   lgl->forcerephead = 1;
 }
 
 static int lglpreprocessing (LGL * lgl, int forced) {
-  int res = !lgl->mt, oldrem;
+  int res, oldrem, oldirr;
+  if (lgl->mt) return 0;
   assert (!lgl->searching);
-  if (forced || !lgl->stats->simp.count) {
-    lgl->stats->simp.count++;
-    oldrem = lglrem (lgl);
-    res = lglisimp (lgl);
-    lglupdsimpint (lgl, oldrem, forced);
-  }
+  lgl->stats->simp.count++;
+  oldrem = lglrem (lgl);
+  oldirr = lgl->stats->irr.clauses.cur;
+  res = lglisimp (lgl);
+  lglupdsimpint (lgl, oldrem, oldirr, forced);
   assert (res == !lgl->mt);
   return res;
 }
 
 static int lglsimplimhit (LGL * lgl) {
+  int64_t n, o, d;
+  int a, r, res = 0;;
   if (!lgl->opts->inprocessing.val && lgl->stats->simp.count) return 0;
-  if (lgl->stats->confs < lgl->limits->simp.confs) return 0;
-  lgl->stats->simp.climhit++;
-  lglprt (lgl, 1, "");
-  lglprt (lgl, 1,
-    "[simplification-%d] limit %lld hit at %lld conflicts",
-    lgl->stats->simp.count + 1,
-    (LGLL) lgl->limits->simp.confs, (LGLL) lgl->stats->confs);
-  if (lgl->limits->simp.pen)
+  if (lgl->stats->confs >= lgl->limits->simp.confs) {
+    lglprt (lgl, 1, "");
     lglprt (lgl, 1,
-      "[simplification-%d] simplification penalty of %d",
-      lgl->stats->simp.count + 1, lgl->limits->simp.pen);
-  else
-    lglprt (lgl, 2,
-      "[simplification-%d] no simplification penalty",
-      lgl->stats->simp.count + 1);
-  return 1;
+      "[simplification-%d] limit of %lld conflicts hit after %lld conflicts",
+      lgl->stats->simp.count + 1,
+      (LGLL) lgl->limits->simp.confs, (LGLL) lgl->stats->confs);
+    lgl->stats->simp.limhit.confs++;
+    res = 1;
+  }
+  if (!res &&
+      (o = lgl->limits->simp.irr) &&
+      (n = lgl->stats->irr.clauses.cur) >= lgl->opts->simpirrlim.val) {
+    d = n - o;
+    r = 100*d;
+    r /= o;
+    if (r <= INT_MIN || r > INT_MAX) a = INT_MAX;
+    else if (r < 0) a = -r;
+    else a = r;
+    if (a >= lgl->opts->simpirrchg.val) {
+      lglprt (lgl, 1, "");
+      lglprt (lgl, 1,
+	"[simplification-%d] limit hit: "
+	"irredundant clauses changed from %lld to %lld by %d%%",
+	lgl->stats->simp.count + 1, (LGLL) o, (LGLL) n, r);
+      lgl->stats->simp.limhit.irr++;
+      res = 1;
+    }
+  }
+  if (!res &&
+      (o = lgl->limits->simp.vars) &&
+      (n = lglrem (lgl)) >= lgl->opts->simpvarlim.val) {
+    d = n - o;
+    r = 100*d;
+    r /= o;
+    if (r <= INT_MIN || r > INT_MAX) a = INT_MAX;
+    else if (r < 0) a = -r;
+    else a = r;
+    if (a >= lgl->opts->simpvarchg.val) {
+      lglprt (lgl, 1, "");
+      lglprt (lgl, 1,
+	"[simplification-%d] limit hit: "
+	"remaining variables changed from %lld to %lld by %d%%",
+	lgl->stats->simp.count + 1, (LGLL) o, (LGLL) n, r);
+      lgl->stats->simp.limhit.vars++;
+      res = 1;
+    }
+  }
+  if (res) {
+    if (lgl->limits->simp.pen)
+      lglprt (lgl, 1,
+	"[simplification-%d] with simplification penalty of %d",
+	lgl->stats->simp.count + 1, lgl->limits->simp.pen);
+    else
+      lglprt (lgl, 2,
+	"[simplification-%d] no simplification penalty",
+	lgl->stats->simp.count + 1);
+  }
+  return res;
 }
 
 static int lglinprocessing (LGL * lgl) {
-  int res, oldrem;
+  int res, oldrem, oldirr;
   assert (lgl->searching);
   if (!lglsimplimhit (lgl)) return !lgl->mt;
   lgl->stats->simp.count++;
   lglstart (lgl, &lgl->times->inpr);
   oldrem = lglrem (lgl);
+  oldirr = lgl->stats->irr.clauses.cur;
   res = lglisimp (lgl);
-  lglupdsimpint (lgl, oldrem, 0);
+  lglupdsimpint (lgl, oldrem, oldirr, 0);
   lglstop (lgl);
   assert (res == !lgl->mt);
   return res;
@@ -20779,6 +22507,12 @@ static int lglimhit (LGL * lgl, Lim * lim) {
   if (lim->confs >= 0 && lgl->stats->confs >= lim->confs) {
     lglprt (lgl, 1, "[limits] conflict limit %lld hit at %lld conflicts",
       (LGLL) lim->confs, (LGLL) lgl->stats->confs);
+    return 1;
+  }
+  if (lim->props >= 0 && lgl->stats->props.search >= lim->props) {
+    lglprt (lgl, 1,
+      "[limits] propagation limit %lld hit at %lld propagations",
+      (LGLL) lim->props, (LGLL) lgl->stats->props.search);
     return 1;
   }
   return 0;
@@ -20821,7 +22555,7 @@ static int lgltopsimp (LGL * lgl, int forcesimp) {
   if ((forcesimp || lglsimplimhit (lgl)) &&
       !lglpreprocessing (lgl, forcesimp)) return 20;
   if (lglfailedass (lgl)) return 20;
-  if (!lgl->stats->confs) lglcutwidth (lgl);
+  if (!lgl->stats->cutwidths) lglcutwidth (lgl);
   lglrep (lgl, 2, 's');
   return 0;
 }
@@ -20839,9 +22573,7 @@ static int lglsolve (LGL * lgl, Lim * lim, int forcesimp) {
 static void lglincsetup (LGL * lgl) { lgl->elmrtc = lgl->blkrtc = 0; }
 
 static void lglsetup (LGL * lgl) {
-  if (lgl->state == RESET) goto DONE;
-  assert (lgl->state & (UNUSED | OPTSET | USED));
-
+  if (lgl->setuponce) goto DONE;
   lgl->limits->dfg.pshwchs = lgl->stats->pshwchs + lgl->opts->defragint.val;
   lgl->limits->reduce.inner = lgl->opts->redlinit.val;
   lglboundredl (lgl);
@@ -20849,7 +22581,6 @@ static void lglsetup (LGL * lgl) {
 
   lgl->limits->blk.irrprgss = -1;
   lgl->limits->elm.irrprgss = -1;
-  lgl->limits->simp.prgss = -1;
   lgl->limits->term.steps = -1;
 
   lgl->limits->rephase.confs = lgl->stats->rephase.inc = 10000;
@@ -20871,6 +22602,10 @@ static void lglsetup (LGL * lgl) {
   lgl->limits->randec += lgl->opts->randecint.val/2;
   lgl->limits->randec += lglrand (lgl) % lgl->opts->randecint.val;
 
+  lgl->limits->simp.irr = lgl->stats->irr.clauses.cur;
+  lgl->limits->simp.vars = lglrem (lgl);
+
+  lgl->setuponce = 1;
   lglchkenv (lgl);
 DONE:
   lglinitscores (lgl);
@@ -20974,12 +22709,12 @@ LOG (3, "external %d without internal representative", abs (erepr));
       lgleassign (lgl, lit);
     }
   }
-#ifndef NLGLOG
-  lglpushstk (lgl, &lgl->extend, 0);
-  (void) lglpopstk (&lgl->extend);
-#endif
   start = lgl->extend.start;
   p = lgl->extend.top;
+  if (p == start) goto SKIP;
+  assert (p > start);
+  p--;
+  assert (!*p);
   while (p > start) {
 #ifndef NLGLOG
     if (lgl->opts->log.val >= 4) {
@@ -20993,7 +22728,7 @@ LOG (3, "external %d without internal representative", abs (erepr));
     next = 0;
     do {
       lit = next;
-      next = *--p;
+      if (p == start) next = 0; else next = *--p;
       if (!lit || satisfied) continue;
       val = lglederef (lgl, lit);
       assert (!next || val);
@@ -21006,6 +22741,7 @@ LOG (3, "external %d without internal representative", abs (erepr));
     if (satisfied) continue;
     lgleassign (lgl, lit);
   }
+SKIP:
   lglcomputechanged (lgl);
   TRANS (EXTENDED);
 }
@@ -21130,12 +22866,14 @@ static int lglcompactify (LGL * lgl, int res) {
 }
 
 static int lglisat (LGL * lgl, Lim * lim, int simpits) {
-  int res, count;
+  int res, count, reported = lgl->stats->reported;
   lglreset (lgl);
   lglinitsolve (lgl);
   res = lglsolve (lgl, lim, 0);
   for (count = 0; !res && count < simpits; count++) {
-    lglprt (lgl, 1, "next forced simplification iteration %d", count);
+    lglprt (lgl, 1,
+      "[simplification-%d] next forced simplification iteration %d",
+      lgl->stats->simp.count + 1, count + 1);
     res = lglsolve (lgl, lim, 1);
   }
   if (lglcompactify (lgl, res)) lglcompact (lgl);
@@ -21152,7 +22890,7 @@ static int lglisat (LGL * lgl, Lim * lim, int simpits) {
     if (!lgl->level && !lgl->mt) assert (lgl->failed);
     lglrep (lgl, 1, '0');
   }
-  lglflshrep (lgl);
+  if (reported != lgl->stats->reported) lglflshrep (lgl);
   if (res == 10) lglextend (lgl);
 #ifndef NCHKSOL
   if (res == 10) lglchksol (lgl);
@@ -21254,7 +22992,7 @@ do { \
 } while (0)
 
 static void lglsetlim (LGL * lgl, Lim * lim) {
-  int64_t clim, dlim, confs, decs, delay, delayed;
+  int64_t clim, dlim, plim, confs, decs, props, delay, delayed;
   if ((dlim = lgl->opts->dlim.val) < 0) {
     lim->decs = -1;
     lglprt (lgl, 1, "[limits] no decision limit");
@@ -21272,6 +23010,17 @@ static void lglsetlim (LGL * lgl, Lim * lim) {
     lim->confs = (confs >= LLMAX - clim) ? LLMAX : confs + clim;
     lglprt (lgl, 1, "[limits] conflict limit %lld after %lld conflicts", 
             (LGLL) lim->confs, (LGLL) confs);
+  }
+  if ((plim = lgl->opts->plim.val) < 0) {
+    lim->props = -1;
+    lglprt (lgl, 1, "[limits] no propagation limit");
+  } else {
+    plim *= 1000;
+    props = lgl->stats->props.search;
+    lim->props = (props >= LLMAX - plim) ? LLMAX : props + plim;
+    lglprt (lgl, 1,
+      "[limits] propagation limit %lld after %lld propagations", 
+      (LGLL) lim->props, (LGLL) props);
   }
   if ((delay = lgl->opts->simpdelay.val) > 0) {
     delayed = lgl->stats->confs + delay;
@@ -21294,6 +23043,7 @@ int lglsat (LGL * lgl) {
   lglstart (lgl, &lgl->times->all);
   lgl->stats->calls.sat++;
   ABORTIF (!lglmtstk (&lgl->clause), "clause terminating zero missing");
+  lglfreezer (lgl);
   lglsetlim (lgl, &lim);
   res = lglisat (lgl, &lim, 0);
   lglstop (lgl);
@@ -21400,6 +23150,7 @@ int lglookahead (LGL * lgl) {
   lglreset (lgl);
   assert (!lgl->lkhd);
   lgl->lkhd = 1;
+  lglfreezer (lgl);
   if (lgl->level) lglbacktrack (lgl, 0);
   if (!lgl->mt && lglbcp (lgl)) {
     ilit = 0;
@@ -21446,6 +23197,7 @@ int lglsimp (LGL * lgl, int iterations) {
   ABORTIF (!lglmtstk (&lgl->clause), "clause terminating zero missing");
   lglstart (lgl, &lgl->times->all);
   lgl->stats->calls.simp++;
+  lglfreezer (lgl);
   CLR (lim);
   lim.decs = lgl->stats->decisions;
   res = lglisat (lgl, &lim, iterations);
@@ -21571,44 +23323,90 @@ void lglfreeze (LGL * lgl, int elit) {
   assert (!ext->blocking && !ext->eliminated);
   ABORTIF (ext->frozen == INT_MAX, "literal %d frozen too often", elit);
   ext->frozen++;
-  if (!ext->frozen) lgl->stats->irrprgss++;
-  lglmelter (lgl);
+  if (!ext->frozen) {
+    lgl->stats->irrprgss++;
+    lglmelter (lgl);
+  }
   if (lgl->clone) lglfreeze (lgl->clone, elit);
 }
 
-int lglitgone (LGL * lgl, int elit) {
+int lglfrozen (LGL * lgl, int elit) {
+  Ext * ext;
   int res;
   REQINIT ();
-  TRAPI ("litgone %d", elit);
-  ABORTIF (!elit, "can not check zero literal for being gone");
-  if (abs (elit) > lgl->maxext) res = 1;
-  else if (lglfixed (lgl, elit)) res = 1;
-  else if (lglerepr (lgl, elit) != elit) res = 1;
-  else res = lglelit2ext (lgl, elit)->eliminated;
-  RETURNARG (lglitgone, elit, res);
+  TRAPI ("frozen %d", elit);
+  ABORTIF (!elit, "can not check zero literal for being frozen");
+  if (abs (elit) > lgl->maxext) res = INT_MAX;
+  else if (!(ext = lglelit2ext (lgl, elit))->imported) res = INT_MAX;
+  else res = ext->frozen;
+  RETURNARG (lglfrozen, elit, res);
   return res;
 }
 
-int lglitcanbemelted (LGL * lgl, int elit) {
+int lglusable (LGL * lgl, int elit) {
+  Ext * ext;
   int res;
+  REQINIT ();
+  TRAPI ("usable %d", elit);
+  ABORTIF (!elit, "can not check zero literal for being usable");
+  if (abs (elit) > lgl->maxext) res = 1;
+  else if (!(ext = lglelit2ext (lgl, elit))->imported) res = 1;
+  else res = !ext->melted;
+  RETURNARG (lglusable, elit, res);
+  return res;
+}
+
+static int lglereusable (LGL * lgl, int elit) {
+  Ext * ext;
+  int res;
+  if (abs (elit) > lgl->maxext) res = 1;
+  else if (!(ext = lglelit2ext (lgl, elit))->imported) res = 1;
+  else if (ext->blocking) res = 0;
+  else if (ext->eliminated) res = 0;
+  else if (ext->equiv) res = 0;
+  else if (abs (ext->repr) == 1) res = 0;
+  else res = 1;
+  return res;
+}
+
+int lglreusable (LGL * lgl, int elit) {
+  int res;
+  REQINIT ();
+  TRAPI ("reusable %d", elit);
+  ABORTIF (!elit, "can not check zero literal for being reusable");
+  res = lglereusable (lgl, elit);
+  RETURNARG (lglreusable, elit, res);
+  return res;
+}
+
+void lglreuse (LGL * lgl, int elit) {
   Ext * ext;
   REQINIT ();
-  TRAPI ("litcanbemelted %d", elit);
-  ABORTIF (!elit, "can not check zero literal for being frozen");
-  if (abs (elit) > lgl->maxext) res = 0;
-  else if (lglfixed (lgl, elit)) res = 0;
-  else if (lglerepr (lgl, elit) != elit) res = 0;
-  else if (!(ext = lglelit2ext (lgl, elit))->frozen) res = 0;
-  else if (ext->melted) res = 0;
-  else res = 1;
-  RETURNARG (lglitcanbemelted, elit, res);
-  return res;
+  TRAPI ("reuse %d", elit);
+  ABORTIF (!elit, "can not reuse zero literal");
+  ABORTIF (!lglereusable (lgl, elit), "can not reuse non-reusable literal");
+  if (abs (elit) <= lgl->maxext) {
+    ext = lglelit2ext (lgl, elit);
+    if (ext->imported) {
+      assert (!ext->blocking);
+      assert (!ext->eliminated);
+      if (ext->melted) {
+	LOG (2,
+	  "forced permanently melted external %d to be reused",
+	  elit);
+	ext->melted = 0;
+	lglmelter (lgl);
+      }
+    }
+  }
+  if (lgl->clone) lglreuse (lgl->clone, elit);
 }
 
 void lglmeltall (LGL * lgl) {
   int idx, melted;
   Ext * ext;
   REQINIT ();
+  TRAPI ("meltall");
   melted = 0;
   for (idx = 1; idx <= lgl->maxext; idx++) {
     ext = lglelit2ext (lgl, idx);
@@ -21619,6 +23417,8 @@ void lglmeltall (LGL * lgl) {
     melted++;
   }
   lglprt (lgl, 1, "[meltall] melted %d frozen literals", melted);
+  lglmelter (lgl);
+  if (lgl->clone) lglmeltall (lgl->clone);
 }
 
 void lglmelt (LGL * lgl, int elit) {
@@ -21636,8 +23436,17 @@ void lglmelt (LGL * lgl, int elit) {
   ABORTIF (!ext->frozen, "can not melt fully unfrozen literal %d", elit);
   assert (!ext->blocking && !ext->eliminated);
   ext->frozen--;
-  lglmelter (lgl);
+  lglmelter (lgl);	// TODO guard  by !ext->frozen?
   if (lgl->clone) lglmelt (lgl->clone, elit);
+}
+
+void lglreconstk (LGL * lgl, int ** startptr, int ** toptr) {
+  REQINIT ();
+  TRAPI ("reconstk");
+  lglfitstk (lgl, &lgl->extend);	// 'lglcompact' -> 'lglclone'!!
+  if (startptr) *startptr = lgl->extend.start;
+  if (toptr) *toptr = lgl->extend.top;
+  if (lgl->clone) lglreconstk (lgl->clone, 0, 0);
 }
 
 static void lglprstart (LGL * lgl) {
@@ -21781,7 +23590,7 @@ static void lglprof (LGL * lgl) {
   if (!lgl->opts->verbose.val) goto SHORT;
 
 
-  sztns = 25;
+  sztns = 26;
   NEW (tns, sztns);
   ntns = 0;
 
@@ -21805,6 +23614,7 @@ static void lglprof (LGL * lgl) {
   INSTN (mincls, mcls);
   INSTN (phase, phs);
   INSTN (probe, prb.all);
+  INSTN (rdp, rdp);
   INSTN (reduce, red );
   INSTN (restart, rsts);
   INSTN (ternres, trn);
@@ -21853,8 +23663,8 @@ SHORT:
 }
 
 void lglstats (LGL * lgl) {
+  long long visits, travs, min, p, steps;
   int remaining, removed, sum;
-  long long v, min, p, steps;
   Stats * s;
   double t;
   REQINIT ();
@@ -21875,6 +23685,25 @@ void lglstats (LGL * lgl) {
     s->bca.count, (LGLL) s->bca.added, s->bca.skipped, (LGLL) s->bca.steps);
 
   lglprs (lgl,
+    "bkwd: tried %lld clauses, %lld lits, %.2f lits/clause",
+    (LGLL) s->bkwd.tried.clauses, (LGLL) s->bkwd.tried.lits,
+    lglavg (s->bkwd.tried.lits, s->bkwd.tried.clauses));
+  lglprs (lgl,
+    "bkwd: checked %lld occs, %.2f occs/clause, %.2f occs/lit",
+    (LGLL) s->bkwd.tried.occs,
+    lglavg (s->bkwd.tried.occs, s->bkwd.tried.clauses),
+    lglavg (s->bkwd.tried.occs, s->bkwd.tried.lits));
+  lglprs (lgl,
+    "bkwd: subsumed %d binary, %d ternary, %d large",
+    s->bkwd.sub2, s->bkwd.sub3, s->bkwd.subl);
+  lglprs (lgl,
+    "bkwd: strengthened %d binary, "
+    "%d ternary (%.0f%% self), %d large (%.0f%% self)",
+    s->bkwd.str2,
+    s->bkwd.str3, lglpcnt (s->bkwd.str3self, s->bkwd.str3),
+    s->bkwd.strl, lglpcnt (s->bkwd.strlself, s->bkwd.strl));
+
+  lglprs (lgl,
     "blkd: %d bces, %d removed, %lld resolutions, %lld steps",
     s->blk.count, s->blk.clauses, (LGLL) s->blk.res, (LGLL) s->blk.steps);
   lglprs (lgl,
@@ -21885,8 +23714,9 @@ void lglstats (LGL * lgl) {
     "card: %d count, %d units, %d am1, %lld steps",
     s->card.count, s->card.units, s->card.expam1, (LGLL) s->card.steps);
   lglprs (lgl,
-    "card: %d rescheduled, %lld eliminated, %lld resolved",
-    s->card.resched, (LGLL) s->card.eliminated, (LGLL) s->card.resolved);
+    "card: %d rescheduled, %lld eliminated, %lld resolved, %lld subsumed",
+    s->card.resched, (LGLL) s->card.eliminated,
+    (LGLL) s->card.resolved, (LGLL) s->card.subsumed);
   lglprs (lgl,
     "card: %d at-most-one constraints found, average size %.2f",
     s->card.am1.found.cnt,
@@ -21958,7 +23788,7 @@ void lglstats (LGL * lgl) {
     (LGLL) s->calls.sat, (LGLL) s->calls.simp,
     (LGLL) s->calls.freeze, (LGLL) s->calls.melt);
   lglprs (lgl,
-    "clls: %lld add, %lld assume,, %lld deref, %lld failed",
+    "clls: %lld add, %lld assume, %lld deref, %lld failed",
     (LGLL) s->calls.add, (LGLL) s->calls.assume,
     (LGLL) s->calls.deref, (LGLL) s->calls.failed);
   lglprs (lgl,
@@ -21975,7 +23805,7 @@ void lglstats (LGL * lgl) {
 
   lglprs (lgl,
     "deco: %lld decision-only clauses %.0f%%, %.0f%% reduction",
-    s->deco.cnt, lglpcnt (s->deco.cnt, s->clauses.learned),
+    s->deco.count, lglpcnt (s->deco.count, s->clauses.learned),
     lglpcnt (s->deco.sum.orig - s->deco.sum.red, s->deco.sum.orig)); 
 
   lglprs (lgl,
@@ -22032,12 +23862,12 @@ void lglstats (LGL * lgl) {
     s->gauss.steps.elim, lglpcnt (s->gauss.steps.elim, steps));
 
   lglprs (lgl,
-    "glue: %.1f avg, %.1f scaled avg",
+    "glue: %.1f orig avg, %.1f real avg, %.1f scaled avg",
     lglavg (s->clauses.glue, s->clauses.learned),
+    lglavg (s->clauses.realglue, s->clauses.learned),
     lglavg (s->clauses.scglue, s->clauses.learned));
   lglprs (lgl,
-    "glue: %lld maxredglue=%d (%.0f%%)",
-    lglavg (s->clauses.glue, s->clauses.learned),
+    "glue: %lld maxscaledglue=%d (%.0f%%)",
     (LGLL) s->clauses.maxglue, MAXGLUE,
     lglpcnt (s->clauses.maxglue, s->clauses.learned));
 
@@ -22069,10 +23899,9 @@ void lglstats (LGL * lgl) {
     s->lift.units, s->lift.eqs, s->lift.impls);
 
   lglprs (lgl,
-    "lrnd: %lld clauses, %.1f length, %.1f glue",
+    "lrnd: %lld clauses, %.1f length",
     (LGLL) s->clauses.learned,
-    lglavg (s->lits.learned, s->clauses.learned),
-    lglavg (s->clauses.glue, s->clauses.learned));
+    lglavg (s->lits.learned, s->clauses.learned));
   lglprs (lgl,
     "lrnd: %lld uips %.0f%%, %lld flips %.0f%%",
     (LGLL) s->uips, lglpcnt (s->uips, s->clauses.learned),
@@ -22094,11 +23923,11 @@ void lglstats (LGL * lgl) {
 
   sum = s->otfs.str.dyn.red + s->otfs.str.dyn.irr;
   lglprs (lgl,
-    "otfs: str %d dyn (%d red, %d irr) %d drv %.0f%%, %d rst %.0f%%",
+    "otfs: str %d dyn (%d red, %d irr) %lld drv %.0f%%, %lld rst %.0f%%",
     sum,
     s->otfs.str.dyn.red, s->otfs.str.dyn.irr,
-    s->otfs.driving, lglpcnt (s->otfs.driving, sum),
-    s->otfs.restarting, lglpcnt (s->otfs.restarting, sum));
+    (LGLL) s->otfs.driving, lglpcnt (s->otfs.driving, sum),
+    (LGLL) s->otfs.restarting, lglpcnt (s->otfs.restarting, sum));
   lglprs (lgl,
     "otfs: sub %d dyn (%d red, %d irr)",
     s->otfs.sub.dyn.red + s->otfs.sub.dyn.irr,
@@ -22135,6 +23964,10 @@ void lglstats (LGL * lgl) {
     "psns: %lld searches, %lld hits, %.0f%% hit rate",
     (LGLL) s->poison.search, (LGLL) s->poison.hits,
     lglpcnt (s->poison.hits, s->poison.search));
+
+  lglprs (lgl,
+    "rdps: %d count, %d units, %d bin, %d trn, %lld steps",
+    s->rdp.count, s->rdp.units, s->rdp.bin, s->rdp.trn, (LGLL) s->rdp.steps);
 
   lglprs (lgl,
     "reds: %d count, %d reset, %d acts %.0f%%",
@@ -22176,9 +24009,16 @@ void lglstats (LGL * lgl) {
     lglavg (s->restarts.kept.sum, s->restarts.kept.count));
 
   lglprs (lgl,
-    "simp: %d count (%d conflict limit %0.f%%)",
+    "simp: %d count (%d confs %0.f%%, %d irr %.0f%%, %d vars %.0f%%)",
     s->simp.count,
-    s->simp.climhit, lglpcnt (s->simp.climhit, s->simp.count));
+    s->simp.limhit.confs, lglpcnt (s->simp.limhit.confs, s->simp.count),
+    s->simp.limhit.irr, lglpcnt (s->simp.limhit.irr, s->simp.count),
+    s->simp.limhit.vars, lglpcnt (s->simp.limhit.vars, s->simp.count));
+
+  lglprs (lgl,
+    "subl: %lld count (%lld tried %.1f), %lld sub out of %lld (%.1f%%)",
+    s->subl.count, s->subl.tried, lglavg (s->subl.tried, s->subl.count),
+    s->subl.sub, s->subl.cands, lglpcnt (s->subl.sub, s->subl.cands));
 
   lglprs (lgl,
     "sync: %lld produced units, %lld successful consumptions %.0f%%",
@@ -22208,12 +24048,28 @@ void lglstats (LGL * lgl) {
     s->fixed.sum, lglpcnt (s->fixed.sum, lgl->maxext), 
     s->iterations, s->iterations, lglavg (s->confs, s->iterations));
 
+  travs = s->travs.search + s->visits.simp + s->visits.lkhd;
+  lglprs (lgl,
+    "trvs: %lld traversals, %.0f%% srch, %.0f%% simp, %.0f%% lkhd",
+    (LGLL) travs, lglpcnt (s->travs.search, travs),
+    lglpcnt (s->travs.simp, travs), lglpcnt (s->travs.lkhd, travs));
+  lglprs (lgl,
+    "trvs: %.1f search traversals per propagation, %.1f per conflict",
+    lglavg (s->travs.search, s->props.search),
+    lglavg (s->travs.search, s->confs));
+  lglprs (lgl,
+    "trvs: %.1f search traversals per search visit",
+    lglavg (s->travs.search, s->visits.search));
+
   lglprs (lgl,
     "trds: %d transitive reductions, %d removed, %d failed",
     s->trd.count, s->trd.red, s->trd.failed);
   lglprs (lgl,
     "trds: %lld nodes, %lld edges, %lld steps",
     (LGLL) s->trd.lits, (LGLL) s->trd.bins, (LGLL) s->trd.steps);
+
+  lglprs (lgl, "trim: %lld words, %.1f MB",
+    (LGLL) s->trims, (s->trims * sizeof (int)) / (double)(1<<20));
 
   lglprs (lgl,
     "trnr: %d count, %d bin, %d trn, %lld steps",
@@ -22276,13 +24132,13 @@ void lglstats (LGL * lgl) {
     s->elm.elmd, lglpcnt (s->elm.elmd, lgl->maxext),
     s->equiv.sum, lglpcnt (s->equiv.sum, lgl->maxext));
 
-  v = s->visits.search + s->visits.simp + s->visits.lkhd;
+  visits = s->visits.search + s->visits.simp + s->visits.lkhd;
   lglprs (lgl,
     "vsts: %lld visits, %.0f%% srch, %.0f%% simp, %.0f%% lkhd",
-    (LGLL) v, lglpcnt (s->visits.search, v),
-    lglpcnt (s->visits.simp, v), lglpcnt (s->visits.lkhd, v));
+    (LGLL) visits, lglpcnt (s->visits.search, visits),
+    lglpcnt (s->visits.simp, visits), lglpcnt (s->visits.lkhd, visits));
   lglprs (lgl,
-    "vsts: %.1f search visits per propagation %.1f per conflict",
+    "vsts: %.1f search visits per propagation, %.1f per conflict",
     lglavg (s->visits.search, s->props.search),
     lglavg (s->visits.search, s->confs));
 
@@ -22378,6 +24234,7 @@ void lglrelease (LGL * lgl) {
   lglrelstk (lgl, &lgl->eclause);
   lglrelstk (lgl, &lgl->extend);
   lglrelstk (lgl, &lgl->fassume);
+  lglrelstk (lgl, &lgl->learned);
   lglrelstk (lgl, &lgl->frames);
   lglrelstk (lgl, &lgl->trail);
   lglrelstk (lgl, &lgl->wchs->stk);
@@ -22539,6 +24396,13 @@ void lglprint (LGL * lgl, FILE * file) {
   lglctrav (lgl, &count, lgltravcounter);
   fprintf (file, "p cnf %d %d\n", lglmaxvar (lgl), count);
   lglctrav (lgl, file, lgltravprinter);
+}
+
+void lglprintall (LGL * lgl, FILE * file) {
+  int count = 0;
+  lgltravall (lgl, &count, lgltravcounter);
+  fprintf (file, "p cnf %d %d\n", lglmaxvar (lgl), count);
+  lgltravall (lgl, file, lgltravprinter);
 }
 
 void lglrtrav (LGL * lgl, void * state, void (*trav)(void *, int, int)) {

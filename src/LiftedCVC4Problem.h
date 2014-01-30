@@ -55,7 +55,7 @@ public:
 
 	//Add new numerical condition to the building clause
 	void AddConditionToCluase(const comparison* numericalCondition, FastEnvironment *env, int operatorId, int significantTimePoint);
-	void AddConditionToCluase(const expression *leftExpression, FastEnvironment *env, int operatorId, comparison_op compOp, double rightValue, int significantTimePoint);
+	void AddConditionToCluase(const VAL::expression *leftExpression, FastEnvironment *env, int operatorId, comparison_op compOp, double rightValue, int significantTimePoint);
 
 	//Add new numerical assignment to the building clause
 	void AddConditionToCluase(const assignment* numericalAssignment, FastEnvironment *env, int operatorId, int significantTimePoint);

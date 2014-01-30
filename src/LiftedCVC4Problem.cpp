@@ -286,7 +286,7 @@ void LiftedCVC4Problem::AddConditionToCluase(const comparison* numericalConditio
 }
 
 
-void LiftedCVC4Problem::AddConditionToCluase(const expression* leftExpresion, FastEnvironment *env, int operatorId, comparison_op compOp, double rightValue, int significantTimePoint){
+void LiftedCVC4Problem::AddConditionToCluase(const VAL::expression* leftExpresion, FastEnvironment *env, int operatorId, comparison_op compOp, double rightValue, int significantTimePoint){
 	ExpressionConvertor myConvertor(env, this, operatorId, significantTimePoint);
 	Expr left = myConvertor.convertExpressionToCVC4Expr(leftExpresion);
 	float_expression rightExpression (rightValue);

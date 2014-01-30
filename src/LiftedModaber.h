@@ -11,11 +11,14 @@
 #include "Modaber.h"
 #include "LiftedTranslator.h"
 #include "PlanningGraph.h"
+#include "SATLiftedTranslator.h"
 
 namespace mdbr {
 
 class LiftedModaber: public Modaber {
 private:
+
+	SATLiftedTranslator *satLiftedTranslator;
 
 	LiftedTranslator *myLiftedTranslator;
 
@@ -23,7 +26,11 @@ private:
 
 	PlanningGraph *planGraph;
 
+
 	int nSignificantTimePoints;
+
+	bool usingSMTSolver;
+
 
 protected:
 

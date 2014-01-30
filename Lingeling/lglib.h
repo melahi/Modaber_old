@@ -32,6 +32,7 @@ typedef void * (*lglrealloc) (void*mem, void *ptr, size_t old, size_t);
 LGL * lglminit (void *mem, lglalloc, lglrealloc, lgldealloc);
 
 LGL * lglclone (LGL *);				// identical copy
+LGL * lglmclone (LGL *, void *mem, lglalloc, lglrealloc, lgldealloc);
 int lglunclone (LGL * dst, LGL * src);
 
 //--------------------------------------------------------------------------
@@ -45,6 +46,7 @@ void lglbnr (const char * name,
 void lglusage (LGL *);				// print usage "-h"
 void lglopts (LGL *, const char * prefix, int);	// ... defaults "-d" | "-e"
 void lglrgopts (LGL *);				// ... option ranges "-r"
+void lglpcs (LGL *, int mixed);			// ... PCS file
 void lglsizes (LGL *);				// ... data structure sizes
 
 //--------------------------------------------------------------------------
@@ -110,7 +112,8 @@ void lgltravall (LGL *, void * state, void (*trav)(void *state, int lit));
 
 //--------------------------------------------------------------------------
 
-void lglprint (LGL *, FILE *);			// in DIMACS format
+void lglprint (LGL *, FILE *);			// remaining in DIMACS format
+void lglprintall (LGL *, FILE *);		// including units & equivs
 
 //--------------------------------------------------------------------------
 // main interface as in PicoSAT (see 'picosat.h' for more information)
@@ -125,7 +128,6 @@ void lglcassume (LGL *, int lit);		// assume clause
 						// (at most one)
 
 void lglfixate (LGL *);				// add assumptions as units
-void lglmeltall (LGL *);			// melt everything
 
 int lglsat (LGL *);
 int lglsimp (LGL *, int iterations);
@@ -136,12 +138,23 @@ int lglfixed (LGL *, int lit);			// dito but toplevel
 int lglfailed (LGL *, int lit);			// dito for assumptions
 int lglinconsistent (LGL *);			// contains empty clause?
 int lglchanged (LGL *);				// model changed
-void lglflushcache (LGL *);			// reset cache size
+
+void lglreducecache (LGL *);			// reset cache size
+void lglflushcache (LGL *);			// flush all learned clauses
+
+/*------------------------------------------------------------------------*/
 
 /* Return representative from equivalence class if literal is not top-level
  * assigned nor eliminated.
  */
 int lglrepr (LGL *, int lit);
+
+/* Set 'startptr' and 'toptr' to the 'start' and 'top' of the reconstruction
+ * stack, which is used in BCE, BVE and CCE for reconstructing a solution
+ * after eliminating variables or clauses.  These pointers are only valid
+ * until the next 'lglsat/lglsimp' call.
+ */
+void lglreconstk (LGL * lgl, int ** startptr, int ** toptr);
 
 //--------------------------------------------------------------------------
 // Multiple-Objective SAT tries to solve multiple objectives at the same
@@ -161,46 +174,97 @@ int lglmosat (LGL *, void * state, lglnotify, int * targets);
 
 //--------------------------------------------------------------------------
 // Incremental interface provides reference counting for indices, i.e.
-// unfrozen indices become invalid after next 'lglsat' or 'lglsimp'.
+// unfrozen indices become invalid after next 'lglsat' (or 'lglsimp').
 // This is actually a reference counter for variable indices still in use
 // after the next 'lglsat' or 'lglsimp' call.  It is actually variable based
-// and only applies to literals in new clauses or used as assumptions. 
+// and only applies to literals in new clauses or used as assumptions,
+// e.g. in calls to 'lgladd' and 'lglassume'.
 //
-// LGL * lgl = lglinit ();
-// int res;
-// lgladd (lgl, -14); lgladd (lgl, 2); lgladd (lgl, 0);  // binary clause
-// lgladd (lgl, 14); lgladd (lgl, -1); lgladd (lgl, 0);  // binary clause
-// lglassume (lgl, 1);                                   // assume '1'
-// lglfreeze (lgl, 1);                                   // will use '1' below
-// lglfreeze (lgl, 14);                                  // will use '14 too
-// // frozen (1) && frozen (14)
-// res = lglsat ();
-// (void) lglderef (lgl, 1);                             // fine
-// (void) lglderef (lgl, 2);                             // fine
-// (void) lglderef (lgl, 3);                             // fine
-// (void) lglderef (lgl, 14);                            // fine
-// // lgladd (lgl, 2);                                   // ILLEGAL
-// // lglassume (lgl, 2);                                // ILLEGAL
-// lgladd (lgl, -14); lgladd (lgl, 1); lgladd (lgl, 0);  // binary clause
-// lgladd (lgl, 15); lgladd (lgl, 0);                    // fine!
-// lglmelt (14);                                         // '1' discarded
-// res = lglsat ();
-// // frozen (1)
-// (void) lglderef (lgl, 1);                             // fine
-// (void) lglderef (lgl, 2);                             // fine
-// (void) lglderef (lgl, 3);                             // fine
-// (void) lglderef (lgl, 14);                            // fine
-// (void) lglderef (lgl, 15);                            // fine
-// // lglassume (lgl, 2);                                // ILLEGAL
-// // lglassume (lgl, 14);                               // ILLEGAL
-// lgladd (lgl, 1);                                      // still frozen
-// lglmelt (lgl, 1);
-// res = lglsat (lgl);
-// // none frozen
-// // lgladd(lgl, 1);                                    // ILLEGAL
+// The following example is actually compilable and used for explaining
+// all the details of this rather complicated incremental API contract:
+
+/***** start of incremental example ***************************************
+
+#include "lglib.h"
+
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
+
+#include <assert.h>
+
+int main () {
+  LGL * lgl = lglinit ();
+  int res;
+  lgladd (lgl, -14); lgladd (lgl, 2); lgladd (lgl, 0);  // binary clause
+  lgladd (lgl, 14); lgladd (lgl, -1); lgladd (lgl, 0);  // binary clause
+  lglassume (lgl, 1);                                   // assume '1'
+  lglfreeze (lgl, 1);                                   // will use '1' below
+  lglfreeze (lgl, 14);                                  // will use '14 too
+  assert (lglfrozen (lgl, 1));
+  assert (lglfrozen (lgl, 14));
+  res = lglsat (lgl);
+  assert (res == 10);
+  (void) lglderef (lgl, 1);                             // fine
+  (void) lglderef (lgl, 2);                             // fine
+  (void) lglderef (lgl, 3);                             // fine !
+  (void) lglderef (lgl, 14);                            // fine
+  assert (!lglusable (lgl, 2));
+  // lgladd (lgl, 2);                                   // ILLEGAL
+  // lglassume (lgl, 2);                                // ILLEGAL
+  assert (lglusable (lgl, 15));				// '15' not used yet!
+  lgladd (lgl, -14); lgladd (lgl, 1); lgladd (lgl, 0);  // binary clause
+  lgladd (lgl, 15); lgladd (lgl, 0);                    // fine!
+  lglmelt (lgl, 14);                                    // '1' discarded
+  res = lglsat (lgl);
+  assert (res == 10);
+  assert (lglfrozen (lgl, 1));
+  (void) lglderef (lgl, 1);                             // fine
+  (void) lglderef (lgl, 2);                             // fine
+  (void) lglderef (lgl, 3);                             // fine
+  (void) lglderef (lgl, 14);                            // fine
+  (void) lglderef (lgl, 15);                            // fine
+  assert (!lglusable (lgl, 2));
+  assert (!lglusable (lgl, 14));
+  // lglassume (lgl, 2);                                // ILLEGAL
+  // lglassume (lgl, 14);                               // ILLEGAL
+  lgladd (lgl, 1);                                      // still frozen
+  lglmelt (lgl, 1);
+  res = lglsat (lgl);
+  // none frozen
+  assert (!lglusable (lgl, 1));
+  // lgladd(lgl, 1);                                    // ILLEGAL
+  lglsetopt (lgl, "plain", 1);				// disable BCE ...
+  lgladd (lgl, 8); lgladd (lgl, -9); lgladd (lgl, 0);
+  res = lglsat (lgl);
+  assert (res == 10);
+  assert (!lglusable (lgl, 8));
+  assert (!lglusable (lgl, -9));
+  assert (lglreusable (lgl, 8));
+  assert (lglreusable (lgl, -9));
+  lglreuse (lgl, 8);
+  lgladd (lgl, -8); lgladd (lgl, 0);
+  lglsetopt (lgl, "plain", 0);				// enable BCE ...
+  res = lglsat (lgl);
+  assert (res);
+  return res;
+}
+
+****** end of incremental example ****************************************/
 
 void lglfreeze (LGL *, int lit);
+int lglfrozen (LGL *, int lit);
+
 void lglmelt (LGL *, int lit);
+void lglmeltall (LGL *);				// melt all literals
+
+// If a literal was not frozen at the last call to 'lglsat' (or 'lglsimp')
+// it becomes 'unusable' after the next call even though it might not
+// have been used as blocking literal etc.  This
+
+int lglusable (LGL *, int lit);
+int lglreusable (LGL *, int lit);
+void lglreuse (LGL *, int lit);
 
 //--------------------------------------------------------------------------
 // Returns a good look ahead literal or zero if all potential literals have
@@ -223,6 +287,7 @@ int64_t lglgetdecs (LGL *);
 int64_t lglgetprops (LGL *);
 size_t lglbytes (LGL *);
 int lglnvars (LGL *);
+int lglnclauses (LGL *);
 double lglmb (LGL *);
 double lglmaxmb (LGL *);
 double lglsec (LGL *);

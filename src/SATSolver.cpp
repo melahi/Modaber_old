@@ -1,9 +1,9 @@
 
-#include "Solver.h"
+#include "SATSolver.h"
 
 namespace mdbr {
 
-Solver::~Solver() {
+SATSolver::~SATSolver() {
 	// TODO Auto-generated destructor stub
 }
 

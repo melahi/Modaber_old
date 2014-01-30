@@ -23,15 +23,9 @@ void LiftedTranslator::prepareGoals(double bound) {
 	if (bound != infinite && bound != -infinite){
 		addMetric(bound, translatedLength - 1);
 	}
-	goals = liftedSMTProblem->getAssertions();
 }
 
 void LiftedTranslator::prepare (int length, double bound){
-	if (length == 1 && translatedLength == 1) {
-		prepareGoals(bound);
-		return;
-	}
-
 	if (translatedLength > length){
 		CANT_HANDLE("prepare function is called with the smaller number of length than it is translated");
 		return;
@@ -435,7 +429,7 @@ void LiftedTranslator::findGoalList (const goal *gl, list <const simple_goal *> 
 
 bool LiftedTranslator::solve(){
 
-
+	goals = liftedSMTProblem->getAssertions();
 	//try to solve the problem
 	return liftedSMTProblem->solve(goals);
 	return true;
