@@ -18,11 +18,11 @@ using namespace mdbr;
 
 void PlanningGraph::ignoreGraph(){
 	/* If this function called, Numerical Planning Graph won't constructed */
-	int nOperator = myProblem.operators.size();
+	int nOperator = myProblem.actions.size();
 	for (int i = 0; i < nOperator; ++i){
 		int nActions = myProblem.actions[i].size();
 		for (int j = 0; j < nActions; j++){
-			myProblem.actions[i][j].firstVisitedLayer = 0;
+			myProblem.actions[i][j]->firstVisitedLayer = 0;
 		}
 	}
 
@@ -62,14 +62,9 @@ void PlanningGraph::createInitialLayer(){
 	}
 
 	numberOfLayers = 1;
-	numberOfDynamicMutexesInLastLayer = 0;
-
 }
 
 bool PlanningGraph::extendOneLayer(){
-
-	//@TODO: Extending one layer takes a lot of time,
-	//		 I should do something for it!
 
 	if (numberOfLayers < 1){
 		// First layer is not created yet, so we should first create it!
@@ -77,171 +72,94 @@ bool PlanningGraph::extendOneLayer(){
 		return true;
 	}
 
+	cout << "constructing layer: " << numberOfLayers << " of my graph" << endl;
+
 	bool canContinue = false;
-	int tempNumberOfDynamicMutex = numberOfDynamicMutexesInLastLayer;
-	numberOfDynamicMutexesInLastLayer = 0;
+	int nActions = instantiatedOp::howMany();
+	vector <MyAction*> allActions(nActions);
+	int nOperators = myProblem.actions.size();
+	for (int i = 0; i < nOperators; ++i){
+		int lng = myProblem.actions[i].size();
+		for (int j = 0; j < lng; ++j){
+			allActions[myProblem.actions[i][j]->id] = myProblem.actions[i][j];
+		}
+	}
 
-	//If an action is not visited before, check its applicability, if it can be applied, then apply it!!!
-	int nOperators = myProblem.operators.size();
-	for (int i = 0; i < nOperators; i++){
-		int nActions = myProblem.actions[i].size();
-		int lastLayer = (numberOfLayers - 1) * nOperators + i;
+	int lastLayer = (numberOfLayers - 1) * nActions;
 
-		list <MyAction *> newFoundedActions;
-		list <MyAction *> oldFoundedActions;
+	list <MyProposition *>::iterator prpIt, prpItEnd;
 
 
-		for (int j = 0; j < nActions; j++){
-			if (!myProblem.actions[i][j].possibleEffective){
+	for (int i = 0; i < nActions; ++i, ++lastLayer){
+		if (!allActions[i]->possibleEffective){
+			continue;
+		}
+		if (!isVisited(allActions[i]->firstVisitedLayer, lastLayer)){
+			//If an action is not visited before, check its applicability, if it can be applied, then apply it!!!
+			if (!allActions[i]->isApplicable(lastLayer)){
 				continue;
 			}
-			if (!isVisited(myProblem.actions[i][j].firstVisitedLayer, lastLayer)){
-				if (myProblem.actions[i][j].isApplicable(lastLayer)){
-					myProblem.actions[i][j].applyAction(lastLayer);
-					newFoundedActions.push_back(&(myProblem.actions[i][j]));
-					canContinue =  true;
-				}
-			}else{
-				oldFoundedActions.push_back(&(myProblem.actions[i][j]));
+			allActions[i]->applyAction(lastLayer);
+			canContinue =  true;
+		}
+		map <MyProposition *, int>::iterator prpIt2, prpIt2End;
+		FOR_ITERATION(prpIt2, prpIt2End, allActions[i]->lastLayerPropositionMutexivity){
+			if (prpIt2->second >= lastLayer - 1){
+				allActions[i]->insertPropositionMutex(lastLayer - 1, prpIt2->first);
 			}
 		}
-
-		list <MyProposition *> newPropositions;
-		list <MyProposition *> oldPropositions;
-		int nPropositions = myProblem.propositions.size();
-		for (int j = 0; j < nPropositions; ++j){
-			if (!myProblem.propositions[j].possibleEffective){
-				continue;
-			}
-			if (isVisited(myProblem.propositions[j].firstVisitedLayer, lastLayer)){
-				oldPropositions.push_back(&(myProblem.propositions[j]));
-			}else if (myProblem.propositions[j].firstVisitedLayer == lastLayer + 1){
-				newPropositions.push_back(&(myProblem.propositions[j]));
-			}
-		}
-
-
-		cout << "Layer: " << numberOfLayers - 1 << ", operator: " << i << ", New Actions: " << newFoundedActions.size() << endl;
-
-		/*************** Finding mutex relation between no-op and other actions ***************/
-
-		list <MyAction *>::iterator actionIt, actionItEnd;
-		list <MyProposition *>::iterator propositionIt, propositionItEnd;
-
-		actionIt = newFoundedActions.begin();
-		actionItEnd = newFoundedActions.end();
-		for (; actionIt != actionItEnd; ++actionIt) {
-			for (int j = 0; j < nPropositions; ++j){
-				if (!isVisited(myProblem.propositions[j].firstVisitedLayer, lastLayer)){
-					continue;
-				}
-				if ((*actionIt)->isPropositionStaticallyMutex(&(myProblem.propositions[j]))){
-					continue;
-				}
-				if ((*actionIt)->checkDynamicPropositionMutex(lastLayer, &(myProblem.propositions[j]))){
-					numberOfDynamicMutexesInLastLayer += 1;
-					(*actionIt)->insertPropositionMutex(lastLayer, &(myProblem.propositions[j]));
+		FOR_ITERATION(prpIt, prpItEnd, allActions[i]->preconditionList){
+			FOR_ITERATION(prpIt2, prpIt2End, (*prpIt)->lastLayerMutexivity){
+				if (prpIt2->second >= lastLayer){
+					allActions[i]->insertPropositionMutex(numeric_limits <int>::max(), prpIt2->first);
 				}
 			}
 		}
 
-
-		actionIt = oldFoundedActions.begin();
-		actionItEnd = oldFoundedActions.end();
-		for (; actionIt !=actionItEnd; ++actionIt){
-			map <MyProposition *, int>::iterator dynamicPropositionMutexIt, dynamicPropositionMutexItEnd;
-			dynamicPropositionMutexIt = (*actionIt)->lastLayerPropositionMutexivity.begin();
-			dynamicPropositionMutexItEnd = (*actionIt)->lastLayerPropositionMutexivity.end();
-			for (;dynamicPropositionMutexIt != dynamicPropositionMutexItEnd; ++dynamicPropositionMutexIt){
-				if (dynamicPropositionMutexIt->second == lastLayer - 1){
-					if ((*actionIt)->checkDynamicPropositionMutex(lastLayer, dynamicPropositionMutexIt->first)){
-						numberOfDynamicMutexesInLastLayer += 1;
-						(*actionIt)->insertPropositionMutex(lastLayer, dynamicPropositionMutexIt->first);
+		FOR_ITERATION(prpIt, prpItEnd, allActions[i]->addList){
+			map <MyProposition *, int>::iterator prpIt2, prpIt2End;
+			if ((*prpIt)->firstVisitedLayer == lastLayer + 1){
+				FOR_ITERATION(prpIt2, prpIt2End, allActions[i]->lastLayerPropositionMutexivity){
+					bool addedBySameAction = false;
+					list <MyProposition *>::iterator prpIt4, prpIt4End;
+					FOR_ITERATION(prpIt4, prpIt4End, allActions[i]->addList){
+						if ((*prpIt4)->originalLiteral->getStateID() == prpIt2->first->originalLiteral->getStateID()){
+							addedBySameAction = true;
+							break;
+						}
+					}
+					if (!addedBySameAction){
+						(*prpIt)->insertMutex(numeric_limits <int>::max(), prpIt2->first);
 					}
 				}
-			}
-		}
-
-		actionIt = oldFoundedActions.begin();
-		actionItEnd = oldFoundedActions.end();
-		propositionItEnd = oldPropositions.end();
-		for (; actionIt != actionItEnd; ++actionIt) {
-			propositionIt = oldPropositions.begin();
-			for (;propositionIt != propositionItEnd; ++propositionIt){
-				if ((*propositionIt)->firstVisitedLayer == lastLayer){
-					if ((*actionIt)->isPropositionStaticallyMutex(*propositionIt)){
-						continue;
-					}
-					if ((*actionIt)->checkDynamicPropositionMutex(lastLayer, *propositionIt)){
-						numberOfDynamicMutexesInLastLayer += 1;
-						(*actionIt)->insertPropositionMutex(lastLayer, *propositionIt);
-					}
+				list <MyProposition*>::iterator prpIt3, prpIt3End;
+				FOR_ITERATION(prpIt3, prpIt3End, allActions[i]->deleteList){
+					(*prpIt)->insertMutex(numeric_limits <int>::max(), *prpIt3);
 				}
+
 			}
-		}
-
-		/*************** End of finding mutex relation between no-op and other actions ***************/
-
-
-
-		/*************** Finding mutex relation propositions in new layer ***************/
-
-		propositionIt = oldPropositions.begin();
-		propositionItEnd = oldPropositions.end();
-		for (;propositionIt != propositionItEnd; ++propositionIt){
-			map <MyProposition *, int>::iterator propositionIt2, propositionItEnd2;
-			propositionIt2 = (*propositionIt)->lastLayerMutexivity.begin();
-			propositionItEnd2 = (*propositionIt)->lastLayerMutexivity.end();
-			for (; propositionIt2 != propositionItEnd2; ++propositionIt2){
-				if (propositionIt2->second == lastLayer && (*propositionIt)->checkMutex(lastLayer + 1, propositionIt2->first)){
-					numberOfDynamicMutexesInLastLayer += 1;
-					if ((*propositionIt)->originalLiteral->getStateID() < propositionIt2->first->originalLiteral->getStateID()){
-						(*propositionIt)->insertMutex(lastLayer + 1, propositionIt2->first);
-					}else{
-						propositionIt2->first->insertMutex(lastLayer + 1, *propositionIt);
+			FOR_ITERATION(prpIt2, prpIt2End, (*prpIt)->lastLayerMutexivity){
+				if (prpIt2->second >= lastLayer + 1){
+					bool addedBySameAction = false;
+					list <MyProposition *>::iterator prpIt4, prpIt4End;
+					FOR_ITERATION(prpIt4, prpIt4End, allActions[i]->addList){
+						if ((*prpIt4)->originalLiteral->getStateID() == prpIt2->first->originalLiteral->getStateID()){
+							addedBySameAction = true;
+							break;
+						}
 					}
-				}
-			}
-		}
-
-		propositionIt = newPropositions.begin();
-		propositionItEnd = newPropositions.end();
-		for (;propositionIt != propositionItEnd; ++propositionIt){
-			list<MyProposition*>::iterator propositionIt2, propositionItEnd2;
-			propositionIt2 = oldPropositions.begin();
-			propositionItEnd2 = oldPropositions.end();
-			for (;propositionIt2 != propositionItEnd2; ++propositionIt2){
-				if ((*propositionIt)->checkMutex(lastLayer + 1, *propositionIt2)){
-					numberOfDynamicMutexesInLastLayer += 1;
-					if ((*propositionIt)->originalLiteral->getStateID() < (*propositionIt2)->originalLiteral->getStateID()){
-						(*propositionIt)->insertMutex(lastLayer + 1, *propositionIt2);
-					}else{
-						(*propositionIt2)->insertMutex(lastLayer + 1, *propositionIt);
-					}
-				}
-			}
-
-			propositionIt2 = newPropositions.begin();
-			propositionItEnd2 = newPropositions.end();
-			for (; propositionIt2 != propositionItEnd2; ++propositionIt2){
-				if ((*propositionIt)->originalLiteral->getStateID() <= (*propositionIt2)->originalLiteral->getStateID()){
-					if ((*propositionIt)->checkMutex(lastLayer + 1, *propositionIt2)){
-						numberOfDynamicMutexesInLastLayer += 1;
-						(*propositionIt)->insertMutex(lastLayer + 1, *propositionIt2);
+					if (addedBySameAction || allActions[i]->isPropositionMutex(lastLayer, prpIt2->first) == false){
+						(*prpIt)->insertMutex(lastLayer, prpIt2->first);
+						canContinue = true;
 					}
 				}
 			}
 
 		}
 	}
-
 
 	numberOfLayers++;
 
-
-	if (numberOfDynamicMutexesInLastLayer < tempNumberOfDynamicMutex){
-		canContinue = true;
-	}
 	return canContinue;
 }
 

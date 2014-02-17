@@ -13,12 +13,6 @@
 using namespace VAL;
 using namespace Inst;
 
-
-
-
-
-
-
 class LiftedTranslator {
 private:
 	LiftedCVC4Problem *liftedSMTProblem;

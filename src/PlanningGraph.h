@@ -22,7 +22,6 @@ class PlanningGraph {
 public:
 
 	int numberOfLayers;
-	int numberOfDynamicMutexesInLastLayer;
 	bool levelOff;
 
 

@@ -279,7 +279,7 @@ void LiftedTranslator::addMetric (double bound, int significantTimePoint){
 	}
 	FastEnvironment env(0);
 	liftedSMTProblem->startNewClause();
-	liftedSMTProblem->AddConditionToCluase(current_analysis->the_problem->metric->expr, &env, 0, compOp, bound, significantTimePoint);
+	liftedSMTProblem->AddConditionToCluase((const VAL::expression *) current_analysis->the_problem->metric->expr, &env, 0, compOp, bound, significantTimePoint);
 	liftedSMTProblem->endClause();
 }
 
@@ -437,7 +437,8 @@ bool LiftedTranslator::solve(){
 
 double LiftedTranslator::getMetricValue(){
 	FastEnvironment env (0);
-	return liftedSMTProblem->getExpressionValue(current_analysis->the_problem->metric->expr, &env, 0, translatedLength - 1);
+	const VAL::expression *myExpr = current_analysis->the_problem->metric->expr;
+	return liftedSMTProblem->getExpressionValue (myExpr, &env, 0, translatedLength - 1);
 }
 
 
@@ -474,7 +475,7 @@ void LiftedTranslator::extractSolution (ostream &sout){
 					for (; paramIt != paramItEnd; ++paramIt){
 						if (((*env)[*paramIt]) == NULL){
 							//It means some parameters of action is not bind, so I assume, I can bind it to any object!!!
-							(*env)[*paramIt] = (*(myProblem.actions[j][0].valAction->getEnv()))[*paramIt];
+							(*env)[*paramIt] = (*(myProblem.actions[j][0]->valAction->getEnv()))[*paramIt];
 						}
 					}
 					instantiatedOp op (myProblem.operators[j]->originalOperator, env);

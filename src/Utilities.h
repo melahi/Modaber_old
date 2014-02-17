@@ -17,6 +17,7 @@ using namespace std;
 
 
 #define isVisited(firstVisitedLayer, layerNumber) (firstVisitedLayer != -1 && firstVisitedLayer <= layerNumber)
+#define isVisited2(firstVisitedLayer) (firstVisitedLayer != -1)
 
 #define initializeIterator(begining, ending, container) begining = container.begin(); ending = container.end();
 #define FOR_ITERATION(begining, ending, container) \

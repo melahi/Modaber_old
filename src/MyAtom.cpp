@@ -4,6 +4,8 @@
 using namespace mdbr;
 
 bool MyProposition::checkMutex (int layerNumber, MyProposition *otherProposition){
+	cout << "This proposition: "; originalLiteral->write(cout); cout << endl;
+	cout << "Other proposition: "; otherProposition->originalLiteral->write(cout); cout << endl;
 
 	list <MyAction *>::iterator it, itEnd;
 
@@ -30,6 +32,7 @@ bool MyProposition::checkMutex (int layerNumber, MyProposition *otherProposition
 	if (isVisited(otherProposition->firstVisitedLayer, layerNumber - 1)){
 		it = provider.begin(); itEnd = provider.end();
 		for (; it != itEnd; ++it){
+			cout << "Provider: "; (*it)->valAction->write(cout); cout << endl;
 			if ( !(*it)->isPropositionMutex(layerNumber - 1, otherProposition)){
 				return false;
 			}
@@ -66,12 +69,14 @@ bool MyProposition::isMutex (int layerNumber, MyProposition *otherProposition){
 }
 
 void MyProposition::insertMutex (int layerNumber, MyProposition *mutexProposition){
-	if (lastLayerMutexivity[mutexProposition] < layerNumber){
-		lastLayerMutexivity[mutexProposition] = layerNumber;
-	}
+	lastLayerMutexivity[mutexProposition] = layerNumber;
+	mutexProposition->lastLayerMutexivity[this] = layerNumber;
 }
 
 void MyProposition::visiting(int layerNumber, MyAction *action) {
+	if (!possibleEffective){
+		return;
+	}
 	if (!isVisited(firstVisitedLayer, layerNumber)){
 		firstVisitedLayer = layerNumber;
 	}

@@ -26,7 +26,6 @@ private:
 
 	PlanningGraph *planGraph;
 
-
 	int nSignificantTimePoints;
 
 	bool usingSMTSolver;

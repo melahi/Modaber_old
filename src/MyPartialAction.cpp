@@ -55,7 +55,6 @@ void MyPartialOperator::findTypes(const expression *exp){
 
 	const func_term *function = dynamic_cast <const func_term *> (exp);
 	if (function){
-		parameter_symbol_list::const_iterator it, itEnd;
 		findArgument(function->getArgs());
 		return;
 	}
@@ -159,6 +158,622 @@ bool MyPartialAction::isArgumentsConflicted (MyPartialAction *otherAction, const
 	return ((*env)[commonSymbol]->getName() != (*(otherAction->env))[commonSymbol]->getName());
 }
 
+void MyPartialAction::findingVariablesMinimum (const expression *expr, map < int, pair <bool, bool> > &result){
+	const binary_expression *binary = dynamic_cast <const binary_expression *> (expr);
+	if (binary){
+		if (dynamic_cast <const plus_expression *> (expr)){
+			findingVariablesMinimum(binary->getLHS(), result);
+			findingVariablesMinimum(binary->getRHS(), result);
+			return;
+		}else if (dynamic_cast <const minus_expression *> (expr)){
+			findingVariablesMinimum(binary->getLHS(), result);
+			findingVariablesMaximum(binary->getRHS(), result);
+			return;
+		}else {
+			findingVariablesMinimum(binary->getLHS(), result);
+			findingVariablesMinimum(binary->getRHS(), result);
+			findingVariablesMaximum(binary->getLHS(), result);
+			findingVariablesMaximum(binary->getRHS(), result);
+			return;
+		}
+	}
+	const uminus_expression *unitMinus = dynamic_cast <const uminus_expression *> (expr);
+	if (unitMinus){
+		findingVariablesMaximum(unitMinus->getExpr(), result);
+		return;
+	}
+	const num_expression *number = dynamic_cast <const num_expression *> (expr);
+	if (number){
+		return;
+	}
+	const func_term *function = dynamic_cast <const func_term *> (expr);
+	if (function){
+		PNE pne (function, env);
+		PNE *pne2 = instantiatedOp::findPNE(&pne);
+		if (pne2 && pne2->getStateID() != -1){
+			if (result.find(pne2->getStateID()) == result.end()){
+				result[pne2->getStateID()].second = false;
+			}
+			result[pne2->getStateID()].first = true;
+		}
+		return;
+	}
+	CANT_HANDLE("I can't handle some expression!!!");
+	return;
+}
+
+
+void MyPartialAction::findingVariablesMaximum (const expression *expr, map < int, pair <bool, bool> > &result){
+	const binary_expression *binary = dynamic_cast <const binary_expression *> (expr);
+	if (binary){
+		if (dynamic_cast <const plus_expression *> (expr)){
+			findingVariablesMaximum(binary->getLHS(), result);
+			findingVariablesMaximum(binary->getRHS(), result);
+			return;
+		}else if (dynamic_cast <const minus_expression *> (expr)){
+			findingVariablesMaximum(binary->getLHS(), result);
+			findingVariablesMinimum(binary->getRHS(), result);
+			return;
+		}else{
+			findingVariablesMinimum(binary->getLHS(), result);
+			findingVariablesMinimum(binary->getRHS(), result);
+			findingVariablesMaximum(binary->getLHS(), result);
+			findingVariablesMaximum(binary->getRHS(), result);
+			return;
+		}
+	}
+	const uminus_expression *unitMinus = dynamic_cast <const uminus_expression *> (expr);
+	if (unitMinus){
+		findingVariablesMinimum(unitMinus->getExpr(), result);
+		return;
+	}
+	const num_expression *number = dynamic_cast <const num_expression *> (expr);
+	if (number){
+		return;
+	}
+	const func_term *function = dynamic_cast <const func_term *> (expr);
+	if (function){
+		PNE pne (function, env);
+		PNE *pne2 = instantiatedOp::findPNE(&pne);
+		if (pne2 && pne2->getStateID() != -1){
+			if (result.find(pne2->getStateID()) == result.end()){
+				result[pne2->getStateID()].first = false;
+			}
+			result[pne2->getStateID()].second = true;
+		}
+		return;
+	}
+	CANT_HANDLE("I can't handle some expression!!!");
+	return;
+}
+
+
+
+double MyPartialAction::evalMaximum (const expression *expr, map <int, pair <double, double> > &selectedValue){
+	const binary_expression *binary = dynamic_cast <const binary_expression *> (expr);
+	if (binary){
+		double left, right;
+		if (dynamic_cast <const plus_expression *> (expr)){
+			left = evalMaximum(binary->getLHS(), selectedValue);
+			right = evalMaximum(binary->getRHS(), selectedValue);
+			return left + right;
+		}else if (dynamic_cast <const minus_expression *> (expr)){
+			left = evalMaximum(binary->getLHS(), selectedValue);
+			right = evalMinimum(binary->getRHS(), selectedValue);
+			return left - right;
+		}else if (dynamic_cast <const mul_expression *> (expr)){
+			left = evalMaximum(binary->getLHS(), selectedValue);
+			right = evalMaximum(binary->getRHS(), selectedValue);
+			double left2, right2;
+			left2 = evalMinimum(binary->getLHS(), selectedValue);
+			right2 = evalMinimum(binary->getRHS(), selectedValue);
+			double tempRet[4], ret;
+			tempRet[0] = left * right;
+			tempRet[1] = left2 * right;
+			tempRet[2] = left * right2;
+			tempRet[3] = left2 * right2;
+			ret = tempRet[0];
+			for (int i = 1; i < 4; i++){
+				if (tempRet[i] > ret)
+					ret = tempRet[i];
+			}
+			return ret;
+		}else if (dynamic_cast <const div_expression *> (expr)){
+			left = evalMaximum(binary->getLHS(), selectedValue);
+			right = evalMaximum(binary->getRHS(), selectedValue);
+			double left2, right2;
+			left2 = evalMinimum(binary->getLHS(), selectedValue);
+			right2 = evalMinimum(binary->getRHS(), selectedValue);
+			double tempRet[4], ret;
+			tempRet[0] = left / right;
+			tempRet[1] = left2 / right;
+			tempRet[2] = left / right2;
+			tempRet[3] = left2 / right2;
+			ret = tempRet[0];
+			for (int i = 1; i < 4; i++){
+				if (tempRet[i] > ret)
+					ret = tempRet[i];
+			}
+			return ret;
+		}else {
+			CANT_HANDLE("I can't handle some binary expression!!!");
+		}
+	}
+	const uminus_expression *unitMinus = dynamic_cast <const uminus_expression *> (expr);
+	if (unitMinus){
+		return -1 * evalMinimum(unitMinus->getExpr(), selectedValue);
+	}
+	const num_expression *number = dynamic_cast <const num_expression *> (expr);
+	if (number){
+		return number->double_value();
+	}
+	const func_term *function = dynamic_cast <const func_term *> (expr);
+	if (function){
+		PNE pne (function, env);
+		PNE *pne2 = instantiatedOp::findPNE(&pne);
+		if (pne2 && pne2->getStateID() != -1){
+			return selectedValue[pne2->getStateID()].second;
+		}
+		if (pne2 && pne2->getStateID() == -1){
+			return myProblem.initialValue[pne2->getGlobalID()];
+		}
+	}
+	CANT_HANDLE("I can't handle some expression!!!");
+	return 0;
+}
+
+
+double MyPartialAction::evalMinimum (const expression *expr, map <int, pair <double, double> > &selectedValue){
+	const binary_expression *binary = dynamic_cast <const binary_expression *> (expr);
+	if (binary){
+		double left, right;
+		if (dynamic_cast <const plus_expression *> (expr)){
+			left = evalMinimum(binary->getLHS(), selectedValue);
+			right = evalMinimum(binary->getRHS(), selectedValue);
+			return left + right;
+		}else if (dynamic_cast <const minus_expression *> (expr)){
+			left = evalMinimum(binary->getLHS(), selectedValue);
+			right = evalMaximum(binary->getRHS(), selectedValue);
+			return left - right;
+		}else if (dynamic_cast <const mul_expression *> (expr)){
+			left = evalMaximum(binary->getLHS(), selectedValue);
+			right = evalMaximum(binary->getRHS(), selectedValue);
+			double left2, right2;
+			left2 = evalMinimum(binary->getLHS(), selectedValue);
+			right2 = evalMinimum(binary->getRHS(), selectedValue);
+			double tempRet[4], ret;
+			tempRet[0] = left * right;
+			tempRet[1] = left2 * right;
+			tempRet[2] = left * right2;
+			tempRet[3] = left2 * right2;
+			ret = tempRet[0];
+			for (int i = 1; i < 4; i++){
+				if (tempRet[i] < ret)
+					ret = tempRet[i];
+			}
+			return ret;
+		}else if (dynamic_cast <const div_expression *> (expr)){
+			left = evalMaximum(binary->getLHS(), selectedValue);
+			right = evalMaximum(binary->getRHS(), selectedValue);
+			double left2, right2;
+			left2 = evalMinimum(binary->getLHS(), selectedValue);
+			right2 = evalMinimum(binary->getRHS(), selectedValue);
+			double tempRet[4], ret;
+			tempRet[0] = left / right;
+			tempRet[1] = left2 / right;
+			tempRet[2] = left / right2;
+			tempRet[3] = left2 / right2;
+			ret = tempRet[0];
+			for (int i = 1; i < 4; i++){
+				if (tempRet[i] < ret)
+					ret = tempRet[i];
+			}
+			return ret;
+		}else {
+			CANT_HANDLE("I can't handle some binary expression!!!");
+		}
+	}
+	const uminus_expression *unitMinus = dynamic_cast <const uminus_expression *> (expr);
+	if (unitMinus){
+		return -1 * evalMaximum(unitMinus->getExpr(), selectedValue);
+	}
+	const num_expression *number = dynamic_cast <const num_expression *> (expr);
+	if (number){
+		return number->double_value();
+	}
+	const func_term *function = dynamic_cast <const func_term *> (expr);
+	if (function){
+		PNE pne (function, env);
+		PNE *pne2 = instantiatedOp::findPNE(&pne);
+		if (pne2 && pne2->getStateID() != -1){
+			return selectedValue[pne2->getStateID()].first;
+		}
+		if (pne2 && pne2->getStateID() == -1){
+			return myProblem.initialValue[pne2->getGlobalID()];
+		}
+	}
+	CANT_HANDLE("I can't handle some expression!!!");
+	return 0;
+}
+
+void MyPartialAction::constructComparisons (const comparison *expr, map <int, pair <bool, bool> > &variables, map <int, pair <bool, bool> >::iterator it, map <int, pair <double, double> > &values) {
+	if (it == variables.end()){
+		if (expr->getOp() == E_EQUALS){
+			double lowerLeft, upperLeft, lowerRight, upperRight;
+			lowerLeft = evalMinimum(expr->getLHS(), values);
+			upperLeft = evalMaximum(expr->getLHS(), values);
+			lowerRight = evalMinimum(expr->getRHS(), values);
+			upperRight = evalMaximum(expr->getRHS(), values);
+			if (lowerLeft > lowerRight){
+				swap(lowerLeft, lowerRight);
+				swap(upperLeft, upperRight);
+			}
+			if (upperLeft < lowerRight){
+				vector <MyBound> unacceptableBoundaries;
+				createMyBoundVector(values, unacceptableBoundaries);
+				unacceptablePreconditionBoundaries.push_back(unacceptableBoundaries);
+			}
+			return;
+		}
+		double lowerLeft, upperRight;
+		if (expr->getOp() == E_LESSEQ || expr->getOp() == E_LESS){
+			lowerLeft = evalMinimum(expr->getLHS(), values);
+			upperRight = evalMaximum(expr->getRHS(), values);
+		} else {
+			lowerLeft = evalMinimum(expr->getRHS(), values);
+			upperRight = evalMaximum(expr->getLHS(), values);
+		}
+		if (expr->getOp() == E_LESS || expr->getOp() == E_GREATER){
+			if (lowerLeft >= upperRight){
+				vector <MyBound> unacceptableBoundaries;
+				createMyBoundVector(values, unacceptableBoundaries);
+				unacceptablePreconditionBoundaries.push_back(unacceptableBoundaries);
+			}
+		}else{
+			if (lowerLeft > upperRight){
+				vector <MyBound> unacceptableBoundaries;
+				createMyBoundVector(values, unacceptableBoundaries);
+				unacceptablePreconditionBoundaries.push_back(unacceptableBoundaries);
+			}
+		}
+		return;
+	}
+	map <double, vector <int> >::iterator domainIt,domainItEnd;
+	map <int, pair <bool, bool> >::iterator nextIt = it;
+	++nextIt;
+	FOR_ITERATION (domainIt, domainItEnd, myProblem.variables[it->first].domain){
+		if (domainIt->first == infinite){
+			continue;
+		}
+		if (it->second.first){
+			values[it->first].first = domainIt->first;
+		}else{
+			values[it->first].first = infinite;
+		}
+		map <double, vector <int> >::iterator domainIt2;
+		for (domainIt2 = domainIt; domainIt2 != domainItEnd; ++domainIt2){
+			if (domainIt2->first == -infinite){
+				continue;
+			}
+			if (it->second.second){
+				values[it->first].second = domainIt2->first;
+			}else{
+				values[it->first].second = -infinite;
+			}
+			constructComparisons(expr, variables, nextIt, values);
+			if (!(it->second.second)){
+				break;
+			}
+		}
+		if (!(it->second.first)){
+			break;
+		}
+	}
+}
+
+
+void MyPartialAction::constructComparisons (const comparison *expr){
+	map <int, pair <bool, bool> > variables;
+	if (expr->getOp() == E_LESS || expr->getOp() == E_LESSEQ){
+		findingVariablesMinimum (expr->getLHS(), variables);
+		findingVariablesMaximum (expr->getRHS(), variables);
+	}else if (expr->getOp() == E_GREATER || expr->getOp() == E_GREATEQ){
+		findingVariablesMinimum (expr->getRHS(), variables);
+		findingVariablesMaximum (expr->getLHS(), variables);
+	}else{
+		findingVariablesMinimum (expr->getLHS(), variables);
+		findingVariablesMaximum (expr->getRHS(), variables);
+		findingVariablesMinimum (expr->getRHS(), variables);
+		findingVariablesMaximum (expr->getLHS(), variables);
+	}
+	map <int, pair <double, double> > values;
+	constructComparisons(expr, variables, variables.begin(), values);
+}
+
+void MyPartialAction::constructComparisons(){
+
+	unacceptablePreconditionBoundaries.clear();
+
+	list <const comparison *>::iterator it, itEnd;
+	FOR_ITERATION(it, itEnd, partialOperator->comparisonPrecondition){
+		constructComparisons(*it);
+	}
+}
+
+
+void MyPartialAction::constructAssignmentsMaximum (const assignment *expr, map <int, pair <bool, bool> > &variables, map <int, pair <bool, bool> >::iterator it, map <int, pair <double, double> > &values) {
+	if (it == variables.end()){
+		double ret = 0;
+		if (expr->getOp() == E_SCALE_UP || expr->getOp() == E_SCALE_DOWN){
+			double lowerExpr, upperExpr, lowerVariable, upperVariable;
+			lowerExpr = evalMinimum(expr->getExpr(), values);
+			upperExpr = evalMaximum(expr->getExpr(), values);
+			lowerVariable = evalMinimum(expr->getFTerm(), values);
+			upperVariable = evalMaximum(expr->getFTerm(), values);
+
+			double tempRet[4];
+			if (expr->getOp() == E_SCALE_UP){
+				tempRet[0] = lowerExpr * lowerVariable;
+				tempRet[1] = lowerExpr * upperVariable;
+				tempRet[2] = upperExpr * lowerVariable;
+				tempRet[3] = upperExpr * upperVariable;
+			}else{
+				tempRet[0] = lowerVariable / lowerExpr;
+				tempRet[1] = upperVariable / lowerExpr;
+				tempRet[2] = lowerVariable / upperExpr;
+				tempRet[3] = upperVariable / upperExpr;
+			}
+			ret = tempRet[0];
+			for (int i = 1; i < 4; i++){
+				if (tempRet[i] > ret)
+					ret = tempRet[i];
+			}
+		}else if (expr->getOp() == E_INCREASE){
+			ret = evalMaximum(expr->getFTerm(), values);
+			ret += evalMaximum(expr->getExpr(), values);
+		}else if (expr->getOp() == E_DECREASE){
+			ret = evalMaximum(expr->getFTerm(), values);
+			ret -= evalMinimum(expr->getExpr(), values);
+		}else if (expr->getOp() == E_ASSIGN){
+			ret = evalMaximum(expr->getExpr(), values);
+		}else{
+			CANT_HANDLE("Some assignment can't be handled");
+		}
+		map <double, vector <int> >::iterator it;
+
+		PNE pne (expr->getFTerm(), env);
+		PNE *pne2 = instantiatedOp::findPNE(&pne);
+
+		it = myProblem.variables[pne2->getStateID()].domain.begin();
+		while (it->first < ret){
+			++it;
+		}
+
+		vector <MyBound> boundaries;
+		createMyBoundVector(values, boundaries);
+		pair <vector <MyBound>, MyBound > newAssignmentBoundary;
+		newAssignmentBoundary.first = boundaries;
+		newAssignmentBoundary.second.kind = upperBound;
+		newAssignmentBoundary.second.member = it;
+		assignmentBoundaries.push_back(newAssignmentBoundary);
+		return;
+	}
+	map <double, vector <int> >::iterator domainIt,domainItEnd;
+	map <int, pair <bool, bool> >::iterator nextIt = it;
+	++nextIt;
+	FOR_ITERATION (domainIt, domainItEnd, myProblem.variables[it->first].domain){
+		if (domainIt->first == infinite){
+			continue;
+		}
+		if (it->second.first){
+			values[it->first].first = domainIt->first;
+		}else{
+			values[it->first].first = infinite;
+		}
+		map <double, vector <int> >::iterator domainIt2;
+		for (domainIt2 = domainIt; domainIt2 != domainItEnd; ++domainIt2){
+			if (domainIt2->first == -infinite){
+				continue;
+			}
+			if (it->second.second){
+				values[it->first].second = domainIt2->first;
+			}else{
+				values[it->first].second = -infinite;
+			}
+			constructAssignmentsMaximum (expr, variables, nextIt, values);
+			if (!(it->second.second)){
+				break;
+			}
+		}
+		if (!(it->second.first)){
+			break;
+		}
+	}
+}
+
+
+
+
+
+
+
+void MyPartialAction::constructAssignmentsMaximum (const assignment *expr){
+	map <int, pair <bool, bool> > variables;
+
+	if (expr->getOp() == E_ASSIGN){
+		findingVariablesMaximum (expr->getExpr(), variables);
+	}else if (expr->getOp() == E_INCREASE){
+		findingVariablesMaximum(expr->getExpr(), variables);
+		findingVariablesMaximum(expr->getFTerm(), variables);
+	}else if (expr->getOp() == E_DECREASE){
+		findingVariablesMinimum(expr->getExpr(), variables);
+		findingVariablesMaximum(expr->getFTerm(), variables);
+	}else{
+		findingVariablesMaximum(expr->getExpr(), variables);
+		findingVariablesMaximum(expr->getFTerm(), variables);
+		findingVariablesMinimum(expr->getExpr(), variables);
+		findingVariablesMinimum(expr->getFTerm(), variables);
+	}
+
+	map <int, pair <double, double> > values;
+	constructAssignmentsMaximum (expr, variables, variables.begin(), values);
+}
+
+
+
+
+
+void MyPartialAction::constructAssignmentsMinimum (const assignment *expr, map <int, pair <bool, bool> > &variables, map <int, pair <bool, bool> >::iterator it, map <int, pair <double, double> > &values) {
+	if (it == variables.end()){
+		double ret = 0;
+		if (expr->getOp() == E_SCALE_UP || expr->getOp() == E_SCALE_DOWN){
+			double lowerExpr, upperExpr, lowerVariable, upperVariable;
+			lowerExpr = evalMinimum(expr->getExpr(), values);
+			upperExpr = evalMaximum(expr->getExpr(), values);
+			lowerVariable = evalMinimum(expr->getFTerm(), values);
+			upperVariable = evalMaximum(expr->getFTerm(), values);
+
+			double tempRet[4];
+			if (expr->getOp() == E_SCALE_UP){
+				tempRet[0] = lowerExpr * lowerVariable;
+				tempRet[1] = lowerExpr * upperVariable;
+				tempRet[2] = upperExpr * lowerVariable;
+				tempRet[3] = upperExpr * upperVariable;
+			}else{
+				tempRet[0] = lowerVariable / lowerExpr;
+				tempRet[1] = upperVariable / lowerExpr;
+				tempRet[2] = lowerVariable / upperExpr;
+				tempRet[3] = upperVariable / upperExpr;
+			}
+			ret = tempRet[0];
+			for (int i = 1; i < 4; i++){
+				if (tempRet[i] < ret)
+					ret = tempRet[i];
+			}
+		}else if (expr->getOp() == E_INCREASE){
+			ret = evalMinimum(expr->getFTerm(), values);
+			ret += evalMinimum(expr->getExpr(), values);
+		}else if (expr->getOp() == E_DECREASE){
+			ret = evalMinimum(expr->getFTerm(), values);
+			ret -= evalMaximum(expr->getExpr(), values);
+		}else if (expr->getOp() == E_ASSIGN){
+			ret = evalMinimum(expr->getExpr(), values);
+		}else{
+			CANT_HANDLE("Some assignment can't be handled");
+		}
+		map <double, vector <int> >::iterator it;
+
+		PNE pne (expr->getFTerm(), env);
+		PNE *pne2 = instantiatedOp::findPNE(&pne);
+
+		it = myProblem.variables[pne2->getStateID()].domain.end();
+		--it;
+		while (it->first > ret){
+			--it;
+		}
+
+		vector <MyBound> boundaries;
+		createMyBoundVector(values, boundaries);
+		pair <vector <MyBound>, MyBound > newAssignmentBoundary;
+		newAssignmentBoundary.first = boundaries;
+		newAssignmentBoundary.second.kind = lowerBound;
+		newAssignmentBoundary.second.member = it;
+		assignmentBoundaries.push_back(newAssignmentBoundary);
+		return;
+	}
+	map <double, vector <int> >::iterator domainIt,domainItEnd;
+	map <int, pair <bool, bool> >::iterator nextIt = it;
+	++nextIt;
+	FOR_ITERATION (domainIt, domainItEnd, myProblem.variables[it->first].domain){
+		if (domainIt->first == infinite){
+			continue;
+		}
+		if (it->second.first){
+			values[it->first].first = domainIt->first;
+		}else{
+			values[it->first].first = infinite;
+		}
+		map <double, vector <int> >::iterator domainIt2;
+		for (domainIt2 = domainIt; domainIt2 != domainItEnd; ++domainIt2){
+			if (domainIt2->first == -infinite){
+				continue;
+			}
+			if (it->second.second){
+				values[it->first].second = domainIt2->first;
+			}else{
+				values[it->first].second = -infinite;
+			}
+			constructAssignmentsMinimum (expr, variables, nextIt, values);
+			if (!(it->second.second)){
+				break;
+			}
+		}
+		if (!(it->second.first)){
+			break;
+		}
+	}
+}
+
+
+void MyPartialAction::constructAssignmentsMinimum (const assignment *expr){
+	map <int, pair <bool, bool> > variables;
+
+	if (expr->getOp() == E_ASSIGN){
+		findingVariablesMinimum (expr->getExpr(), variables);
+	}else if (expr->getOp() == E_INCREASE){
+		findingVariablesMinimum(expr->getExpr(), variables);
+		findingVariablesMinimum(expr->getFTerm(), variables);
+	}else if (expr->getOp() == E_DECREASE){
+		findingVariablesMaximum(expr->getExpr(), variables);
+		findingVariablesMinimum(expr->getFTerm(), variables);
+	}else{
+		findingVariablesMaximum(expr->getExpr(), variables);
+		findingVariablesMaximum(expr->getFTerm(), variables);
+		findingVariablesMinimum(expr->getExpr(), variables);
+		findingVariablesMinimum(expr->getFTerm(), variables);
+	}
+
+	map <int, pair <double, double> > values;
+	constructAssignmentsMinimum(expr, variables, variables.begin(), values);
+}
+
+
+
+
+
+
+void MyPartialAction::constructAssignments(){
+	assignmentBoundaries.clear();
+
+	list <const assignment *>::iterator it, itEnd;
+	FOR_ITERATION(it, itEnd, partialOperator->assignmentEffect){
+		constructAssignmentsMaximum(*it);
+		constructAssignmentsMinimum(*it);
+	}
+}
+
+
+
+
+void MyPartialAction::createMyBoundVector (map <int, pair<double, double> > &values, vector <MyBound> &result){
+	result.clear();
+	map <int, pair<double, double> >::iterator it, itEnd;
+	FOR_ITERATION(it, itEnd, values){
+		if (it->second.first != infinite){
+			MyBound myBound;
+			myBound.kind = lowerBound;
+			myBound.member = myProblem.variables[it->first].domain.find(it->second.first);
+			result.push_back(myBound);
+		}
+		if (it->second.second != -infinite){
+			MyBound myBound;
+			myBound.kind = upperBound;
+			myBound.member = myProblem.variables[it->first].domain.find(it->second.second);
+			result.push_back(myBound);
+		}
+	}
+}
+
 void MyPartialAction::prepare (MyPartialOperator *partialOperator, FastEnvironment *env, int id){
 	this->id = id;
 	this->partialOperator = partialOperator;
@@ -167,7 +782,6 @@ void MyPartialAction::prepare (MyPartialOperator *partialOperator, FastEnvironme
 	preparePropositionList(partialOperator->precondition, precondition, E_PRECONDITION);
 	preparePropositionList(partialOperator->addEffect, addEffect, E_ADD_EFFECT);
 	preparePropositionList(partialOperator->deleteEffect, deleteEffect, E_DELETE_EFFECT);
-
 	findModifyingVariable();
 }
 
@@ -233,6 +847,12 @@ void MyPartialAction::findModifyingVariable(){
 			myProblem.variables[pne2->getStateID()].modifier.push_back(this);
 		}
 	}
+}
+
+
+void MyPartialAction::constructNumericalCondition(){
+	constructAssignments();
+	constructComparisons();
 }
 
 

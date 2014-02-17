@@ -62,6 +62,9 @@ public:
 	list <MyPartialAction *> adder;
 	list <MyPartialAction *> deleter;
 
+	vector <MyAction *> adder_groundAction;
+	vector <MyAction *> deleter_groundAction;
+
 	MyProposition(Literal *originalLiteral):firstVisitedLayer(-1), possibleEffective(false), originalLiteral(originalLiteral), ids(current_analysis->the_domain->ops->size(), -2) {}
 	MyProposition():firstVisitedLayer(-1), possibleEffective (false), originalLiteral(0), ids(current_analysis->the_domain->ops->size(), -2) {}
 
@@ -77,22 +80,24 @@ public:
 
 	PNE *originalPNE;
 
+	map <double, vector <int> > domain;  //The first element of the map is a member of domain and second one is ids associated with the element
+
 
 	list <MyPartialAction *> modifier;
+	vector <MyAction *> modifier_groundAction;
 
-	/* FIXME: for now we assume that every variable which appears in some precondition is
-	 * important; but it is not completely true, perhaps a variable is appeared in an
-	 * assignment and the assignee be an important one, then the variable is also should
-	 * count as important variable!
-	 */
-	bool visitInPrecondition;
-
-
-	MyVariable (PNE *originalPNE): ids(current_analysis->the_domain->ops->size(), -2), originalPNE(originalPNE), visitInPrecondition(false) {}
-	MyVariable (): ids(current_analysis->the_domain->ops->size(), -2), originalPNE(0), visitInPrecondition(false) {}
+	MyVariable (PNE *originalPNE): ids(current_analysis->the_domain->ops->size(), -2), originalPNE(originalPNE){}
+	MyVariable (): ids(current_analysis->the_domain->ops->size(), -2), originalPNE(0){}
 
 	~MyVariable () { }
 
+};
+
+enum boundKind { upperBound, lowerBound };
+class MyBound {
+public:
+	boundKind kind;
+	map <double, vector <int> >::iterator member;
 };
 
 

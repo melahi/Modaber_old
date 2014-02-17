@@ -872,10 +872,9 @@ public:
 
 class float_expression : public num_expression
 {
-private:
-    NumScalar val;
 public:
-    float_expression(NumScalar v) : val(v) {};
+    NumScalar val;
+	float_expression(NumScalar v) : val(v) {};
     virtual ~float_expression() {};
     virtual void display(int ind) const;
     virtual void write(ostream & o) const;

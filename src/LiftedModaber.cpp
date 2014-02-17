@@ -19,7 +19,6 @@ using namespace mdbr;
 void LiftedModaber::initialization (char *domainFilePath, char *problemFilePath){
 	Modaber::initialization(domainFilePath, problemFilePath);
 
-
 	UnrelatedFilter filterAllUnrelateActionsAndProposition;
 
 	myProblem.liftedInitializing();
@@ -59,7 +58,7 @@ bool LiftedModaber::tryToSolve(double bound){
 			satLiftedTranslator = new SATLiftedTranslator();
 
 			cout  << "Preparing SAT formula" << nSignificantTimePoints << endl;
-			satLiftedTranslator->prepare(nSignificantTimePoints);
+			satLiftedTranslator->prepare(nSignificantTimePoints, NULL);
 			cout << "solving ..." << endl;
 			foundSolution = satLiftedTranslator->solve();
 			cout << "end solving" << endl;

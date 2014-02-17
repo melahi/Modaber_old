@@ -10,6 +10,7 @@
 #include "VALfiles/instantiation.h"
 #include "Utilities.h"
 #include "MyProblem.h"
+#include "LiftedCVC4Problem.h"
 
 #include "VALfiles/FastEnvironment.h"
 #include <list>
@@ -28,11 +29,7 @@ void SATLiftedTranslator::prepareGoals() {
 	addGoals(translatedLength - 1);
 }
 
-void SATLiftedTranslator::prepare (int length){
-	if (length == 1 && translatedLength == 1) {
-		prepareGoals();
-		return;
-	}
+void SATLiftedTranslator::prepare (int length, MyPartialAction *metricFunction){
 
 	if (translatedLength > length){
 		CANT_HANDLE("prepare function is called with the smaller number of length than it is translated");
@@ -41,6 +38,7 @@ void SATLiftedTranslator::prepare (int length){
 
 	if (translatedLength == length){
 		prepareGoals();
+		addMetricFunction(translatedLength - 1, metricFunction);
 		return;
 	}
 
@@ -52,6 +50,7 @@ void SATLiftedTranslator::prepare (int length){
 	}
 
 	prepareGoals();
+	addMetricFunction(translatedLength - 1, metricFunction);
 }
 
 
@@ -78,6 +77,24 @@ void SATLiftedTranslator::addInitialState(){
 			solver.endClause();
 		}
 	}
+
+	int nVariables = myProblem.variables.size();
+	for (int i = 0; i < nVariables; ++i){
+		if (myProblem.variables[i].domain.size() < 3){
+			continue;
+		}
+		map <double, vector <int> >::iterator domainIt, domainItEnd;
+		FOR_ITERATION(domainIt, domainItEnd, myProblem.variables[i].domain){
+			bool polarity = false;
+			if (domainIt->first == myProblem.initialValue[myProblem.variables[i].originalPNE->getGlobalID()]){
+				polarity = true;
+			}
+			solver.addValue(domainIt, upperBound, 0, 0, polarity);
+			solver.endClause();
+			solver.addValue(domainIt, lowerBound, 0, 0, polarity);
+			solver.endClause();
+		}
+	}
 }
 
 //Add goals to the smt problem
@@ -86,6 +103,12 @@ void SATLiftedTranslator::addGoals (int significantTimePoint){
 	addGoal(current_analysis->the_problem->the_goal, &env, significantTimePoint);
 }
 
+
+void SATLiftedTranslator::addMetricFunction (int significantTimePoint, MyPartialAction *metricFunction){
+	if (metricFunction){
+		addUnacceptablePreconditionBoundaries(significantTimePoint, metricFunction);
+	}
+}
 
 //Insert actions' conditions for the specified time point in smt problem
 void SATLiftedTranslator::addPartialActions (int significantTimePoint){
@@ -99,7 +122,7 @@ void SATLiftedTranslator::addPartialActions (int significantTimePoint){
 			set <const VAL::symbol*>::iterator it1, it1End;
 
 			FOR_ITERATION(it1, it1End, it->partialOperator->argument){
-				solver.addPartialAction(it->id, significantTimePoint, false);
+				solver.addAction(it->id, significantTimePoint, false);
 				solver.addUnification(theOperator->unificationId[theOperator->argument[*it1]][(*(it->env))[*it1]->getName()], significantTimePoint, true);
 				solver.endClause();
 			}
@@ -107,7 +130,7 @@ void SATLiftedTranslator::addPartialActions (int significantTimePoint){
 
 
 		if (it->isValid == false){
-			solver.addPartialAction(it->id, significantTimePoint, false);
+			solver.addAction(it->id, significantTimePoint, false);
 			solver.endClause();
 			continue;
 		}
@@ -115,6 +138,8 @@ void SATLiftedTranslator::addPartialActions (int significantTimePoint){
 		addSimpleEffectList(E_POS, it->addEffect, significantTimePoint, &(*it));
 		addSimpleEffectList(E_NEG, it->deleteEffect, significantTimePoint, &(*it));
 		addGoalList(it->precondition, significantTimePoint, &(*it));
+		addUnacceptablePreconditionBoundaries(significantTimePoint, &(*it));
+		addAssignmentBoundaries(significantTimePoint, &(*it));
 	}
 }
 
@@ -153,7 +178,7 @@ void SATLiftedTranslator::addExplanatoryAxioms (int significantTimePoint){
 				pAIt = deleter[j].begin();
 				pAItEnd = deleter[j].end();
 				for (; pAIt != pAItEnd; ++pAIt){
-					solver.addPartialAction((*pAIt)->id, significantTimePoint, true);
+					solver.addAction((*pAIt)->id, significantTimePoint, true);
 				}
 				solver.endClause();
 
@@ -163,9 +188,44 @@ void SATLiftedTranslator::addExplanatoryAxioms (int significantTimePoint){
 				pAIt = adder[j].begin();
 				pAItEnd = adder[j].end();
 				for (; pAIt != pAItEnd; ++pAIt){
-					solver.addPartialAction((*pAIt)->id, significantTimePoint, true);
+					solver.addAction((*pAIt)->id, significantTimePoint, true);
 				}
 				solver.endClause();
+			}
+		}
+	}
+
+
+	int nVariables = myProblem.variables.size();
+	for (int i = 0; i < nVariables; ++i){
+		vector <list <MyPartialAction *> > modifier;
+		modifier.resize(nOperators);
+		FOR_ITERATION(pAIt, pAItEnd, myProblem.variables[i].modifier){
+			modifier[(*pAIt)->partialOperator->op->id].push_back(*pAIt);
+		}
+
+		for (int j = 0; j < nOperators; ++j){
+			if (!modifier[j].size()){
+				continue;
+			}
+			map <double, vector <int> >::iterator domainIt, domainItEnd;
+			FOR_ITERATION(domainIt, domainItEnd, myProblem.variables[i].domain){
+				//FOR UPPER BOUND
+				solver.addValue(domainIt, upperBound, j, significantTimePoint, true);
+				solver.addValue(domainIt, upperBound, j + 1, significantTimePoint, false);
+				FOR_ITERATION(pAIt, pAItEnd, modifier[j]){
+					solver.addAction((*pAIt)->id, significantTimePoint, true);
+				}
+				solver.endClause();
+
+				//FOR LOWER BOUND
+				solver.addValue(domainIt, lowerBound, j, significantTimePoint, true);
+				solver.addValue(domainIt, lowerBound, j + 1, significantTimePoint, false);
+				FOR_ITERATION(pAIt, pAItEnd, modifier[j]){
+					solver.addAction((*pAIt)->id, significantTimePoint, true);
+				}
+				solver.endClause();
+
 			}
 		}
 	}
@@ -204,9 +264,9 @@ void SATLiftedTranslator::addCompletingAction (int significantTimePoint){
 			int nextPartialOperator = (j + 1) % nPartialOperators;
 			int nNextPartialActions = myProblem.operators[i]->partialOperator[nextPartialOperator]->child.size();
 			for (int k = 0; k < nPartialActions; k++){
-				solver.addPartialAction(myProblem.operators[i]->partialOperator[j]->child[k]->id, significantTimePoint, false);
+				solver.addAction(myProblem.operators[i]->partialOperator[j]->child[k]->id, significantTimePoint, false);
 				for (int l = 0; l < nNextPartialActions; ++l){
-					solver.addPartialAction(myProblem.operators[i]->partialOperator[nextPartialOperator]->child[l]->id, significantTimePoint, true);
+					solver.addAction(myProblem.operators[i]->partialOperator[nextPartialOperator]->child[l]->id, significantTimePoint, true);
 				}
 				solver.endClause();
 			}
@@ -216,15 +276,16 @@ void SATLiftedTranslator::addCompletingAction (int significantTimePoint){
 
 void SATLiftedTranslator::addAtomMutex(int significantTimePoint){
 	int nProposition = myProblem.propositions.size();
-	int nOperator = myProblem.operators.size();
+	int nOperators = myProblem.operators.size();
 	for (int i = 0; i < nProposition; ++i){
 		for (int j = 0; j < i; ++j){
-			for (int k = 0; k < nOperator; ++k){
-				int layerNumber = (significantTimePoint * nOperator) + k;
+			int lastId1, lastId2;
+			lastId1 = -10;
+			lastId2 = -10;
+			for (int k = 0; k < nOperators; ++k){
+				int layerNumber = (significantTimePoint * nOperators) + k;
 				if (myProblem.propositions[i].isMutex (layerNumber, &(myProblem.propositions[j]))){
-					int lastId1, lastId2;
-					lastId1 = lastId2 = -1;
-					if (myProblem.propositions[i].ids[k] == lastId1 && myProblem.propositions[j].ids[k]){
+					if (myProblem.propositions[i].ids[k] == lastId1 && myProblem.propositions[j].ids[k] == lastId2){
 						continue;
 					}
 					solver.addProposition(i, k, significantTimePoint, false);
@@ -236,13 +297,59 @@ void SATLiftedTranslator::addAtomMutex(int significantTimePoint){
 			}
 		}
 	}
+
+
+	int nVariables = myProblem.variables.size();
+	for (int i = 0; i < nVariables; ++i){
+		if (myProblem.variables[i].domain.size() == 0){
+			continue;
+		}
+		map <double, vector <int> >::iterator domainIt, domainIt2, domainItEnd;
+		int lastID = myProblem.variables[i].domain.begin()->second[0];
+		domainItEnd = myProblem.variables[i].domain.end();
+		for (int j = 1; lastID != -1 && j <= nOperators; ++j){
+			domainIt = myProblem.variables[i].domain.begin();
+			if (j != nOperators){
+				if (lastID == domainIt->second[j]){
+					continue;
+				}
+				lastID = domainIt->second[j];
+			}
+			for (; domainIt != domainItEnd; ++domainIt){
+				domainIt2 = domainIt;
+				++domainIt2;
+				for (; domainIt2 != domainItEnd; ++domainIt2){
+					solver.addValue(domainIt, upperBound, j, significantTimePoint, false);
+					solver.addValue(domainIt2, upperBound, j, significantTimePoint, false);
+					solver.endClause();
+					solver.addValue(domainIt, lowerBound, j, significantTimePoint, false);
+					solver.addValue(domainIt2, lowerBound, j, significantTimePoint, false);
+					solver.endClause();
+				}
+			}
+
+			domainIt = myProblem.variables[i].domain.begin();
+			for (; domainIt != domainItEnd; ++domainIt){
+				solver.addValue(domainIt, upperBound, j, significantTimePoint, true);
+			}
+			solver.endClause();
+
+			domainIt = myProblem.variables[i].domain.begin();
+			for (; domainIt != domainItEnd; ++domainIt){
+				solver.addValue(domainIt, lowerBound, j, significantTimePoint, true);
+			}
+			solver.endClause();
+
+		}
+	}
+
 }
 
 void SATLiftedTranslator::addSimpleEffectList (polarity plrty, const list <MyProposition *> &simpleEffectList, int significantTimePoint, MyPartialAction *partialAction){
 	list <MyProposition*>::const_iterator it = simpleEffectList.begin();
 	list <MyProposition*>::const_iterator itEnd = simpleEffectList.end();
 	for (; it != itEnd; ++it){
-		solver.addPartialAction(partialAction->id, significantTimePoint, false);
+		solver.addAction(partialAction->id, significantTimePoint, false);
 		solver.addProposition((*it)->originalLiteral->getStateID(), partialAction->partialOperator->op->id + 1, significantTimePoint, (plrty == E_POS));
 		solver.endClause();
 	}
@@ -254,7 +361,7 @@ void SATLiftedTranslator::addGoal (const goal *gl, FastEnvironment *env, int sig
 		Literal lit (simple->getProp(), env);
 		Literal *lit2 = instantiatedOp::findLiteral(&lit);
 		if (partialAction){
-			solver.addPartialAction(partialAction->id, significantTimePoint, false);
+			solver.addAction(partialAction->id, significantTimePoint, false);
 			solver.addProposition(lit2->getStateID(), partialAction->partialOperator->op->id, significantTimePoint, (simple->getPolarity() == E_POS));
 		}else{
 			solver.addProposition(lit2->getStateID(), 0, significantTimePoint, (simple->getPolarity() == E_POS));
@@ -289,7 +396,7 @@ void SATLiftedTranslator::addGoalList (const list <MyProposition *> &preconditio
 	list <MyProposition*>::const_iterator it = preconditionList.begin();
 	list <MyProposition*>::const_iterator itEnd = preconditionList.end();
 	for (; it != itEnd; ++it){
-		solver.addPartialAction(partialAction->id, significantTimePoint, false);
+		solver.addAction(partialAction->id, significantTimePoint, false);
 		solver.addProposition((*it)->originalLiteral->getStateID(), partialAction->partialOperator->op->id, significantTimePoint, true);
 		solver.endClause();
 	}
@@ -315,6 +422,39 @@ void SATLiftedTranslator::addGoalList (const list <MyProposition *> &preconditio
 //}
 
 
+void SATLiftedTranslator::addUnacceptablePreconditionBoundaries (int significantTimePoint, MyPartialAction *partialAction){
+	int lng = partialAction->unacceptablePreconditionBoundaries.size();
+	int operatorId;
+	for (int i = 0; i < lng; ++i){
+		vector <MyBound>::iterator it, itEnd;
+		if ((unsigned int) partialAction->id != myProblem.partialAction.size()){
+			solver.addAction(partialAction->id, significantTimePoint, false);
+			operatorId = partialAction->partialOperator->op->id;
+		}else{
+			operatorId = 0;
+		}
+		FOR_ITERATION(it, itEnd, partialAction->unacceptablePreconditionBoundaries[i]){
+			solver.addValue(it->member, it->kind, operatorId, significantTimePoint, false);
+		}
+		solver.endClause();
+	}
+}
+
+void SATLiftedTranslator::addAssignmentBoundaries (int significantTimePoint, MyPartialAction *partialAction){
+	int lng = partialAction->assignmentBoundaries.size();
+	for (int i = 0; i < lng; ++i){
+		vector <MyBound>::iterator it, itEnd;
+		solver.addAction(partialAction->id, significantTimePoint, false);
+		FOR_ITERATION(it, itEnd, partialAction->assignmentBoundaries[i].first){
+			solver.addValue(it->member, it->kind, partialAction->partialOperator->op->id, significantTimePoint, false);
+		}
+		solver.addValue(partialAction->assignmentBoundaries[i].second.member, partialAction->assignmentBoundaries[i].second.kind, partialAction->partialOperator->op->id + 1, significantTimePoint, true);
+		solver.endClause();
+	}
+}
+
+
+
 bool SATLiftedTranslator::solve(){
 
 
@@ -322,6 +462,52 @@ bool SATLiftedTranslator::solve(){
 	return solver.solving();
 	return true;
 }
+
+
+void SATLiftedTranslator::getSolution(vector <pair <operator_ *, FastEnvironment> > &solution){
+	solution.clear();
+	int nOperator = myProblem.operators.size();
+	for (int i = 0; i < translatedLength - 1; ++i){
+		for (int j = 0; j < nOperator; ++j){
+			int nPartialOperator = myProblem.operators[j]->partialOperator.size();
+			FastEnvironment env(myProblem.operators[j]->originalOperator->parameters->size());
+			for (int k= 0; k < nPartialOperator; ++k){
+				int nPartialActions = myProblem.operators[j]->partialOperator[k]->child.size();
+				int l;
+				for (l = 0; l < nPartialActions; ++l){
+					if (solver.isTrueAction(myProblem.operators[j]->partialOperator[k]->child[l]->id, i)){
+//						sout << ";;Partial action: "; myProblem.operators[j]->partialOperator[k]->child[l]->write(sout); sout << endl;
+						break;
+					}
+				}
+				if (l == nPartialActions){
+					if (k != 0){
+						CANT_HANDLE("Oops, some actions was incompletely done");
+					}
+					break;
+				}else{
+					set <const VAL::symbol *>::const_iterator it, itEnd;
+					initializeIterator(it, itEnd, myProblem.operators[j]->partialOperator[k]->argument);
+					for (; it != itEnd; ++it){
+						env[*it] = (*(myProblem.operators[j]->partialOperator[k]->child[l]->env))[*it];
+					}
+				}
+				if (k == nPartialOperator - 1){
+					var_symbol_list::iterator paramIt, paramItEnd;
+					initializeIterator(paramIt, paramItEnd, (*(myProblem.operators[j]->originalOperator->parameters)));
+					for (; paramIt != paramItEnd; ++paramIt){
+						if ((env[*paramIt]) == NULL){
+							//It means some parameters of action is not bind, so I assume, I can bind it to any object!!!
+							env[*paramIt] = (*(myProblem.actions[j][0]->valAction->getEnv()))[*paramIt];
+						}
+					}
+					solution.push_back(pair <operator_ *, FastEnvironment> (myProblem.operators[j]->originalOperator, env));
+				}
+			}
+		}
+	}
+}
+
 
 void SATLiftedTranslator::extractSolution (ostream &sout){
 	int nOperator = myProblem.operators.size();
@@ -333,7 +519,7 @@ void SATLiftedTranslator::extractSolution (ostream &sout){
 				int nPartialActions = myProblem.operators[j]->partialOperator[k]->child.size();
 				int l;
 				for (l = 0; l < nPartialActions; ++l){
-					if (solver.isTruePartialAction(myProblem.operators[j]->partialOperator[k]->child[l]->id, i)){
+					if (solver.isTrueAction(myProblem.operators[j]->partialOperator[k]->child[l]->id, i)){
 //						sout << ";;Partial action: "; myProblem.operators[j]->partialOperator[k]->child[l]->write(sout); sout << endl;
 						break;
 					}
@@ -356,7 +542,7 @@ void SATLiftedTranslator::extractSolution (ostream &sout){
 					for (; paramIt != paramItEnd; ++paramIt){
 						if (((*env)[*paramIt]) == NULL){
 							//It means some parameters of action is not bind, so I assume, I can bind it to any object!!!
-							(*env)[*paramIt] = (*(myProblem.actions[j][0].valAction->getEnv()))[*paramIt];
+							(*env)[*paramIt] = (*(myProblem.actions[j][0]->valAction->getEnv()))[*paramIt];
 						}
 					}
 					instantiatedOp op (myProblem.operators[j]->originalOperator, env);
@@ -380,7 +566,7 @@ void SATLiftedTranslator::insertSolutionToSMTFormula (LiftedCVC4Problem *smtProb
 				int l;
 				for (l = 0; l < nPartialActions; ++l){
 					smtProblem->startNewClause();
-					if (solver.isTruePartialAction(myProblem.operators[j]->partialOperator[k]->child[l]->id, i)){
+					if (solver.isTrueAction(myProblem.operators[j]->partialOperator[k]->child[l]->id, i)){
 						smtProblem->addPartialActionToClause(myProblem.operators[j]->partialOperator[k]->child[l], i, true);
 					}else{
 						smtProblem->addPartialActionToClause(myProblem.operators[j]->partialOperator[k]->child[l], i, false);

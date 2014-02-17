@@ -92,11 +92,11 @@ UnrelatedFilter::UnrelatedFilter() {
 			if (nActions == 0){
 				continue;
 			}
-			const goal *gl = myProblem.actions[i][0].valAction->forOp()->precondition;
+			const goal *gl = myProblem.actions[i][0]->valAction->forOp()->precondition;
 			for (int j = 0; j < nActions; ++j){
-				if ((!myProblem.actions[i][j].possibleEffective) && canBeEffective(myProblem.actions[i][j].valAction)){
-					myProblem.actions[i][j].possibleEffective = true;
-					considerAsEffective(gl, myProblem.actions[i][j].valAction->getEnv());
+				if ((!myProblem.actions[i][j]->possibleEffective) && canBeEffective(myProblem.actions[i][j]->valAction)){
+					myProblem.actions[i][j]->possibleEffective = true;
+					considerAsEffective(gl, myProblem.actions[i][j]->valAction->getEnv());
 					canContinue = true;
 				}
 			}

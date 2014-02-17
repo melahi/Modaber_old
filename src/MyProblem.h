@@ -32,12 +32,16 @@ private:
 
 	void assignIdToPropositions();
 	void assignIdToVariables();
+	void assignIdToValues();
 
 	void assignIdtoUnification ();
 
 public:
 
-	vector <vector <MyAction> >actions;
+	void assignIdToPropositions_EStep();
+	void assignIdToValues_EStep();
+
+	vector <vector <MyAction *> >actions;
 	vector <MyProposition> propositions;
 	vector <MyVariable> variables;
 
@@ -48,6 +52,7 @@ public:
 	int nPropositionIDs;  //The number of variables needed for propositions for each layer in SAT formula
 	int nPartialActions;
 	int nVariableIDs;
+	int nValueIDs;
 	int nUnification;
 
 	vector <double> initialValue;  //The initial value for each variable
@@ -63,12 +68,20 @@ public:
 
 	void liftedInitializing ();
 
+	void reconsiderValues();
+	void reconsiderValues_EStep();
+
 	void write(ostream &sout);
 
 	virtual ~MyProblem() {
 		int nOperators = operators.size();
 		for (int i = 0; i < nOperators; i++){
 			delete(operators[i]);
+		}
+		for (unsigned int i = 0; i < actions.size(); ++i){
+			for (unsigned int j = 0; j < actions[i].size(); ++j){
+				delete actions[i][j];
+			}
 		}
 	}
 };

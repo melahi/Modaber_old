@@ -212,7 +212,7 @@ void LiftedCVC4Problem::addConditionToCluase(int propostionId, int operatorId, i
 		ignoreCluase = true;
 		return;
 	}
-	if (! isVisited(myProblem.propositions[propostionId].firstVisitedLayer, (myProblem.operators.size() * significantTimePoint + operatorId))){
+	if (! isVisited2(myProblem.propositions[propostionId].firstVisitedLayer)){
 		if (! polarity){
 			ignoreCluase = true;
 		}else{

@@ -1,5 +1,6 @@
 
 #include "MyProblem.h"
+#include "MyAction.h"
 #include "Utilities.h"
 #include "VALfiles/parsing/ptree.h"
 #include "VALfiles/instantiation.h"
@@ -85,10 +86,9 @@ void MyProblem::initializing(){
 	actions.resize(nOperator);
 	for (int i = 0; i < nAction; i++){
 		instantiatedOp *valAction = instantiatedOp::getInstOp(i);
-		actions[operatorMap[valAction->getHead()->getName()]].push_back(MyAction());
-		actions[operatorMap[valAction->getHead()->getName()]].rbegin()->initialize(valAction);
+		actions[operatorMap[valAction->getHead()->getName()]].push_back(new MyAction());
+		(*actions[operatorMap[valAction->getHead()->getName()]].rbegin())->initialize(valAction, i);
 	}
-
 
 	updateInitialLayer();
 
@@ -114,8 +114,8 @@ void MyProblem::liftedInitializing(){
 	for (int i = 0; i < nOperators; ++i){
 		int nActions = actions[i].size();
 		for (int j = 0; j < nActions; ++j){
-			if (actions[i][j].possibleEffective){
-				operators[i]->consideringAction(actions[i][j].valAction);
+			if (actions[i][j]->possibleEffective){
+				operators[i]->consideringAction(actions[i][j]->valAction);
 			}
 		}
 	}
@@ -123,6 +123,52 @@ void MyProblem::liftedInitializing(){
 	assignIdToPropositions();
 	assignIdToVariables();
 	assignIdtoUnification();
+}
+
+
+void MyProblem::reconsiderValues(){
+
+	//Considering +infinity and -infinity for each variable
+	int nVariables = variables.size();
+	for (int i = 0; i < nVariables; ++i){
+		variables[i].domain[+infinite];
+		variables[i].domain[-infinite];
+	}
+
+
+	int nOperators = operators.size();
+	for (int i = 0; i < nOperators; ++i){
+		int nPartialOperators = operators[i]->partialOperator.size();
+		for (int j = 0; j < nPartialOperators; ++j){
+			int nPartialActions = operators[i]->partialOperator[j]->child.size();
+			for (int k = 0; k < nPartialActions; ++k){
+				operators[i]->partialOperator[j]->child[k]->constructNumericalCondition();
+			}
+		}
+	}
+
+	assignIdToValues();
+}
+
+
+void MyProblem::reconsiderValues_EStep(){
+
+	//Considering +infinity and -infinity for each variable
+	int nVariables = variables.size();
+	for (int i = 0; i < nVariables; ++i){
+		variables[i].domain[+infinite];
+		variables[i].domain[-infinite];
+	}
+
+
+	int nOperators = actions.size();
+	for (int i = 0; i < nOperators; ++i){
+		int nActions = actions[i].size();
+		for (int j = 0; j < nActions; ++j){
+			actions[i][j]->constructNumericalCondition();
+		}
+	}
+	assignIdToValues_EStep();
 }
 
 
@@ -218,6 +264,164 @@ void MyProblem::assignIdToVariables(){
 		}
 	}
 }
+
+void MyProblem::assignIdToValues(){
+	vector <MyVariable>::iterator it, itEnd;
+	it = variables.begin();
+	itEnd = variables.end();
+	int nOperators = operators.size();
+
+	nValueIDs = 0;
+
+	for (; it != itEnd; ++it){
+
+		vector <bool> possibleModificationByOperator (nOperators, false);
+
+		//find which operator affect on this proposition
+		list <MyPartialAction*>::iterator paIt, paItEnd;
+
+		paIt = it->modifier.begin();
+		paItEnd = it->modifier.end();
+		for (; paIt != paItEnd; ++paIt){
+			possibleModificationByOperator[(*paIt)->partialOperator->op->id] = true;
+		}
+
+		//assigning id
+		int lastModifierOperator;
+		for (lastModifierOperator = nOperators - 1; lastModifierOperator >= 0; --lastModifierOperator){
+			if (possibleModificationByOperator[lastModifierOperator]){
+				break;
+			}
+		}
+
+		map <double, vector<int> >::iterator domainIt, domainItEnd;
+
+		FOR_ITERATION(domainIt, domainItEnd, it->domain){
+			domainIt->second.resize(nOperators);
+			domainIt->second[0] = nValueIDs++;
+		}
+		for (int i = 1; i < nOperators; ++i){
+			if (i > lastModifierOperator){
+				FOR_ITERATION(domainIt, domainItEnd, it->domain){
+					domainIt->second[i] = -1;
+				}
+				continue;
+			}
+			if (possibleModificationByOperator[i - 1]){
+				FOR_ITERATION(domainIt, domainItEnd, it->domain){
+					domainIt->second[i] = nValueIDs++;
+				}
+				continue;
+			}
+			FOR_ITERATION(domainIt, domainItEnd, it->domain){
+				domainIt->second[i] = domainIt->second[i-1];
+			}
+		}
+	}
+}
+
+
+void MyProblem::assignIdToPropositions_EStep(){
+	vector <MyProposition>::iterator it, itEnd;
+	it = propositions.begin();
+	itEnd = propositions.end();
+	int nActions = instantiatedOp::howMany();
+
+	nPropositionIDs = 0;
+
+	for (; it != itEnd; ++it){
+
+		vector <bool> possibleModificationByAction (nActions, false);
+
+		//find which action affect on this proposition
+		vector <MyAction *>::iterator aIt, aItEnd;
+
+		FOR_ITERATION(aIt, aItEnd, it->adder_groundAction){
+			possibleModificationByAction[(*aIt)->id] = true;
+		}
+
+		FOR_ITERATION(aIt, aItEnd, it->deleter_groundAction){
+			possibleModificationByAction[(*aIt)->id] = true;
+		}
+
+		//assigning id
+		it->ids.resize(nActions, -2);
+		int lastModifierAction;
+		for (lastModifierAction = nActions - 1; lastModifierAction >= 0; --lastModifierAction){
+			if (possibleModificationByAction[lastModifierAction]){
+				break;
+			}
+		}
+		it->ids[0] = nPropositionIDs++;
+		for (int i = 1; i < nActions; ++i){
+			if (i > lastModifierAction){
+				it->ids[i] = -1;
+				continue;
+			}
+			if (possibleModificationByAction[i - 1]){
+				it->ids[i] = nPropositionIDs++;
+				continue;
+			}
+			it->ids[i] = it->ids[i - 1];
+		}
+	}
+}
+
+
+void MyProblem::assignIdToValues_EStep(){
+	vector <MyVariable>::iterator it, itEnd;
+	it = variables.begin();
+	itEnd = variables.end();
+	int nActions = instantiatedOp::howMany();
+
+	nValueIDs = 0;
+
+	for (; it != itEnd; ++it){
+
+		vector <bool> possibleModificationByAction (nActions, false);
+
+		//find which operator affect on this proposition
+		vector <MyAction*>::iterator aIt, aItEnd;
+
+		FOR_ITERATION(aIt, aItEnd, it->modifier_groundAction){
+			possibleModificationByAction[(*aIt)->id] = true;
+		}
+
+		//assigning id
+		int lastModifierAction;
+		for (lastModifierAction = nActions - 1; lastModifierAction >= 0; --lastModifierAction){
+			if (possibleModificationByAction[lastModifierAction]){
+				break;
+			}
+		}
+
+		map <double, vector<int> >::iterator domainIt, domainItEnd;
+
+		FOR_ITERATION(domainIt, domainItEnd, it->domain){
+			domainIt->second.resize(nActions);
+			domainIt->second[0] = nValueIDs++;
+		}
+		for (int i = 1; i < nActions; ++i){
+			if (i > lastModifierAction){
+				FOR_ITERATION(domainIt, domainItEnd, it->domain){
+					domainIt->second[i] = -1;
+				}
+				continue;
+			}
+			if (possibleModificationByAction[i - 1]){
+				FOR_ITERATION(domainIt, domainItEnd, it->domain){
+					domainIt->second[i] = nValueIDs++;
+				}
+				continue;
+			}
+			FOR_ITERATION(domainIt, domainItEnd, it->domain){
+				domainIt->second[i] = domainIt->second[i-1];
+			}
+		}
+	}
+}
+
+
 
 void MyProblem::assignIdtoUnification() {
 	nUnification = 0;
