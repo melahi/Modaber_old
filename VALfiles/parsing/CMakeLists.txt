@@ -21,9 +21,9 @@ add_custom_command(
        COMMAND
         ${FLEX_EXECUTABLE}
        ARGS
-       -+  --outfile=${CMAKE_CURRENT_BINARY_DIR}/lex.yy.cc ${CMAKE_CURRENT_SOURCE_DIR}/pddl+.lex
+       -+  --outfile=${CMAKE_CURRENT_BINARY_DIR}/lex.yy.cc ${CMAKE_CURRENT_LIST_DIR}/pddl+.lex
        DEPENDS
-        ${CMAKE_CURRENT_SOURCE_DIR}/pddl+.lex
+        ${CMAKE_CURRENT_LIST_DIR}/pddl+.lex
 )
 
 add_custom_command(
@@ -32,17 +32,19 @@ add_custom_command(
        COMMAND
         ${BISON_EXECUTABLE}
        ARGS
-        ${CMAKE_CURRENT_SOURCE_DIR}/pddl+.yacc -o ${CMAKE_CURRENT_BINARY_DIR}/pddl+.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/pddl+.yacc -o ${CMAKE_CURRENT_BINARY_DIR}/pddl+.cpp
        DEPENDS
-        ${CMAKE_CURRENT_SOURCE_DIR}/pddl+.yacc ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.cc
+        ${CMAKE_CURRENT_LIST_DIR}/pddl+.yacc ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.cc
        COMMAND
-        ${CMAKE_CURRENT_SOURCE_DIR}/fixyywrap ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_LIST_DIR}/fixyywrap ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_LIST_DIR}
 )
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 set(libParsePDDL_SRCS
-      pddl+.cpp ptree.cpp DebugWriteController.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/pddl+.cpp
+      ${CMAKE_CURRENT_LIST_DIR}/ptree.cpp
+      ${CMAKE_CURRENT_LIST_DIR}/DebugWriteController.cpp
 )
 
 add_library(ParsePDDL STATIC ${libParsePDDL_SRCS})

@@ -11,13 +11,12 @@
 #include "MyAtom.h"
 #include "MyProblem.h"
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <vector>
 
 
 
 using namespace std;
-using namespace boost;
 
 namespace mdbr {
 

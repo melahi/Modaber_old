@@ -1,14 +1,3 @@
-*
-!*/
-!Lingeling/*
-!myRun/*
-!src/*
-!src/*/*
-!src/*/*/*
-!TranslateToSASPlus/*
-!TranslateToSASPlus/*/*
-!TranslateToSASPlus/*/*/*
-!VALfiles/*
-!VALfiles/*/*
-!VALfiles/*/*/*
-!.gitignore
+cmake-build-debug/
+.idea/
+

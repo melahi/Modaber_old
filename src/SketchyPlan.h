@@ -6,11 +6,10 @@
 #include "VALfiles/parsing/ptree.h"
 #include "MyStateVariable.h"
 #include <vector>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 using namespace VAL;
 using namespace std;
-using namespace boost;
 
 using namespace mdbr;
 

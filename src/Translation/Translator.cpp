@@ -5,11 +5,6 @@
 
 
 
-Translator::Translator(SMTProblem *smtProblem): smtProblem(smtProblem) {
-	// TODO Auto-generated constructor stub
-
-}
-
 /*
 void Translator::addInitialState(){
 	bool *proposition = new bool [pProblem.pAllProposition.size()];
@@ -148,10 +143,6 @@ void Translator::addActionMutex(int significantTimePoint){
 }
 
 */
-
-Translator::~Translator() {
-	// TODO Auto-generated destructor stub
-}
 
 
 
